@@ -1,3 +1,3 @@
-## 0.0.1
+## 1.0.0
 
-* TODO: Describe initial release.
+* First version: brand, theme, ar/fr/en localisation, config, API client, realtime, auth, shared screens, safety widgets, permission helpers.

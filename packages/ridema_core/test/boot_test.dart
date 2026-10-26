@@ -45,7 +45,7 @@ void main() {
     phone(tester);
     final backend = FakeBackend();
     FakeAuthServer(backend);
-    backend.on('GET', '/v1/app/config', (_) => const Res(200, {...appConfigJson, 'min_version': '2.0.0', 'force_update': true, 'latest_version': '2.1.0'}));
+    backend.on('GET', '/v1/app/config', (_) => Res(200, {...appConfigJson, 'min_version': '2.0.0', 'force_update': true, 'latest_version': '2.1.0'}));
     final s = await buildTestServices(backend: backend);
     await tester.pumpWidget(app(s));
     await settle(tester);
@@ -95,7 +95,7 @@ void main() {
     final backend = FakeBackend();
     FakeAuthServer(backend);
     backend.on('GET', '/v1/app/config',
-        (_) => const Res(200, {...appConfigJson, 'force_update': true, 'min_version': '9.0.0', 'store_url': 'https://play.google.com/store/apps/details?id=ma.ridema.rider'}));
+        (_) => Res(200, {...appConfigJson, 'force_update': true, 'min_version': '9.0.0', 'store_url': 'https://play.google.com/store/apps/details?id=ma.ridema.rider'}));
     final launcher = FakeLauncher();
     final base = await buildTestServices(backend: backend, launcher: launcher);
     final s = CoreServices(
