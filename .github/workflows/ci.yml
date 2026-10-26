@@ -53,6 +53,7 @@ jobs:
       - name: Analyze and test
         run: |
           for d in packages/ridema_core apps/driver apps/rider; do
+            [ -f "$d/pubspec.yaml" ] || { echo "skip $d (not created yet)"; continue; }
             (cd "$d" && flutter pub get && flutter analyze && flutter test)
           done
 
@@ -65,6 +66,9 @@ jobs:
         with: { distribution: temurin, java-version: 17 }
       - uses: subosito/flutter-action@v2
         with: { flutter-version: 3.47.8, channel: stable, cache: true }
+      - name: Check apps exist
+        id: apps
+        run: echo "ok=$([ -f apps/rider/pubspec.yaml ] && [ -f apps/driver/pubspec.yaml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
       - name: Restore release keystore (optional repository secrets)
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -81,8 +85,10 @@ jobs:
           API_BASE_URL: ${{ vars.API_BASE_URL }}
           GOOGLE_MAPS_ANDROID_KEY: ${{ secrets.GOOGLE_MAPS_ANDROID_KEY }}
           GOOGLE_PLACES_KEY: ${{ secrets.GOOGLE_PLACES_KEY }}
+        if: steps.apps.outputs.ok == 'true'
         run: scripts/build-apks.sh
       - uses: actions/upload-artifact@v4
+        if: steps.apps.outputs.ok == 'true'
         with:
           name: ridema-android
           path: dist/
