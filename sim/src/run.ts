@@ -233,7 +233,7 @@ async function riderLoop(base: string, email: string, n: number, completed: stri
       const r = await api.req('GET', `/v1/rides/${ride.id}`);
       if (r.status === 'completed') break;
       if (r.status === 'cancelled' || r.status === 'expired') throw new Error(`ride ${ride.id} ended ${r.status}`);
-      if (Date.now() - t0 > 180_000) throw new Error(`ride ${ride.id} stuck in ${r.status}`);
+      if (Date.now() - t0 > 180_000 * Math.max(1, TICK / 250)) throw new Error(`ride ${ride.id} stuck in ${r.status}`);
     }
     await api.req('POST', `/v1/rides/${ride.id}/rating`, { stars: 5, comment: 'Simulated' });
     const receipt = await api.req('GET', `/v1/rides/${ride.id}/receipt`);

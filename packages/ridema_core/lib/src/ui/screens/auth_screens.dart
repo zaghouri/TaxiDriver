@@ -247,9 +247,15 @@ class _ConsentsScreenState extends State<ConsentsScreen> {
             Row(
               children: [
                 const SizedBox(width: 16),
-                if (doc != null)
-                  Text(l.consentVersion(doc.version), style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                const Spacer(),
+                Expanded(
+                  child: doc == null
+                      ? const SizedBox.shrink()
+                      : Text(
+                          l.consentVersion(doc.version),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                        ),
+                ),
                 TextButton.icon(
                   key: ValueKey('consent_read_$kind'),
                   icon: const Icon(Icons.article_outlined),
