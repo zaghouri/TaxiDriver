@@ -8,7 +8,11 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+# Optional build-time CA for TLS-intercepting proxies (never needed on a normal server):
+#   docker build --secret id=build_ca,src=/path/ca.crt ...
+RUN --mount=type=cache,target=/root/.npm --mount=type=secret,id=build_ca,required=false,mode=0444 \
+    if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
+    npm ci --no-audit --no-fund
 COPY . .
 # build = tsc + scripts/copy-assets.mjs (SQL migrations -> dist/db/migrations, web assets)
 RUN npm run build && test -d dist/db/migrations
@@ -17,7 +21,9 @@ RUN npm run build && test -d dist/db/migrations
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm --mount=type=secret,id=build_ca,required=false,mode=0444 \
+    if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
+    npm ci --omit=dev --no-audit --no-fund
 
 # ---- runtime ----
 FROM node:22-alpine

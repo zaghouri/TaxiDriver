@@ -1,0 +1,70 @@
+// Server-side strings (emails, push, WhatsApp fallback text). App UI strings live in the Flutter ARB files.
+export type Locale = 'ar' | 'fr' | 'en';
+
+const t = {
+  email_verify_subject: { en: 'Your {app} code: {code}', fr: 'Votre code {app} : {code}', ar: 'رمز {app} الخاص بك: {code}' },
+  email_verify_body: {
+    en: 'Hello {name},\n\nYour code is {code}. It is valid for 30 minutes.\nOr open this link: {link}\n\nIf you did not sign up, ignore this email.',
+    fr: 'Bonjour {name},\n\nVotre code est {code}. Il est valable 30 minutes.\nOu ouvrez ce lien : {link}\n\nSi vous ne vous êtes pas inscrit, ignorez cet email.',
+    ar: 'مرحباً {name}،\n\nرمزك هو {code}. صالح لمدة 30 دقيقة.\nأو افتح هذا الرابط: {link}\n\nإذا لم تقم بالتسجيل، تجاهل هذه الرسالة.',
+  },
+  reset_subject: { en: 'Reset your {app} password', fr: 'Réinitialiser votre mot de passe {app}', ar: 'إعادة تعيين كلمة مرور {app}' },
+  reset_body: {
+    en: 'Your password reset code is {code}. It is valid for 30 minutes. If you did not ask for it, you can ignore this email.',
+    fr: 'Votre code de réinitialisation est {code}. Il est valable 30 minutes. Si vous ne l’avez pas demandé, ignorez cet email.',
+    ar: 'رمز إعادة تعيين كلمة المرور هو {code}. صالح لمدة 30 دقيقة. إذا لم تطلبه، تجاهل هذه الرسالة.',
+  },
+  login_code_subject: { en: 'Your {app} login code', fr: 'Votre code de connexion {app}', ar: 'رمز الدخول إلى {app}' },
+  login_code_body: {
+    en: 'Your login code is {code}. It is valid for 10 minutes.',
+    fr: 'Votre code de connexion est {code}. Il est valable 10 minutes.',
+    ar: 'رمز الدخول الخاص بك هو {code}. صالح لمدة 10 دقائق.',
+  },
+  doc_expiry_subject: { en: 'A document expires soon', fr: 'Un document expire bientôt', ar: 'وثيقة ستنتهي صلاحيتها قريباً' },
+  doc_expiry_body: {
+    en: 'Your {doc} expires on {date} ({days} days). Upload the new one in the app to keep driving.',
+    fr: 'Votre {doc} expire le {date} (dans {days} jours). Ajoutez le nouveau dans l’application pour continuer à rouler.',
+    ar: 'تنتهي صلاحية {doc} بتاريخ {date} (بعد {days} أيام). أضف الوثيقة الجديدة في التطبيق لتواصل العمل.',
+  },
+  doc_expired_body: {
+    en: 'Your {doc} has expired. You cannot go online until you upload a valid one.',
+    fr: 'Votre {doc} a expiré. Vous ne pouvez plus vous mettre en ligne avant d’en ajouter un valide.',
+    ar: 'انتهت صلاحية {doc}. لا يمكنك الاتصال حتى تضيف وثيقة صالحة.',
+  },
+  push_new_request_title: { en: 'New ride request', fr: 'Nouvelle demande', ar: 'طلب رحلة جديد' },
+  push_new_request_body: { en: '{price} DH · {distance} km', fr: '{price} DH · {distance} km', ar: '{price} درهم · {distance} كلم' },
+  push_new_offer_title: { en: 'New offer', fr: 'Nouvelle offre', ar: 'عرض جديد' },
+  push_new_offer_body: { en: '{name} offers {price} DH', fr: '{name} propose {price} DH', ar: '{name} يقترح {price} درهم' },
+  push_accepted_title: { en: 'You got the ride!', fr: 'Course acceptée !', ar: 'تم قبولك للرحلة!' },
+  push_accepted_body: { en: 'Go to the pickup point.', fr: 'Rendez-vous au point de départ.', ar: 'توجّه إلى نقطة الانطلاق.' },
+  push_arrived_title: { en: 'Your driver is here', fr: 'Votre chauffeur est arrivé', ar: 'السائق وصل' },
+  push_arrived_body: { en: '{car} · {plate}', fr: '{car} · {plate}', ar: '{car} · {plate}' },
+  push_cancelled_title: { en: 'Ride cancelled', fr: 'Course annulée', ar: 'أُلغيت الرحلة' },
+  push_cancelled_body: { en: 'The ride was cancelled.', fr: 'La course a été annulée.', ar: 'تم إلغاء الرحلة.' },
+  push_expired_title: { en: 'No driver found', fr: 'Aucun chauffeur trouvé', ar: 'لم يتم العثور على سائق' },
+  push_expired_body: { en: 'Try again or raise your fare.', fr: 'Réessayez ou augmentez votre prix.', ar: 'حاول مرة أخرى أو ارفع الثمن.' },
+  push_driver_approved_title: { en: 'You are approved!', fr: 'Compte approuvé !', ar: 'تمت الموافقة على حسابك!' },
+  push_driver_approved_body: { en: 'Go online to receive ride requests.', fr: 'Passez en ligne pour recevoir des demandes.', ar: 'اتصل لتستقبل طلبات الرحلات.' },
+  push_driver_rejected_title: { en: 'Application needs changes', fr: 'Dossier à compléter', ar: 'ملفك يحتاج إلى تعديل' },
+  push_driver_rejected_body: { en: '{reason}', fr: '{reason}', ar: '{reason}' },
+  push_suspended_title: { en: 'Account suspended', fr: 'Compte suspendu', ar: 'تم توقيف الحساب' },
+  push_suspended_body: { en: '{reason}', fr: '{reason}', ar: '{reason}' },
+  push_doc_expiring_title: { en: 'Document expires soon', fr: 'Document bientôt expiré', ar: 'وثيقة ستنتهي قريباً' },
+  push_doc_expiring_body: { en: '{doc}: {days} days left', fr: '{doc} : encore {days} jours', ar: '{doc}: بقي {days} أيام' },
+  push_subscription_active_title: { en: 'Subscription active', fr: 'Abonnement actif', ar: 'الاشتراك مفعل' },
+  push_subscription_active_body: { en: 'Valid until {date}.', fr: "Valable jusqu'au {date}.", ar: 'صالح حتى {date}.' },
+  doc_cin_front: { en: 'ID card (front)', fr: 'CIN (recto)', ar: 'البطاقة الوطنية (الوجه)' },
+  doc_cin_back: { en: 'ID card (back)', fr: 'CIN (verso)', ar: 'البطاقة الوطنية (الظهر)' },
+  doc_licence: { en: 'driving licence', fr: 'permis de conduire', ar: 'رخصة السياقة' },
+  doc_carte_grise: { en: 'registration (carte grise)', fr: 'carte grise', ar: 'البطاقة الرمادية' },
+  doc_insurance: { en: 'insurance', fr: 'assurance', ar: 'التأمين' },
+  doc_visite_technique: { en: 'technical inspection', fr: 'visite technique', ar: 'الفحص التقني' },
+  doc_selfie: { en: 'selfie', fr: 'selfie', ar: 'صورة شخصية' },
+} as const;
+
+export type MsgKey = keyof typeof t;
+
+export function msg(key: MsgKey, locale: Locale, vars: Record<string, string | number> = {}): string {
+  const s: string = t[key][locale] ?? t[key].fr;
+  return s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? String(vars[k]) : k === 'app' ? 'RideMA' : `{${k}}`));
+}
