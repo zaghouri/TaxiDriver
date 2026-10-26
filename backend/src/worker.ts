@@ -13,6 +13,7 @@ export async function startWorker() {
   const cfg = loadConfig();
   if (cfg.SENTRY_DSN) Sentry.init({ dsn: cfg.SENTRY_DSN, environment: cfg.SENTRY_ENVIRONMENT });
   const ctx = createContext(cfg);
+  await ctx.settings.warm();
   const connection = ctx.redis;
   const prefix = `${cfg.REDIS_PREFIX}:bull`;
 

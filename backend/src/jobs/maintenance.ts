@@ -11,6 +11,7 @@ export async function runRetention(ctx: AppContext): Promise<Record<string, numb
   const out: Record<string, number> = {};
   const exec = async (name: string, sql: string, params: unknown[] = [], purge = false) => {
     const n = await withTx(ctx.db, async (tx) => {
+      await tx.query(`SET LOCAL statement_timeout = 0`);
       if (purge) await tx.query(`SELECT set_config('ridema.allow_purge', 'on', true)`);
       return (await tx.query(sql, params)).rowCount ?? 0;
     });
@@ -50,6 +51,7 @@ export async function runRetention(ctx: AppContext): Promise<Record<string, numb
 
   // Old finished rides with everything hanging off them, in batches, in one transaction per batch.
   out.rides = await withTx(ctx.db, async (tx) => {
+    await tx.query(`SET LOCAL statement_timeout = 0`);
     await tx.query(`SELECT set_config('ridema.allow_purge', 'on', true)`);
     const ids = (await many<{ id: string }>(
       tx,

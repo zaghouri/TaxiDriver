@@ -139,7 +139,7 @@ export default function App() {
       <ToastProvider>
         <DialogProvider>
           <AuthProvider>
-            <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <HashRouter>
               <Gate />
             </HashRouter>
           </AuthProvider>

@@ -11,8 +11,14 @@ export type Db = pg.Pool;
 export type Tx = pg.PoolClient;
 export type Queryable = pg.Pool | pg.PoolClient;
 
-export function createPool(url: string, max = 20): Db {
-  return new pg.Pool({ connectionString: url, max });
+export function createPool(url: string, max = 30): Db {
+  return new pg.Pool({
+    connectionString: url,
+    max,
+    connectionTimeoutMillis: 10_000,
+    // Fail fast under contention; maintenance jobs override statement_timeout locally.
+    options: '-c statement_timeout=15000 -c lock_timeout=5000 -c idle_in_transaction_session_timeout=30000',
+  });
 }
 
 /** Runs fn inside a transaction; rolls back on throw. */

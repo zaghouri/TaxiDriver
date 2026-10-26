@@ -9,7 +9,7 @@ import { enqueue, enqueueMany, type OutboxMessage } from '../../core/outbox.js';
 import { abuseAlert } from '../../core/abuse.js';
 import type { City } from '../../core/settings.js';
 import { getUser } from '../users.js';
-import { bidView, getRide, rankedOffers, requestView, rideView, type BidRow, type RideRow } from './views.js';
+import { bidView, bidViewWith, getRide, personCard, rankedOffers, requestView, rideView, vehicleCard, RIDE_COLUMNS, type BidRow, type RideRow } from './views.js';
 
 export const CANCEL_REASONS = ['changed_mind', 'driver_too_far', 'driver_asked', 'wrong_pickup', 'rider_no_show', 'car_mismatch', 'safety', 'other'] as const;
 export type CancelReason = (typeof CANCEL_REASONS)[number];
@@ -179,10 +179,10 @@ async function loadOwnRide(tx: Queryable, rideId: string, userId: string, as: 'r
 }
 
 export async function raiseOffer(ctx: AppContext, riderId: string, rideId: string, price: number) {
+  const city = await ctx.settings.city((await loadOwnRide(ctx.db, rideId, riderId, 'rider', false)).city_id);
   return withTx(ctx.db, async (tx) => {
     const r = await loadOwnRide(tx, rideId, riderId, 'rider');
     if (r.status !== 'searching') throw conflict('RIDE_NOT_SEARCHING', 'This request is no longer open.');
-    const city = await ctx.settings.city(r.city_id);
     if (price <= r.offered_price) throw unprocessable('OFFER_NOT_HIGHER', 'The new fare must be higher.');
     if (price > Math.round(r.suggested_price * city.max_counter_ratio)) throw unprocessable('OFFER_TOO_HIGH', 'This fare is too high for the trip.');
     await tx.query('UPDATE rides SET offered_price = $2, updated_at = now() WHERE id = $1', [rideId, price]);
@@ -328,10 +328,13 @@ export async function placeBid(ctx: AppContext, driverId: string, rideId: string
   if (loc && haversineM(loc, pickup) > city.search_radius_km * 1000 * 1.5) throw unprocessable('TOO_FAR', 'You are too far from the pickup point.');
   const eta = loc ? await ctx.router.route(loc, pickup) : { distance_m: 0, duration_s: 0 };
   const rules = city.cancel_rules;
+  const card: any = await personCard(ctx.db, driverId);
+  if (card) card.vehicle = await vehicleCard(ctx.db, null, driverId, false);
 
   try {
     return await withTx(ctx.db, async (tx) => {
-      const r = (await getRide(tx, rideId, true))!;
+      // FOR SHARE: many drivers can bid at once; acceptance (FOR UPDATE) waits for in-flight bids, so no bid is left active on a taken ride.
+      const r = (await one<RideRow>(tx, `SELECT ${RIDE_COLUMNS} FROM rides r WHERE r.id = $1 FOR SHARE`, [rideId]))!;
       if (r.status !== 'searching' || new Date(r.expires_at) <= new Date()) throw conflict('RIDE_NOT_SEARCHING', 'This request is no longer open.');
       const prior = await many<{ status: string }>(tx, 'SELECT status FROM bids WHERE ride_id = $1 AND driver_id = $2', [rideId, driverId]);
       if (prior.some((p) => p.status === 'declined')) throw conflict('BID_DECLINED_BEFORE', 'The rider declined your offer for this ride.');
@@ -350,7 +353,7 @@ export async function placeBid(ctx: AppContext, driverId: string, rideId: string
         [rideId, driverId, input.kind, price, eta.duration_s, eta.distance_m, city.bid_timeout_s],
       );
       await addEvent(tx, rideId, 'bid_created', { id: driverId, role: 'driver' }, { bid_id: b!.id, kind: input.kind, price });
-      const view = await bidView(tx, b!);
+      const view = bidViewWith(b!, card);
       await enqueueMany(tx, [
         { topic: 'realtime', payload: { target: { user: r.rider_id }, event: 'bid:new', data: view } },
         {
@@ -425,10 +428,10 @@ export async function completeTrip(ctx: AppContext, driverId: string, rideId: st
 }
 
 export async function cancelByDriver(ctx: AppContext, driverId: string, rideId: string, reason: CancelReason) {
+  const city = await ctx.settings.city((await loadOwnRide(ctx.db, rideId, driverId, 'driver', false)).city_id);
   const res = await withTx(ctx.db, async (tx) => {
     const r = await loadOwnRide(tx, rideId, driverId, 'driver');
     if (!['accepted', 'arrived'].includes(r.status)) throw conflict('CANNOT_CANCEL', 'This ride cannot be cancelled now.');
-    const city = await ctx.settings.city(r.city_id);
     const rules = city.cancel_rules;
     const waited = r.arrived_at ? (Date.now() - new Date(r.arrived_at).getTime()) / 1000 : 0;
     const noShow = r.status === 'arrived' && reason === 'rider_no_show' && waited >= (rules.no_show_wait_s ?? 300);

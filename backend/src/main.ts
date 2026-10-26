@@ -9,6 +9,7 @@ async function main() {
   const cfg = loadConfig();
   if (cfg.SENTRY_DSN) Sentry.init({ dsn: cfg.SENTRY_DSN, environment: cfg.SENTRY_ENVIRONMENT, tracesSampleRate: 0.05 });
   const ctx = createContext(cfg);
+  await ctx.settings.warm();
   const app = await buildApp(ctx);
   await app.ready();
   const io = await attachSocketServer(ctx, app.server);

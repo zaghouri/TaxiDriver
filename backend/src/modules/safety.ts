@@ -47,6 +47,7 @@ export async function safetyRoutes(app: FastifyInstance, ctx: AppContext) {
     const recentEnd = r.completed_at && Date.now() - new Date(r.completed_at).getTime() < 3600_000;
     if (!['accepted', 'arrived', 'in_progress'].includes(r.status) && !recentEnd) throw conflict('RIDE_NOT_ACTIVE', 'Call the emergency number directly.');
     const numbers = (await ctx.settings.setting<any>('emergency_numbers')) ?? { police: '19', gendarmerie: '177', ambulance: '15' };
+    const company = await ctx.settings.setting<any>('company');
     const sos = await withTx(db, async (tx) => {
       const row = await one<{ id: string; created_at: Date }>(
         tx,
@@ -57,7 +58,6 @@ export async function safetyRoutes(app: FastifyInstance, ctx: AppContext) {
       await addEvent(tx, r.id, 'sos', { id: req.user!.id, role: req.user!.role }, { service: b.service, lat: b.lat, lng: b.lng, sos_id: row!.id });
       const data = { id: row!.id, ride_id: r.id, user_id: req.user!.id, role: req.user!.role, service: b.service, lat: b.lat, lng: b.lng, created_at: row!.created_at };
       await enqueue(tx, { topic: 'realtime', payload: { target: { admins: true }, event: 'sos:new', data } });
-      const company = await ctx.settings.setting<any>('company');
       if (company?.support_email) {
         await enqueue(tx, { topic: 'email', payload: { to: company.support_email, subject: `SOS ${b.service} — ride ${r.id.slice(0, 8)}`, text: `SOS from ${req.user!.role} at ${b.lat},${b.lng}. Open the admin panel: ${ctx.cfg.publicBaseUrl}/admin/#/sos/${row!.id}` } });
       }

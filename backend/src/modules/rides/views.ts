@@ -159,6 +159,10 @@ export interface BidRow {
 export async function bidView(q: Queryable, b: BidRow) {
   const driver: any = await personCard(q, b.driver_id);
   if (driver) driver.vehicle = await vehicleCard(q, null, b.driver_id, false);
+  return bidViewWith(b, driver);
+}
+
+export function bidViewWith(b: BidRow, driver: any) {
   return {
     id: b.id,
     ride_id: b.ride_id,
@@ -174,10 +178,18 @@ export async function bidView(q: Queryable, b: BidRow) {
   };
 }
 
-/** Offers ranking (D10): price, then ETA, then rating. */
+/** Offers ranking (D10): price, then ETA, then rating — ranked in SQL, full cards built only for the shown ones. */
 export async function rankedOffers(q: Queryable, rideId: string, limit: number) {
-  const bids = await many<BidRow>(q, `SELECT * FROM bids WHERE ride_id = $1 AND status = 'active' AND expires_at > now()`, [rideId]);
-  const views = await Promise.all(bids.map((b) => bidView(q, b)));
-  views.sort((a, b) => a.price - b.price || a.eta_s - b.eta_s || (b.driver?.rating ?? 0) - (a.driver?.rating ?? 0));
-  return { offers: views.slice(0, limit), total: views.length };
+  const rows = await many<BidRow & { total: number }>(
+    q,
+    `SELECT b.*, count(*) OVER () AS total FROM bids b JOIN users u ON u.id = b.driver_id
+     WHERE b.ride_id = $1 AND b.status = 'active' AND b.expires_at > now()
+     ORDER BY b.price, b.eta_s,
+       CASE WHEN u.rating_count > 0 THEN u.rating_sum::numeric / u.rating_count ELSE 0 END
+         - 0.05 * (SELECT COALESCE(sum(points), 0) FROM driver_penalties p WHERE p.driver_id = b.driver_id AND p.created_at > now() - interval '30 days') DESC
+     LIMIT $2`,
+    [rideId, limit],
+  );
+  const offers = await Promise.all(rows.map((b) => bidView(q, b)));
+  return { offers, total: rows[0]?.total ?? 0 };
 }

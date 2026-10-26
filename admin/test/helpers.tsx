@@ -71,7 +71,7 @@ export function wrap(ui: ReactElement, { route = '/', path = '/' }: { route?: st
     <I18nProvider initial="fr">
       <ToastProvider>
         <DialogProvider>
-          <MemoryRouter initialEntries={[route]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <MemoryRouter initialEntries={[route]}>
             <Routes>
               <Route path={path} element={ui} />
               <Route path="*" element={<div data-testid="elsewhere" />} />

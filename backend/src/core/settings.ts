@@ -42,16 +42,49 @@ export class SettingsService {
   private cache = new Map<string, { at: number; value: unknown }>();
   constructor(private db: Db) {}
 
+  /** Forces the next read to reload synchronously (used right after an admin change on this instance). */
   invalidate() {
     this.cache.clear();
   }
 
+  private inflight = new Map<string, Promise<unknown>>();
+
+  /**
+   * Stale-while-revalidate: after the first load, callers get the cached value immediately and a refresh runs in
+   * the background. This keeps settings reads from ever waiting on a pool connection while a transaction is open.
+   */
   private async cached<T>(key: string, load: () => Promise<T>): Promise<T> {
     const hit = this.cache.get(key);
-    if (hit && Date.now() - hit.at < TTL_MS) return hit.value as T;
-    const value = await load();
-    this.cache.set(key, { at: Date.now(), value });
-    return value;
+    if (hit) {
+      if (Date.now() - hit.at >= TTL_MS && !this.inflight.has(key)) {
+        const p = load()
+          .then((value) => this.cache.set(key, { at: Date.now(), value }))
+          .catch(() => undefined)
+          .finally(() => this.inflight.delete(key));
+        this.inflight.set(key, p);
+      }
+      return hit.value as T;
+    }
+    const pending = this.inflight.get(key);
+    if (pending) {
+      await pending;
+      return this.cache.get(key)!.value as T;
+    }
+    const p = load().then((value) => {
+      this.cache.set(key, { at: Date.now(), value });
+      return value;
+    });
+    this.inflight.set(key, p);
+    try {
+      return await p;
+    } finally {
+      this.inflight.delete(key);
+    }
+  }
+
+  /** Loads everything once (called at boot) so later reads never block. */
+  async warm() {
+    await Promise.all([this.flags(), this.setting('company'), this.cities()]);
   }
 
   async flag(key: string, cityId?: string | null): Promise<boolean> {
