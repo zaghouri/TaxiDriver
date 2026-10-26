@@ -1,0 +1,38 @@
+# DECISIONS
+
+Every choice made without asking the owner, with the reason. Newest at the bottom. Change any of these by editing the code/config named in the entry.
+
+| # | Topic | Decision | Why |
+|---|---|---|---|
+| D1 | REA / inDrive APK | `spec/indrive.apk` is not in the repo and github.com is blocked from the build container, so REA was **not** run. Flows are designed from the product description and general ride-hailing UX patterns only. | Section 6: "If neither exists, design the flows yourself". Also keeps us clear of copying anything. |
+| D2 | Repo layout | Monorepo: `backend/` (Node+TS), `admin/` (React+Vite), `apps/rider`, `apps/driver` (Flutter), `packages/ridema_core` (shared Flutter code), `infra/` (Compose, Caddy, OSRM, backups). | One place, shared contracts, one CI. |
+| D3 | Backend framework | Fastify 5 + TypeScript, raw SQL with `pg` and plain SQL migration files, `zod` for validation, `vitest` for tests. | Fast, small, no ORM magic around the race-sensitive SQL (conditional updates, partial unique indexes). |
+| D4 | Password hashing | Argon2id via `@node-rs/argon2` (prebuilt binaries). | OWASP recommendation, no native toolchain needed. |
+| D5 | Tokens | Access token: JWT (HS256), 15 min. Refresh token: opaque 256-bit, 30 days, stored hashed, rotated on every use; reuse of a rotated token revokes the whole family. | Section 3. |
+| D6 | Email verification | 6-digit code **and** a link carrying a signed token, both valid 30 min. | Code is easier on phones; link is easier on desktop. |
+| D7 | Phone verification | WhatsApp OTP once per user. After a phone is verified it can only be changed through a data-correction request handled by an admin. Max 3 codes per number per day, 5 wrong tries per code. | "Used only ONCE per user". |
+| D8 | Brand | Name `RideMA` in `packages/ridema_core/lib/brand.dart` (`kAppName`) + `assets/brand/`. Colours: primary emerald `#0B6E4F`, accent saffron `#F4A300`, ink `#1D1D1F`. Logo: our own simple wordmark (SVG). | Clearly distinct from inDrive's palette; easy to rename. |
+| D9 | Minimum offer | Rider offer must be ≥ city `min_fare` and ≥ 70 % of the suggested price; counter-offers must be between the rider offer and 300 % of the suggested price. All percentages per city. | Stops spam offers while keeping bargaining. |
+| D10 | "5 best" offers | Rank: lowest price, then shortest pickup ETA, then highest rating. Rider sees the top 5 active offers; others stay queued and move up when one expires. | Simple, explainable. |
+| D11 | Rider cancellations | Free (no penalty) before the driver taps "I've arrived". Every rider cancellation of an accepted ride is counted; at 3 in a rolling 7 days the app shows a warning. No block for riders. | Section 2. |
+| D12 | Driver cancellations | Each cancel after accepting = 1 penalty point (shown rating = average − 0.05 × points from the last 30 days, floor 1.0). 3 cancels in 24 h → blocked 2 h; 5 in 7 days → blocked 24 h. Driver may cancel without penalty as "rider no-show" 5 min after arriving. All numbers per city. | Section 2. |
+| D13 | Subscription rule | When `subscriptions_enabled` is on: every driver gets 10 completed rides per day free. To bid on an 11th ride in the same day a driver needs an active 99 DH/30-day subscription. Default OFF. | Simplest reading of "99 DH/month for drivers above 10 rides/day". |
+| D14 | Payment provider | `PaymentProvider` interface with `cashplus`, `wafacash`, `card`, `wallet` adapters. Without merchant keys they run in mock mode: they create a reference code and an admin marks it paid. The platform never holds money. | No merchant contracts yet. |
+| D15 | Ride states | `searching → accepted → arrived → in_progress → completed`; terminal `cancelled`, `expired`. | Short, matches the bidding product. |
+| D16 | Pickup PIN | 4 digits generated at acceptance, shown to the rider, typed by the driver to start the trip. Feature flag `pickup_pin` (default ON). | Section 5 safety. |
+| D17 | Voice calls | WebRTC audio, signalling through our Socket.IO server, TURN by a `coturn` container. Only the two parties of an active ride can call; phone numbers are never sent to the other party. | No third-party telephony account needed; numbers stay private. |
+| D18 | Public map pages (trip share, admin live map) | Leaflet + OpenStreetMap tiles with attribution. Google Maps SDK is used inside the mobile apps only. | No Google Maps JavaScript key in the requested key list; share pages are low traffic. |
+| D19 | Router fallback | `RouterProvider` has an `osrm` adapter and a `haversine` fallback (straight line × 1.3, 25 km/h) used in tests and when OSRM is down. | OSRM data could not be downloaded in the build container. |
+| D20 | Retention defaults | GPS route points 12 months; rides + ride events 5 years; SOS 2 years; rejected-driver documents 6 months after rejection; approved-driver documents until 6 months after account deletion or driver exit; verification codes 7 days; expired refresh tokens 30 days; idempotency keys 48 h; admin audit log 5 years; consent log kept for account life + 5 years; outbox processed rows 7 days. All editable in admin settings. | Law 09-08 asks for limited, declared periods; 5 years covers civil/commercial disputes. |
+| D21 | Account deletion | Deletion removes personal data immediately (name, email, phone, documents, tokens, devices, push tokens, route points). Ride rows are kept for the retention period with the user replaced by an anonymous placeholder so the other party's history and receipts stay valid. | "Fully deletes" personal data while keeping legally needed trip records non-identifying. |
+| D22 | CIN storage | Only the last 4 characters of the CIN number are stored in clear (`cin_last4`). Full ID images are stored encrypted (AES-256-GCM, per-file data key wrapped by a master key from env). | Section 5. |
+| D23 | Admin access | Admins log in with email + password + **mandatory TOTP**. Admin API routes check `ADMIN_IP_ALLOWLIST` (CIDR list, empty = allow all, logged at boot as a warning). Caddy also restricts `/admin`. | Section 5. |
+| D24 | Idempotency | All POST/PUT/PATCH/DELETE under `/v1` require an `Idempotency-Key` header (UUID). Same key + same body replays the stored response; same key + different body → 422. | Section 5. |
+| D25 | Outbox | Business writes insert `outbox` rows inside the same transaction. A dispatcher (LISTEN/NOTIFY + 1 s poll) delivers to Socket.IO, FCM and email after commit. | Section 5. |
+| D26 | Flutter state management | `provider` + `ChangeNotifier`, `dio` for HTTP, `socket_io_client`, `flutter_foreground_task` for the driver foreground service. | Small, well-known packages. |
+| D27 | Remote config | Apps read `api_base_url` from Firebase Remote Config; if Firebase is not configured or unreachable they use the compiled default (`https://<SERVER_IP>.sslip.io`) and the last value cached on the phone. | Section 4; lets us move domain without an app update. |
+| D28 | Admin panel stack | React 18 + Vite + TypeScript + react-router, plain fetch client, vitest + Testing Library. | Section 1. |
+| D29 | Languages | ARB files for ar/fr/en in `ridema_core`. Default locale = phone locale if ar/fr/en, else French. | Morocco; French is the safest fallback. |
+| D30 | Driver types | Stored per city as `enabled_driver_types`. Meknes: `taxi`, `licensed_operator` on; `private_car` off. Riders don't choose a type; all enabled types receive requests. | Section 2. |
+| D31 | Car rules | Validated at onboarding and re-checked at approval: model year ≥ current year − 6 (under 7 years), 4 doors, A/C = yes. Per-city overridable. | Section 2. |
+| D32 | Licence age | Licence issue date must be ≥ 3 years before the application date. | Section 2. |
