@@ -70,7 +70,8 @@ void main() {
   test('outgoing call: invite → accept → offer → answer → ICE → active → hang up', () async {
     await call.startCall('ride-1', peerName: 'Youssef', peerRole: 'driver');
     expect(call.state, CallState.outgoing);
-    expect(socket.emitted.single, ('call:invite', {'ride_id': 'ride-1'}));
+    expect(socket.emitted.single.$1, 'call:invite');
+    expect(socket.emitted.single.$2, {'ride_id': 'ride-1'});
 
     // ICE arriving before the answer is queued.
     socket.fire('call:accept', {'ride_id': 'ride-1', 'from_role': 'driver'});
