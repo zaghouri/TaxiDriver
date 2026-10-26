@@ -4,13 +4,13 @@ Legend: `[x]` done and tested here · `[~]` built; needs a key, a server or a re
 Each line names where it lives and how it was verified.
 
 ## Store-ready
-- [ ] Driver app: Android foreground service type `location` + persistent notification — *apps/driver (in progress)*
-- [ ] Rider app: foreground location only (no background permission in manifest) — *apps/rider (in progress)*
-- [ ] Disclosure screen before every location permission prompt (driver text mentions app closed) — *packages/ridema_core `LocationDisclosureScreen`; app wiring pending*
+- [~] Driver app: Android foreground service type `location` + persistent notification — `flutter_foreground_task` service declared with `foregroundServiceType="location"`, FOREGROUND_SERVICE_LOCATION + BACKGROUND_LOCATION permissions, "you are online" notification (apps/driver manifest + `location/`); needs a real phone to verify (B16)
+- [x] Rider app: foreground location only — no location service; `ACCESS_BACKGROUND_LOCATION` and `FOREGROUND_SERVICE_LOCATION` explicitly removed with `tools:node="remove"` (checked in `apps/rider/android/app/src/main/AndroidManifest.xml`); iOS has only When-In-Use
+- [x] Disclosure screen before every location permission prompt (driver text mentions app closed) — `LocationDisclosureScreen` in ridema_core, used by both apps before any OS prompt; widget test asserts the disclosure appears before the request
 - [x] In-app account deletion that fully deletes — `DELETE /v1/me` (D21); `rides.test.ts › account deletion` (personal data scrubbed, tokens/devices/route points/documents+files removed, login impossible); app screen in ridema_core
 - [x] Public pages: privacy policy, terms, account deletion request — `/legal/privacy`, `/legal/terms`, `/account-deletion` (ar/fr/en); `safety-realtime.test.ts › public pages`
-- [ ] iOS Info.plist location texts + `UIBackgroundModes: location` (driver) — *apps (in progress)*
-- [ ] Both apps usable when location or notifications are refused, with clear prompts — *apps (in progress)*
+- [~] iOS Info.plist location texts + `UIBackgroundModes: location` (driver) — present in both apps with fr/ar/en `InfoPlist.strings`; iOS never built (no Mac, B12; `docs/IOS_BUILD.md`)
+- [~] Both apps usable when location or notifications are refused, with clear prompts — rider falls back to manual addresses, driver shows a blocking card with Settings button, notification banner; covered by widget tests, to confirm on phones (PHONE_TEST §3)
 
 ## Morocco law-ready
 - [x] Consent screens at signup with consent log (timestamp, version, exact text), incl. US transfers (Firebase, Google Maps, WhatsApp) — `consents` table (append-only trigger), signup rejects missing/outdated consents; `auth.test.ts › requires every consent and logs the exact text`
@@ -32,7 +32,7 @@ Each line names where it lives and how it was verified.
 ## Security and fraud
 - [x] Per-object authorization on every API route (tested) — `rides.test.ts › per-object authorization`, `docs/SECURITY_REVIEW.md` API1
 - [x] Rate limits per account, IP, device; phone codes max 3/day/number; abuse alerts — `http/hooks.ts`, `auth.test.ts › limits codes to 3 per number per day and raises an abuse alert`
-- [~] Mock-location + root detection + Play Integrity (driver app) — server side done and tested (`drivers.test.ts`: MOCK_LOCATION, ROOTED_DEVICE, INTEGRITY_FAILED); native Android checks in apps/driver (in progress); Play Integrity needs keys (B11)
+- [~] Mock-location + root detection + Play Integrity (driver app) — server side tested (`drivers.test.ts`); Kotlin `ma.ridema/device_integrity` channel (root, `isMock`, Play Integrity Standard API) + geolocator `isMocked` in apps/driver; device check blocks going online (unit tested); real-device check pending (B16), Play Integrity keys (B11)
 - [x] One active ride per driver (partial unique index); race-safe bid acceptance (409); idempotency keys on every write — `rides.test.ts › race safety` (concurrent accepts), `auth.test.ts › idempotency`
 - [x] Admin: 2FA required, IP allowlist, audit log of every admin action — `admin.test.ts` (TOTP enrolment forced, allowlist incl. spoofed X-Forwarded-For, an audit row asserted for every action)
 - [x] Secrets only in `.env` (gitignored), `.env.example` committed — `.gitignore`; production refuses to boot without keys
@@ -41,18 +41,18 @@ Each line names where it lives and how it was verified.
 - [x] Ride state machine + append-only event log — conditional updates, 409 on wrong state; DB trigger on `ride_events`
 - [x] Ride and bid timeouts as BullMQ delayed jobs that re-check state — `rides.test.ts › timeouts` incl. real BullMQ; 30 s sweeper safety net
 - [x] Outbox pattern for notifications — `core/outbox.ts` (LISTEN/NOTIFY + poll, SKIP LOCKED); `rides.test.ts › notifies through the outbox only after commit`
-- [~] Apps re-fetch active ride on reconnect/resume — server contract (`session:ready`, `GET /v1/rides/active`) tested in `safety-realtime.test.ts` and the simulator; app wiring in progress
+- [x] Apps re-fetch active ride on reconnect/resume — both controllers call `GET /v1/rides/active` on start, `AppLifecycleState.resumed` and every socket reconnect (unit tests in apps/rider + apps/driver; the rider live-backend test reconnects mid-ride); server side in `safety-realtime.test.ts` and the simulator
 - [x] Nightly backups + scripted restore test — WAL-G sidecar + `scripts/restore-test.sh` → **PASS** locally against MinIO; needs backup bucket on the server (B7)
 - [~] Uptime and error alerts; health endpoints — `/health/live`, `/health/ready` (tested), Sentry wiring, abuse webhook; external uptime monitor + `SENTRY_DSN` to configure (RUNBOOK §7, B6)
 - [x] Server-side minimum app version check (force update) — 426 `UPGRADE_REQUIRED` + `/v1/app/config.force_update`; `admin.test.ts › forced update`
-- [~] Driver battery setup guide (Xiaomi, Tecno, Infinix, Oppo, Samsung); no battery-optimization exemption permission — guide screen in ridema_core; manifest check pending in apps/driver
+- [x] Driver battery setup guide (Xiaomi/Redmi/POCO, Tecno, Infinix, Oppo/Realme, Samsung, other) in ar/fr/en — `BatteryGuideScreen`; `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is NOT in the driver manifest (checked)
 - [x] Feature flags and city settings from admin without redeploy — settings cache 5 s; `admin.test.ts › cities … applied without redeploy`
 
 ## Distribution before the stores
-- [ ] Android flavors `sideload` (in-app update) and `store` (no REQUEST_INSTALL_PACKAGES), same package names + signing key — *apps (in progress)*; signing via `scripts/make-keystore.sh`, builds via `scripts/build-apks.sh` / CI `android` job
+- [~] Android flavors `sideload` (in-app update) and `store` (no REQUEST_INSTALL_PACKAGES), same package names + signing key — both apps: `REQUEST_INSTALL_PACKAGES` + FileProvider only in `src/sideload/AndroidManifest.xml`, one signing config; built by the CI `android` job (`scripts/build-apks.sh`); signed with the release key once the keystore secrets are set (B8)
 - [x] Download page for APKs served by the backend — `/download` (+ SHA-256), `/apk/:file`; `scripts/publish-apk.sh`
 
 ## Load and hardening (phase 8)
 - [x] OWASP API Top 10 review — `docs/SECURITY_REVIEW.md`; `npm audit` clean (backend, admin)
 - [x] Load test — `sim/`: 20 riders × 200 drivers × 3 rides, 60/60 completed, 0 errors, 96 k GPS points, all endpoints p95 < 1 s (`docs/load-test-2026-10-26.txt`)
-- [ ] Arabic RTL check — *apps (in progress)*
+- [x] Arabic RTL check — widget tests assert RTL + mirrored button order + LTR plate/PIN in both apps; key screens rendered with real fonts (`apps/*/test_screenshots`, ar + fr) and reviewed; fixed a French overflow on the offers sheet
