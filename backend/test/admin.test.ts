@@ -120,6 +120,7 @@ describe('every admin action is audited', () => {
     const { ride, d } = await rideWithDriver();
     let r = await call(env, 'GET', '/v1/admin/live', undefined, admin);
     expect(r.json().rides.some((x: any) => x.id === ride.id)).toBe(true);
+    expect((await call(env, 'GET', '/v1/admin/rides?flagged=false', undefined, admin)).json().every((x: any) => !x.flagged)).toBe(true);
     r = await call(env, 'GET', '/v1/admin/rides?status=accepted', undefined, admin);
     expect(r.json().some((x: any) => x.id === ride.id)).toBe(true);
     r = await call(env, 'GET', `/v1/admin/rides/${ride.id}`, undefined, admin);
@@ -173,6 +174,14 @@ describe('every admin action is audited', () => {
     expect((await call(env, 'GET', '/v1/app/config?app=rider')).json().features.trip_share).toBe(false);
     await call(env, 'PUT', '/v1/admin/flags/trip_share', { enabled: true }, admin);
     expect((await lastAudit('flag.set')).after.enabled).toBe(true);
+    // Per-city override, then removal falls back to the global value.
+    const city = await cityId(env);
+    await call(env, 'PUT', '/v1/admin/flags/voice_calls', { enabled: false, city_id: city }, admin);
+    expect(await env.ctx.settings.flag('voice_calls', city)).toBe(false);
+    r = await call(env, 'DELETE', `/v1/admin/flags/voice_calls?city_id=${city}`, undefined, admin);
+    expect(r.json().removed).toBe(true);
+    expect(await env.ctx.settings.flag('voice_calls', city)).toBe(true);
+    expect(await lastAudit('flag.remove_override')).toBeTruthy();
     r = await call(env, 'PUT', '/v1/admin/settings/company', { value: { name: 'RideMA', legal_name: 'RideMA SARL', rc: '123456', ice: '001234567000089', address: 'Meknès', support_email: 'help@ridema.ma' } }, admin);
     expect(r.statusCode).toBe(200);
     const cfg = (await call(env, 'GET', '/v1/app/config?app=driver')).json();

@@ -64,6 +64,7 @@ class SimDriver {
   timer?: NodeJS.Timeout;
   bids = 0;
   trips = 0;
+  prices = new Map<string, number>();
   sent = 0;
   constructor(base: string, public email: string, public n: number) {
     this.api = timed(new SimClient(base, 'driver'));
@@ -77,6 +78,7 @@ class SimDriver {
     const s = await this.api.connect();
     await this.api.req('POST', '/v1/driver/online', { ...this.pos, mock_location: false, rooted: false });
     s.on('ride:request', (r: any) => this.onRequest(r));
+    s.on('ride:request_update', (u: any) => this.prices.set(u.id, u.offered_price));
     s.on('ride:update', (r: any) => this.onRideUpdate(r).catch((e) => fail(`driver${this.n} ride:update`, e)));
     s.on('call:invite', (p: any) => {
       callInvites.add(p.ride_id);
@@ -92,10 +94,11 @@ class SimDriver {
       if (this.state !== 'cruising') return;
       const counter = Math.random() < 0.35;
       try {
-        await this.api.req('POST', `/v1/rides/${r.id}/bids`, counter ? { kind: 'counter', price: r.offered_price + Math.round(rnd(3, 15)) } : { kind: 'accept' });
+        const current = this.prices.get(r.id) ?? r.offered_price;
+        await this.api.req('POST', `/v1/rides/${r.id}/bids`, counter ? { kind: 'counter', price: current + Math.round(rnd(3, 15)) } : { kind: 'accept' });
         this.bids++;
       } catch (e) {
-        if (e instanceof ApiError && (EXPECTED_CONFLICTS.has(e.code) || e.code === 'COUNTER_TOO_HIGH')) expected[e.code] = (expected[e.code] ?? 0) + 1;
+        if (e instanceof ApiError && (EXPECTED_CONFLICTS.has(e.code) || e.code === 'COUNTER_TOO_HIGH' || e.code === 'COUNTER_TOO_LOW')) expected[e.code] = (expected[e.code] ?? 0) + 1;
         else fail(`driver${this.n} bid`, e);
       }
     }, rnd(150, 1500));

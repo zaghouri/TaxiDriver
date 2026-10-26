@@ -242,7 +242,7 @@ export async function adminRoutes(app: FastifyInstance, ctx: AppContext) {
   });
 
   app.get('/v1/admin/rides', { config: A }, async (req) => {
-    const q = parse(z.object({ status: z.string().optional(), q: z.string().max(100).optional(), flagged: z.coerce.boolean().optional(), limit: z.coerce.number().int().min(1).max(500).default(100) }), req.query);
+    const q = parse(z.object({ status: z.string().optional(), q: z.string().max(100).optional(), flagged: z.enum(['true', 'false']).transform((v) => v === 'true').optional(), limit: z.coerce.number().int().min(1).max(500).default(100) }), req.query);
     return many(
       db,
       `SELECT r.id, r.status, r.requested_at, r.completed_at, r.offered_price, r.final_price, r.flagged, r.pickup_address, r.dropoff_address,
@@ -398,6 +398,16 @@ export async function adminRoutes(app: FastifyInstance, ctx: AppContext) {
     await audit(db, req, 'flag.set', 'flag', `${key}${b.city_id ? '@' + b.city_id : ''}`, before, { enabled: b.enabled });
     ctx.settings.invalidate();
     return { key, city_id: b.city_id, enabled: b.enabled };
+  });
+
+  app.delete('/v1/admin/flags/:key', { config: A }, async (req) => {
+    const key = parse(z.string().regex(/^[a-z0-9_]{2,60}$/), (req.params as any).key);
+    const q = parse(z.object({ city_id: z.string().uuid() }), req.query);
+    const before = await one(db, 'DELETE FROM feature_flags WHERE key = $1 AND city_id = $2 RETURNING enabled', [key, q.city_id]);
+    if (!before) throw notFound('FLAG_OVERRIDE_NOT_FOUND');
+    await audit(db, req, 'flag.remove_override', 'flag', `${key}@${q.city_id}`, before, null);
+    ctx.settings.invalidate();
+    return { key, city_id: q.city_id, removed: true };
   });
 
   const SETTING_KEYS = ['company', 'app_versions', 'apk', 'retention_days', 'document_reminder_days', 'subscription', 'emergency_numbers'];

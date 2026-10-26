@@ -50,6 +50,8 @@ ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "set -e
   mkdir -p secrets admin/dist
   chown -R 1000:1000 secrets   # node user in the api/worker image
   ln -sfn ../.env infra/.env
+  # Admin panel: static build in place (Caddy mounts admin/dist).
+  docker run --rm -v \"\$PWD/admin:/app\" -w /app node:22-bookworm-slim sh -c 'npm ci --no-audit --no-fund && npm run build'
   docker compose --env-file .env -f infra/docker-compose.yml up -d --build --remove-orphans
   docker image prune -f >/dev/null
   docker compose --env-file .env -f infra/docker-compose.yml ps"
