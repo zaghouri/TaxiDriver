@@ -33,14 +33,22 @@ class OfferCard extends StatelessWidget {
     final d = bid.driver;
     final v = d?.vehicle;
     final counter = bid.isCounter;
-    final rating = d?.rating == null ? l.newRating : l.ratingWithCount(d!.ratingCount, d.rating!.toStringAsFixed(1));
-    final car = [v?.label, v?.colour].whereType<String>().where((s) => s.isNotEmpty).join(' · ');
+    final rating = d?.rating == null
+        ? l.newRating
+        : l.ratingWithCount(d!.ratingCount, d.rating!.toStringAsFixed(1));
+    final car = [
+      v?.label,
+      v?.colour,
+    ].whereType<String>().where((s) => s.isNotEmpty).join(' · ');
     return Card(
       key: ValueKey('offer_${bid.id}'),
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: counter ? BrandColors.accent : Colors.grey.shade300, width: counter ? 2 : 1),
+        side: BorderSide(
+          color: counter ? BrandColors.accent : Colors.grey.shade300,
+          width: counter ? 2 : 1,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
@@ -56,9 +64,19 @@ class OfferCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(d?.firstName ?? '—', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                      Text('$rating · ${l.tripsCount(d?.trips ?? 0)}', style: TextStyle(color: Colors.grey.shade800)),
-                      if (car.isNotEmpty) Text(car, style: const TextStyle(fontSize: 15)),
+                      Text(
+                        d?.firstName ?? '—',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        '$rating · ${l.tripsCount(d?.trips ?? 0)}',
+                        style: TextStyle(color: Colors.grey.shade800),
+                      ),
+                      if (car.isNotEmpty)
+                        Text(car, style: const TextStyle(fontSize: 15)),
                     ],
                   ),
                 ),
@@ -66,20 +84,39 @@ class OfferCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: counter ? BrandColors.accent : Colors.transparent,
+                        color: counter
+                            ? BrandColors.accent
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         l.priceDh(bid.price),
                         key: const ValueKey('offer_price'),
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: BrandColors.ink),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: BrandColors.ink,
+                        ),
                       ),
                     ),
                     if (counter)
-                      Text(l.offerCounter, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: BrandColors.ink)),
-                    Text(l.offerEta(bid.etaMinutes), style: TextStyle(color: Colors.grey.shade800)),
+                      Text(
+                        l.offerCounter,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: BrandColors.ink,
+                        ),
+                      ),
+                    Text(
+                      l.offerEta(bid.etaMinutes),
+                      style: TextStyle(color: Colors.grey.shade800),
+                    ),
                   ],
                 ),
               ],
@@ -92,7 +129,9 @@ class OfferCard extends StatelessWidget {
                 value: progress,
                 minHeight: 5,
                 borderRadius: BorderRadius.circular(3),
-                color: progress < 0.25 ? BrandColors.danger : BrandColors.primary,
+                color: progress < 0.25
+                    ? BrandColors.danger
+                    : BrandColors.primary,
                 backgroundColor: Colors.grey.shade200,
               ),
             ),
@@ -126,7 +165,11 @@ class OfferCard extends StatelessWidget {
 /// Searching screen panel: Cancel request (top), countdown, your fare + Raise
 /// fare, up to 5 offer cards.
 class SearchingPanel extends StatelessWidget {
-  const SearchingPanel({super.key, required this.onCancel, required this.onRaise});
+  const SearchingPanel({
+    super.key,
+    required this.onCancel,
+    required this.onRaise,
+  });
 
   final VoidCallback onCancel;
   final VoidCallback onRaise;
@@ -151,19 +194,40 @@ class SearchingPanel extends StatelessWidget {
               child: Text(l.cancelRequest),
             ),
             const Spacer(),
-            Text(formatMmSs(left), key: const ValueKey('search_countdown'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            Text(
+              formatMmSs(left),
+              key: const ValueKey('search_countdown'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
           ],
         ),
         Text(l.searchingTitle, style: Theme.of(context).textTheme.titleLarge),
-        if (c.driversNotified > 0) Text(rs.driversNotified(c.driversNotified), style: TextStyle(color: Colors.grey.shade700)),
+        if (c.driversNotified > 0)
+          Text(
+            rs.driversNotified(c.driversNotified),
+            style: TextStyle(color: Colors.grey.shade700),
+          ),
         gap8,
-        Row(
+        // Wrap: when "Raise fare" is long (French) the button moves under the fare instead of squeezing it.
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
           children: [
-            Expanded(
-              child: Text.rich(TextSpan(children: [
-                TextSpan(text: '${rs.yourFare}: '),
-                TextSpan(text: l.priceDh(r?.offeredPrice ?? 0), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
-              ])),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: '${rs.yourFare}: '),
+                  TextSpan(
+                    text: l.priceDh(r?.offeredPrice ?? 0),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
             ),
             FilledButton.tonalIcon(
               key: const ValueKey('raise_fare'),
@@ -173,40 +237,56 @@ class SearchingPanel extends StatelessWidget {
             ),
           ],
         ),
-        if (c.error != null) ...[gap8, ErrorBanner(riderErrorText(context, c.error!))],
+        if (c.error != null) ...[
+          gap8,
+          ErrorBanner(riderErrorText(context, c.error!)),
+        ],
         gap8,
         if (offers.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Row(
               children: [
-                const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 3)),
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: Text(l.noOffersYet, key: const ValueKey('no_offers'))),
+                Expanded(
+                  child: Text(l.noOffersYet, key: const ValueKey('no_offers')),
+                ),
               ],
             ),
           )
         else
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxH),
-            child: ListView(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              children: [
-                for (final b in offers)
-                  OfferCard(
-                    bid: b,
-                    progress: c.bidProgress(b),
-                    busy: c.busy,
-                    onAccept: () => c.acceptOffer(b),
-                    onDecline: () => c.declineOffer(b),
-                  ),
-                if (c.hiddenOffers > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(rs.moreOffersWaiting(c.hiddenOffers), textAlign: TextAlign.center),
-                  ),
-              ],
+          // Flexible: on small phones (or with longer French/Arabic headers) the list shrinks and scrolls
+          // instead of overflowing the sheet.
+          Flexible(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxH),
+              child: ListView(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                children: [
+                  for (final b in offers)
+                    OfferCard(
+                      bid: b,
+                      progress: c.bidProgress(b),
+                      busy: c.busy,
+                      onAccept: () => c.acceptOffer(b),
+                      onDecline: () => c.declineOffer(b),
+                    ),
+                  if (c.hiddenOffers > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        rs.moreOffersWaiting(c.hiddenOffers),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
       ],
@@ -229,10 +309,17 @@ class ExpiredPanel extends StatelessWidget {
       children: [
         const Icon(Icons.search_off, size: 48, color: BrandColors.accent),
         gap8,
-        Text(l.requestExpiredTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          l.requestExpiredTitle,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         gap8,
         Text(l.requestExpiredBody, textAlign: TextAlign.center),
-        if (c.error != null) ...[gap8, ErrorBanner(riderErrorText(context, c.error!))],
+        if (c.error != null) ...[
+          gap8,
+          ErrorBanner(riderErrorText(context, c.error!)),
+        ],
         gap16,
         PrimaryButton(
           key: const ValueKey('expired_raise'),
@@ -247,14 +334,22 @@ class ExpiredPanel extends StatelessWidget {
           label: '${rs.sameFareRetry} (${l.priceDh(price)})',
           onPressed: c.busy ? null : () => c.retryRequest(),
         ),
-        TextButton(key: const ValueKey('expired_home'), onPressed: c.backToHome, child: Text(rs.backToHome)),
+        TextButton(
+          key: const ValueKey('expired_home'),
+          onPressed: c.backToHome,
+          child: Text(rs.backToHome),
+        ),
       ],
     );
   }
 }
 
 /// Raise-fare sheet: quick +5 / +10 / +20 and free entry; never lower.
-Future<int?> showRaiseFareSheet(BuildContext context, {required int current, int? max}) {
+Future<int?> showRaiseFareSheet(
+  BuildContext context, {
+  required int current,
+  int? max,
+}) {
   return showModalBottomSheet<int>(
     context: context,
     isScrollControlled: true,
@@ -296,7 +391,9 @@ class _RaiseFareSheetState extends State<_RaiseFareSheet> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final rs = RiderStrings.of(context);
-    final valid = _value > widget.current && (widget.max == null || _value <= widget.max!);
+    final valid =
+        _value > widget.current &&
+        (widget.max == null || _value <= widget.max!);
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -326,14 +423,20 @@ class _RaiseFareSheetState extends State<_RaiseFareSheet> {
               controller: _text,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(4),
+              ],
               style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
               decoration: const InputDecoration(suffixText: 'DH'),
               onChanged: (v) => setState(() => _value = int.tryParse(v) ?? 0),
             ),
           ),
           if (widget.max != null && _value > widget.max!)
-            Text(rs.maxOffer(widget.max!), style: const TextStyle(color: BrandColors.danger)),
+            Text(
+              rs.maxOffer(widget.max!),
+              style: const TextStyle(color: BrandColors.danger),
+            ),
           gap16,
           PrimaryButton(
             key: const ValueKey('raise_confirm'),
