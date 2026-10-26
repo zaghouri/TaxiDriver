@@ -37,7 +37,7 @@ val integrityProjectNumber = secret("PLAY_INTEGRITY_PROJECT_NUMBER").ifEmpty { "
 
 android {
     namespace = "ma.ridema.driver"
-    compileSdk = 36
+    compileSdk = 37 // permission_handler_android needs 37; targetSdk stays 36 (D54)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

@@ -35,7 +35,7 @@ val mapsKey: String = (project.findProperty("GOOGLE_MAPS_ANDROID_KEY") as String
 
 android {
     namespace = "ma.ridema.rider"
-    compileSdk = 36
+    compileSdk = 37 // permission_handler_android needs 37; targetSdk stays 36 (D54)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

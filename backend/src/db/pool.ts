@@ -12,13 +12,17 @@ export type Tx = pg.PoolClient;
 export type Queryable = pg.Pool | pg.PoolClient;
 
 export function createPool(url: string, max = 30): Db {
-  return new pg.Pool({
+  const pool = new pg.Pool({
     connectionString: url,
     max,
     connectionTimeoutMillis: 10_000,
     // Fail fast under contention; maintenance jobs override statement_timeout locally.
     options: '-c statement_timeout=15000 -c lock_timeout=5000 -c idle_in_transaction_session_timeout=30000',
   });
+  // An idle client losing its connection (Postgres restart, failover) emits 'error' on the pool; unhandled, that
+  // would crash the process. The pool drops the broken client and opens a new one on the next query.
+  pool.on('error', (e) => console.error(JSON.stringify({ level: 50, msg: 'postgres idle client error', err: e.message })));
+  return pool;
 }
 
 /** Runs fn inside a transaction; rolls back on throw. */
