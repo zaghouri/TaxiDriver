@@ -54,3 +54,4 @@ build/
 .flutter-plugins-dependencies
 infra/data/
 backend/storage/
+dump.rdb

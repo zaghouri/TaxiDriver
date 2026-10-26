@@ -1,0 +1,343 @@
+# RideMA production stack (single VPS, 4-8 GB RAM).
+#
+# Always run from the repo root with the repo's .env:
+#   docker compose --env-file .env -f infra/docker-compose.yml up -d --build
+# (scripts/deploy.sh also links infra/.env -> ../.env on the server so plain
+#  `docker compose -f infra/docker-compose.yml ...` works there too.)
+#
+# Local backup/restore test: see infra/docker-compose.local.yml.
+name: ridema
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-backend: &backend
+  image: ridema/api:latest
+  build:
+    context: ../backend
+  # RIDEMA_ENV_FILE lets infra/test.env point at itself for local checks (path relative to infra/).
+  env_file: ${RIDEMA_ENV_FILE:-../.env}
+  init: true
+  restart: unless-stopped
+  logging: *logging
+  volumes:
+    - storage_data:/data/storage
+    - ../secrets:/run/secrets:ro
+
+# Variables WAL-G needs (mapped to WALG_*/AWS_* by /usr/local/bin/wal-g in the postgres image).
+x-walg-env: &walg-env
+  BACKUP_STORAGE_ENDPOINT: ${BACKUP_STORAGE_ENDPOINT:-}
+  BACKUP_STORAGE_REGION: ${BACKUP_STORAGE_REGION:-}
+  BACKUP_STORAGE_BUCKET: ${BACKUP_STORAGE_BUCKET:-}
+  BACKUP_STORAGE_ACCESS_KEY: ${BACKUP_STORAGE_ACCESS_KEY:-}
+  BACKUP_STORAGE_SECRET_KEY: ${BACKUP_STORAGE_SECRET_KEY:-}
+  BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
+  BACKUP_PREFIX: ${BACKUP_PREFIX:-postgres}
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${PUBLIC_HOST:-${SERVER_IP:?SERVER_IP must be set}.sslip.io}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      ADMIN_IP_ALLOWLIST: ${ADMIN_IP_ALLOWLIST:-}
+    # Caddy's remote_ip matcher wants space separated ranges; empty list = allow all.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ADMIN_ALLOW="$$(echo "$${ADMIN_IP_ALLOWLIST}" | tr ',' ' ')"
+        if [ -z "$$(echo "$$ADMIN_ALLOW" | tr -d ' ')" ]; then
+          echo "WARNING: ADMIN_IP_ALLOWLIST empty - /admin and /v1/admin open to all IPs"
+          ADMIN_ALLOW="0.0.0.0/0 ::/0"
+        fi
+        export ADMIN_ALLOW
+        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../admin/dist:/srv/admin:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  migrate:
+    <<: *backend
+    command: ["node", "dist/db/migrate.js"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  api:
+    <<: *backend
+    command: ["node", "dist/main.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "3000"
+    volumes:
+      - storage_data:/data/storage
+      - apk_data:/data/apk
+      - ../secrets:/run/secrets:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  worker:
+    <<: *backend
+    command: ["node", "dist/worker.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # No HTTP port: healthy while the process runs and Redis is reachable from it.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const u=new URL(process.env.REDIS_URL||'redis://redis:6379');require('net').connect(+u.port||6379,u.hostname).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1));setTimeout(()=>process.exit(1),4000)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  postgres:
+    image: ridema/postgres:16
+    build:
+      context: ./postgres
+    restart: unless-stopped
+    logging: *logging
+    shm_size: 256m
+    environment:
+      <<: *walg-env
+      POSTGRES_USER: ${POSTGRES_USER:-ridema}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:-ridema}
+      TZ: UTC
+    command:
+      - postgres
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=1536MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - max_connections=100
+      - -c
+      - wal_level=replica
+      - -c
+      - wal_compression=on
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=/usr/local/bin/walg-archive %p
+      # Force a WAL switch at least every 5 min -> RPO <= 5 min.
+      - -c
+      - archive_timeout=300
+      - -c
+      - log_min_duration_statement=500ms
+      - -c
+      - log_checkpoints=on
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+
+  backup:
+    image: ridema/postgres:16
+    restart: unless-stopped
+    logging: *logging
+    user: postgres
+    entrypoint: ["/usr/local/bin/backup-scheduler"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *walg-env
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER:-ridema}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      PGDATABASE: ${POSTGRES_DB:-ridema}
+      PGDATA: /var/lib/postgresql/data
+      BACKUP_TIME: ${BACKUP_TIME:-03:00}
+      BACKUP_RETAIN_FULL: ${BACKUP_RETAIN_FULL:-7}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+      TZ: Africa/Casablanca
+    volumes:
+      - pg_data:/var/lib/postgresql/data:ro
+    healthcheck:
+      test: ["CMD-SHELL", "test -n \"$$(find /tmp/heartbeat -mmin -3 2>/dev/null)\""]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 10m
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    # BullMQ needs maxmemory-policy noeviction. If REDIS_PASSWORD is set, put it in REDIS_URL too
+    # (redis://:password@redis:6379).
+    command:
+      - sh
+      - -c
+      - >-
+        exec redis-server --appendonly yes --appendfsync everysec
+        --maxmemory 256mb --maxmemory-policy noeviction
+        $${REDIS_PASSWORD:+--requirepass "$$REDIS_PASSWORD"}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+
+  osrm:
+    image: ${OSRM_IMAGE:-osrm/osrm-backend:v5.25.0}
+    restart: unless-stopped
+    logging: *logging
+    # Data is produced by infra/osrm/prepare.sh into the osrm_data volume. Until then the container
+    # waits instead of crash-looping; the API falls back to the haversine router (D19).
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while [ ! -f /data/region.osrm.mldgr ]; do
+          echo "osrm: /data/region.osrm.* missing - run infra/osrm/prepare.sh"; sleep 60
+        done
+        exec osrm-routed --algorithm mld --max-table-size 1000 /data/region.osrm
+    expose:
+      - "5000"
+    volumes:
+      - osrm_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "[ ! -f /data/region.osrm.mldgr ] || bash -c 'exec 3<>/dev/tcp/127.0.0.1/5000'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 2m
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+
+  coturn:
+    image: coturn/coturn:4.6
+    restart: unless-stopped
+    logging: *logging
+    # Host networking: TURN needs the real public IP and a UDP relay range; NAT through
+    # docker-proxy would break relayed candidates. Firewall opens 3478 + the relay range.
+    network_mode: host
+    command:
+      - -n
+      - --log-file=stdout
+      - --listening-port=3478
+      - --min-port=${TURN_MIN_PORT:-49160}
+      - --max-port=${TURN_MAX_PORT:-49200}
+      - --external-ip=${SERVER_IP:?SERVER_IP must be set}
+      - --realm=${TURN_REALM:-ridema}
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET:?TURN_SECRET must be set}
+      - --fingerprint
+      - --no-cli
+      - --no-tls
+      - --no-dtls
+      - --no-multicast-peers
+      - --total-quota=200
+      - --stale-nonce=600
+      - --denied-peer-ip=0.0.0.0-0.255.255.255
+      - --denied-peer-ip=10.0.0.0-10.255.255.255
+      - --denied-peer-ip=100.64.0.0-100.127.255.255
+      - --denied-peer-ip=127.0.0.0-127.255.255.255
+      - --denied-peer-ip=169.254.0.0-169.254.255.255
+      - --denied-peer-ip=172.16.0.0-172.31.255.255
+      - --denied-peer-ip=192.168.0.0-192.168.255.255
+    healthcheck:
+      test: ["CMD-SHELL", "turnutils_stunclient 127.0.0.1 >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+volumes:
+  pg_data:
+  redis_data:
+  osrm_data:
+  storage_data:
+  apk_data:
+  caddy_data:
+  caddy_config:

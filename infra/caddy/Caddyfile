@@ -1,0 +1,60 @@
+# RideMA edge proxy.
+# SITE_ADDRESS comes from compose: PUBLIC_HOST, or <SERVER_IP>.sslip.io when PUBLIC_HOST is empty.
+# A bare host name gets an automatic Let's Encrypt certificate (HTTP->HTTPS redirect included).
+# ADMIN_ALLOW is ADMIN_IP_ALLOWLIST with spaces (set by the compose entrypoint; "0.0.0.0/0 ::/0"
+# when the allowlist is empty).
+{
+	email {$ACME_EMAIL}
+}
+
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	# Document uploads are the largest bodies (10 MB).
+	request_body {
+		max_size 10MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Admin panel + admin API: IP allowlist.
+	@admin_denied {
+		path /admin /admin/* /v1/admin /v1/admin/*
+		not remote_ip {$ADMIN_ALLOW}
+	}
+	respond @admin_denied "Forbidden" 403
+
+	redir /admin /admin/ 308
+
+	# Admin SPA (static build mounted from admin/dist).
+	handle_path /admin/* {
+		root * /srv/admin
+		@immutable path /assets/*
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		@html path / /index.html
+		header @html Cache-Control "no-cache"
+		header Content-Security-Policy "default-src 'self'; img-src 'self' data: https://*.tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; connect-src 'self' wss:; frame-ancestors 'none'"
+		try_files {path} /index.html
+		file_server
+	}
+
+	# Everything else (API, Socket.IO at /ws with websocket upgrade, public pages, /apk/*).
+	handle {
+		reverse_proxy api:3000 {
+			lb_try_duration 10s
+			lb_try_interval 500ms
+		}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
