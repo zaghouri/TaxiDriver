@@ -33,7 +33,7 @@ class OfferCard extends StatelessWidget {
     final d = bid.driver;
     final v = d?.vehicle;
     final counter = bid.isCounter;
-    final rating = d?.rating == null ? l.newRating : l.ratingWithCount(d!.rating!.toStringAsFixed(1), d.ratingCount);
+    final rating = d?.rating == null ? l.newRating : l.ratingWithCount(d!.ratingCount, d.rating!.toStringAsFixed(1));
     final car = [v?.label, v?.colour].whereType<String>().where((s) => s.isNotEmpty).join(' · ');
     return Card(
       key: ValueKey('offer_${bid.id}'),

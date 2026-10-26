@@ -1,0 +1,7 @@
+CFBundleDisplayName = "RideMA السائق";
+NSLocationWhenInUseUsageDescription = "يستخدم RideMA موقعك ليعرض عليك طلبات الرحلات القريبة ويرشدك إلى الزبون.";
+NSLocationAlwaysAndWhenInUseUsageDescription = "يستخدم RideMA موقعك حتى عندما يكون التطبيق مغلقًا أو غير مستخدم ما دمت متصلًا، حتى يجدك الزبناء القريبون ويتابعوا الرحلة. عندما تصبح غير متصل نتوقف.";
+NSLocationAlwaysUsageDescription = "يستخدم RideMA موقعك حتى عندما يكون التطبيق مغلقًا أو غير مستخدم ما دمت متصلًا، حتى يجدك الزبناء القريبون ويتابعوا الرحلة. عندما تصبح غير متصل نتوقف.";
+NSMicrophoneUsageDescription = "يستخدم RideMA الميكروفون للمكالمات داخل التطبيق مع الزبون. رقم هاتفك لا يُشارك أبدًا.";
+NSCameraUsageDescription = "يستخدم RideMA الكاميرا لتصوير وثائقك (البطاقة الوطنية، رخصة السياقة، البطاقة الرمادية، التأمين) وصورتك الشخصية.";
+NSPhotoLibraryUsageDescription = "يتيح لك RideMA اختيار صور وثائقك من معرض الصور.";

@@ -71,6 +71,9 @@ class DriverStrings {
   String get onlineSwitchHint => _t('onlineSwitchHint');
   String get pinIncomplete => _t('pinIncomplete');
   String get rateRiderHint => _t('rateRiderHint');
+  String get fileTooLarge => _t('fileTooLarge');
+  String get subscriptionMenu => _t('subscriptionMenu');
+  String get onlineRestored => _t('onlineRestored');
 
   /// Onboarding validation key → text.
   String validation(AppLocalizations l, String key, {DateTime? today}) => switch (key) {
@@ -110,6 +113,9 @@ class DriverStrings {
 
   static const Map<String, Map<String, String>> _strings = {
     'en': {
+      'fileTooLarge': 'This file is too large (max 8 MB). Take a photo instead.',
+      'subscriptionMenu': 'Subscription',
+      'onlineRestored': 'You are online again.',
       'menu': 'Menu',
       'locationUnavailable': 'We could not get your position. Check that location is on and allowed for RideMA.',
       'backgroundHint': 'Tip: allow location “All the time” so riders can follow you when the app is in the background.',
@@ -164,6 +170,9 @@ class DriverStrings {
       'expiryPast': 'This document has expired. Upload a valid one.',
     },
     'fr': {
+      'fileTooLarge': 'Fichier trop lourd (8 Mo max). Prenez plutôt une photo.',
+      'subscriptionMenu': 'Abonnement',
+      'onlineRestored': 'Vous êtes de nouveau en ligne.',
       'menu': 'Menu',
       'locationUnavailable': 'Impossible d’obtenir votre position. Vérifiez que la localisation est activée et autorisée pour RideMA.',
       'backgroundHint': 'Conseil : autorisez la position « Toujours » pour que les clients vous suivent quand l’app est en arrière-plan.',
@@ -218,6 +227,9 @@ class DriverStrings {
       'expiryPast': 'Ce document a expiré. Envoyez un document valide.',
     },
     'ar': {
+      'fileTooLarge': 'الملف كبير جدًا (8 ميغابايت كحد أقصى). التقط صورة بدلًا منه.',
+      'subscriptionMenu': 'الاشتراك',
+      'onlineRestored': 'أنت متصل من جديد.',
       'menu': 'القائمة',
       'locationUnavailable': 'تعذّر تحديد موقعك. تأكد من تشغيل الموقع والسماح به لتطبيق RideMA.',
       'backgroundHint': 'نصيحة: اسمح بالموقع «طوال الوقت» حتى يتابعك الزبناء عندما يكون التطبيق في الخلفية.',

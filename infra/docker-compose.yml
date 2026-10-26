@@ -23,6 +23,10 @@ x-backend: &backend
   init: true
   restart: unless-stopped
   logging: *logging
+  environment:
+    # Paths inside the container (the volumes below); STORAGE_PROVIDER=s3 ignores the first one.
+    STORAGE_LOCAL_DIR: /data/storage
+    APK_DIR: /data/apk
   volumes:
     - storage_data:/data/storage
     - ../secrets:/run/secrets:ro

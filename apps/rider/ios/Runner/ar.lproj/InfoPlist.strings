@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "RideMA";
+"NSLocationWhenInUseUsageDescription" = "يستخدم RideMA موقعك أثناء فتح التطبيق لتحديد نقطة الانطلاق.";
+"NSMicrophoneUsageDescription" = "يستخدم RideMA الميكروفون للمكالمات داخل التطبيق مع السائق. لا تتم مشاركة رقم هاتفك.";
+"NSContactsUsageDescription" = "يقرأ RideMA جهة الاتصال التي تختارها لإرسال رابط تتبع رحلتك إليها.";

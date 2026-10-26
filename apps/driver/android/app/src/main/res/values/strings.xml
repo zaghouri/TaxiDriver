@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RideMA Driver</string>
+    <string name="channel_ride_requests">Ride requests</string>
+    <string name="channel_ride_requests_desc">New ride requests near you (sound).</string>
+    <string name="channel_ride_updates">Ride updates</string>
+    <string name="channel_ride_updates_desc">Your offer was accepted, the rider cancelled, and other changes.</string>
+    <string name="channel_offers">Offers and news</string>
+    <string name="channel_offers_desc">Messages from RideMA.</string>
+</resources>

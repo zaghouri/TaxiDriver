@@ -19,8 +19,8 @@ class DriverFailure implements Exception {
   const DriverFailure(this.code, [this.message = '', this.details, this.status = 0]);
 
   factory DriverFailure.from(Object e) => switch (e) {
-        DriverFailure f => f,
-        ApiException a => DriverFailure(a.code, a.message, a.details, a.status),
+        final DriverFailure f => f,
+        final ApiException a => DriverFailure(a.code, a.message, a.details, a.status),
         _ => DriverFailure('INTERNAL', e.toString()),
       };
 
@@ -419,13 +419,15 @@ class DriverController extends ChangeNotifier {
   /// `GET /v1/driver/requests` (server list replaces ours; keeps arrival order).
   Future<void> refreshRequests() async {
     if (!_online) return;
+    final startedAt = now;
     try {
       final list = await api.requests();
       if (!_online || _active != null) return;
       final n = now;
       final ids = list.map((r) => r.id).toSet();
-      _requests.removeWhere((id, _) => !ids.contains(id));
-      _receivedAt.removeWhere((id, _) => !ids.contains(id));
+      // Drop what the server no longer lists, but keep socket requests that arrived during this call.
+      _requests.removeWhere((id, _) => !ids.contains(id) && (_receivedAt[id]?.isBefore(startedAt) ?? true));
+      _receivedAt.removeWhere((id, _) => !_requests.containsKey(id));
       for (final r in list) {
         _requests[r.id] = r;
         _receivedAt[r.id] ??= n;
@@ -719,6 +721,19 @@ class DriverController extends ChangeNotifier {
 
   void dismissFinished() {
     _finished = null;
+    _notify();
+  }
+
+  /// Signed out: stop location / foreground service and forget all state.
+  Future<void> reset() async {
+    _setOfflineLocally();
+    _active = null;
+    _finished = null;
+    _error = null;
+    _deviceBlock = null;
+    _position = null;
+    throttle.reset();
+    await _syncTracking();
     _notify();
   }
 

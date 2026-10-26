@@ -1,0 +1,7 @@
+CFBundleDisplayName = "RideMA Driver";
+NSLocationWhenInUseUsageDescription = "RideMA uses your location to show you ride requests nearby and to guide you to the rider.";
+NSLocationAlwaysAndWhenInUseUsageDescription = "RideMA uses your location even when the app is closed or not in use while you are online, so riders nearby can find you and follow the trip. When you go offline, we stop.";
+NSLocationAlwaysUsageDescription = "RideMA uses your location even when the app is closed or not in use while you are online, so riders nearby can find you and follow the trip. When you go offline, we stop.";
+NSMicrophoneUsageDescription = "RideMA uses the microphone for in-app calls with your rider. Your phone number is never shared.";
+NSCameraUsageDescription = "RideMA uses the camera to take photos of your documents (ID card, licence, registration, insurance) and your selfie.";
+NSPhotoLibraryUsageDescription = "RideMA lets you choose photos of your documents from your gallery.";

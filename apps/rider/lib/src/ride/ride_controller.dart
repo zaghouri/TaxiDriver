@@ -856,6 +856,7 @@ class RideController extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_disposed) return;
     _disposed = true;
     _stopTimers();
     for (final s in _subs) {

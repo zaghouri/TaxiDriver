@@ -4,10 +4,46 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>ar</string>
+		<string>fr</string>
+		<string>en</string>
+	</array>
+	<key>GMSApiKey</key>
+	<string>$(GOOGLE_MAPS_IOS_KEY)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>RideMA uses your location to show you ride requests nearby and to guide you to the rider.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>RideMA uses your location even when the app is closed or not in use while you are online, so riders nearby can find you and follow the trip. When you go offline, we stop.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>RideMA uses your location even when the app is closed or not in use while you are online, so riders nearby can find you and follow the trip. When you go offline, we stop.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>RideMA uses the microphone for in-app calls with your rider. Your phone number is never shared.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>RideMA uses the camera to take photos of your documents (ID card, licence, registration, insurance) and your selfie.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>RideMA lets you choose photos of your documents from your gallery.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>remote-notification</string>
+		<string>fetch</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.pravera.flutter_foreground_task.refresh</string>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>comgooglemaps</string>
+		<string>waze</string>
+		<string>tel</string>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Ridema Driver</string>
+	<string>RideMA Driver</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +51,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ridema_driver</string>
+	<string>RideMA Driver</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

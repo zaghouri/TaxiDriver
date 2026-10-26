@@ -1,1 +1,5 @@
 #include "Generated.xcconfig"
+
+// Google Maps iOS key: put GOOGLE_MAPS_IOS_KEY=... in ios/Flutter/Keys.xcconfig (gitignored).
+GOOGLE_MAPS_IOS_KEY =
+#include? "Keys.xcconfig"

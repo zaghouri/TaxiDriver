@@ -1,1 +1,6 @@
 #include "Generated.xcconfig"
+
+// Google Maps iOS key (Info.plist GMSApiKey). Empty = placeholder map.
+// Put `GOOGLE_MAPS_IOS_KEY = ...` in Flutter/Secrets.xcconfig (gitignored) or pass it to xcodebuild.
+GOOGLE_MAPS_IOS_KEY =
+#include? "Secrets.xcconfig"

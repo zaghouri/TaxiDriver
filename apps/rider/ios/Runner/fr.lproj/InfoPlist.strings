@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "RideMA";
+"NSLocationWhenInUseUsageDescription" = "RideMA utilise votre position quand l’application est ouverte pour définir votre point de départ.";
+"NSMicrophoneUsageDescription" = "RideMA utilise le micro pour les appels dans l’application avec votre chauffeur. Votre numéro n’est pas partagé.";
+"NSContactsUsageDescription" = "RideMA lit le contact que vous choisissez pour lui envoyer le lien de suivi de votre course.";

@@ -1,0 +1,3 @@
+# Optional keys (also read from environment variables of the same name).
+GOOGLE_MAPS_ANDROID_KEY=
+PLAY_INTEGRITY_PROJECT_NUMBER=

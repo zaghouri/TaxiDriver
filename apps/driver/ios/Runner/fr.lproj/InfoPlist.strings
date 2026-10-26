@@ -1,0 +1,7 @@
+CFBundleDisplayName = "RideMA Chauffeur";
+NSLocationWhenInUseUsageDescription = "RideMA utilise votre position pour vous montrer les demandes proches et vous guider jusqu’au client.";
+NSLocationAlwaysAndWhenInUseUsageDescription = "RideMA utilise votre position même lorsque l’application est fermée ou non utilisée pendant que vous êtes en ligne, pour que les clients proches vous trouvent et suivent la course. Hors ligne, nous arrêtons.";
+NSLocationAlwaysUsageDescription = "RideMA utilise votre position même lorsque l’application est fermée ou non utilisée pendant que vous êtes en ligne, pour que les clients proches vous trouvent et suivent la course. Hors ligne, nous arrêtons.";
+NSMicrophoneUsageDescription = "RideMA utilise le micro pour les appels dans l’application avec votre client. Votre numéro n’est jamais partagé.";
+NSCameraUsageDescription = "RideMA utilise l’appareil photo pour photographier vos documents (CIN, permis, carte grise, assurance) et votre selfie.";
+NSPhotoLibraryUsageDescription = "RideMA vous permet de choisir les photos de vos documents dans votre galerie.";

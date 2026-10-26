@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RideMA السائق</string>
+    <string name="channel_ride_requests">طلبات الرحلات</string>
+    <string name="channel_ride_requests_desc">طلبات رحلات جديدة قريبة منك (مع صوت).</string>
+    <string name="channel_ride_updates">تحديثات الرحلات</string>
+    <string name="channel_ride_updates_desc">قبول عرضك، إلغاء الزبون للرحلة وتغييرات أخرى.</string>
+    <string name="channel_offers">عروض وأخبار</string>
+    <string name="channel_offers_desc">رسائل من RideMA.</string>
+</resources>

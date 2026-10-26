@@ -317,7 +317,7 @@ class BackupLocationTaskHandler extends TaskHandler {
       final base = await FlutterForegroundTask.getData<String>(key: _ServiceKeys.baseUrl);
       final token = await FlutterForegroundTask.getData<String>(key: _ServiceKeys.token);
       final headersJson = await FlutterForegroundTask.getData<String>(key: _ServiceKeys.headers);
-      if (base == null || token == null || token.isEmpty) return _giveUp();
+      if (base == null || token == null || token.isEmpty) return await _giveUp();
       final p = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 10)),
       );
