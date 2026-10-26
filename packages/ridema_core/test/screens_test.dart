@@ -81,7 +81,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(LegalDocScreen), findsOneWidget);
         expect(find.text('Body of privacy in $lang'), findsOneWidget);
-        await tester.pageBack();
+        tester.state<NavigatorState>(find.byType(Navigator)).pop();
         await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(const ValueKey('consent_terms')));
@@ -152,7 +152,7 @@ void main() {
 
       testWidgets('verify phone: +212 fixed, validation, WhatsApp code, success', (tester) async {
         final s = await services(tester, access: 'access-0', refresh: 'refresh-0-xxxxxxxxxxxxxxxxxxxxxx');
-        await s.auth.restore();
+        await tester.runAsync(s.auth.restore);
         bool? result;
         await tester.pumpWidget(testApp(
           s,
@@ -212,8 +212,11 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(find.text(l.resendCode), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('verify_email_resend')));
-    await tester.pump();
-    await tester.pump();
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text(l.codeSent), findsOneWidget);
+    expect(find.text(l.resendIn(60)), findsOneWidget, reason: 'countdown restarts');
     expect(backend.calls('POST', '/v1/auth/email/resend').single.body['email'], 'a@b.ma');
     await tester.pumpWidget(const SizedBox());
   });

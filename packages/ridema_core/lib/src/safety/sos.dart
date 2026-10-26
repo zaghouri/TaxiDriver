@@ -62,12 +62,14 @@ class SosController extends ChangeNotifier {
 
   Future<bool> _sendAlert(String service) async {
     try {
-      final p = await position().timeout(const Duration(seconds: 5), onTimeout: () => null);
+      // `then<LatLng?>` widens the future so a non-nullable provider can still time out to null.
+      final p = await position().then<LatLng?>((v) => v).timeout(const Duration(seconds: 5), onTimeout: () => null);
       if (p == null) return false;
       final r = await api.sos(rideId, service: service, lat: p.lat, lng: p.lng);
       _sosId = r.sosId;
       return true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('SOS alert failed: $e');
       return false;
     }
   }
