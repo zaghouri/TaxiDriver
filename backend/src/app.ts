@@ -12,7 +12,8 @@ import { registerModules } from './modules/index.js';
 export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   const app = Fastify({
     logger: ctx.cfg.NODE_ENV === 'test' ? false : { level: ctx.cfg.LOG_LEVEL, redact: ['req.headers.authorization'] },
-    trustProxy: ctx.cfg.TRUST_PROXY,
+    // Trust exactly the reverse-proxy hops we run (Caddy); anything further left in X-Forwarded-For is client-controlled.
+    trustProxy: (_addr: string, hop: number) => hop < ctx.cfg.TRUST_PROXY_HOPS,
     bodyLimit: 1024 * 1024,
     genReqId: () => crypto.randomUUID(),
   });

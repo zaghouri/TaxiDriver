@@ -13,6 +13,11 @@ export class RateLimiter {
     return n;
   }
 
+  /** Non-throwing variant for sockets. */
+  async allow(key: string, limit: number, windowSec: number): Promise<boolean> {
+    return (await this.hit(key, windowSec)) <= limit * this.multiplier;
+  }
+
   async enforce(key: string, limit: number, windowSec: number, code = 'RATE_LIMITED'): Promise<void> {
     const n = await this.hit(key, windowSec);
     if (n > limit * this.multiplier) throw tooMany(code, 'Too many requests, please wait a moment.');

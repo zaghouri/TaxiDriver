@@ -1,14 +1,15 @@
 # PROGRESS
 
-**Current phase:** 4 — Realtime and safety (simulator next).
+**Current phase:** 5–7 — apps and admin panel (in progress).
 
 ## Done
 - Phase 1: SPEC.md, PLAN.md, DECISIONS.md, BLOCKERS.md, PRODUCTION_CHECKLIST.md, .env.example.
 - Phase 2: infra/ (Compose, Caddy sslip.io, PostGIS + WAL-G encrypted backups, OSRM prep, coturn), scripts/ (bootstrap, deploy, backup-now, restore-test, check-https). restore-test PASS locally (MinIO). Full stack (postgres, redis, migrate, api, worker, caddy) boots locally; check-https PASS on http://localhost:8080 (health + WS 101).
 - Phase 3: backend/ — auth (email+password, email code/link, WhatsApp phone OTP once, 2FA email/TOTP, rotating refresh with reuse detection), consent log, drivers + encrypted documents, rides + bids (race-safe accept, partial unique indexes), cancellations/penalties, ratings, receipts, outbox, BullMQ timeouts + sweeper, retention, document expiry, subscriptions (mock providers), admin API with audit log, SOS, trip share, reports, Socket.IO (location, WebRTC signalling), public pages. 76 API tests green (`cd backend && npx vitest run`).
 
+- Phase 4: realtime (Socket.IO rooms, live location, reconnect contract), push via outbox, SOS, trip share page, WebRTC call signalling + TURN credentials, pickup PIN, fraud checks. `sim/` simulator: **SIM PASS** — 1 rider × 50 drivers × 5 rides in-process (21,568 GPS points, 0 errors) and 3 rides through Caddy against the docker stack (0 errors).
+
 ## Next
-- Phase 4: `sim/` Meknes GPS simulator (1 rider + 50 drivers end to end) against the running stack.
 - Phase 5–7: Flutter driver app, rider app, React admin (see PLAN.md).
 
 ## Environment notes for the next session

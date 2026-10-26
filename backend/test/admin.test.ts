@@ -42,6 +42,9 @@ describe('admin access', () => {
     try {
       const r = await locked.app.inject({ method: 'GET', url: '/v1/admin/dashboard', remoteAddress: '203.0.113.5' });
       expect(r.json().error.code).toBe('IP_NOT_ALLOWED');
+      // A spoofed X-Forwarded-For from the client is ignored: only the proxy's own hop is trusted.
+      const spoof = await locked.app.inject({ method: 'GET', url: '/v1/admin/dashboard', remoteAddress: '203.0.113.5', headers: { 'x-forwarded-for': '10.1.2.3, 203.0.113.5' } });
+      expect(spoof.json().error.code).toBe('IP_NOT_ALLOWED');
       const ok = await locked.app.inject({ method: 'GET', url: '/v1/admin/dashboard', remoteAddress: '10.1.2.3' });
       expect(ok.json().error.code).toBe('AUTH_REQUIRED'); // passes the network check, then needs a login
     } finally {

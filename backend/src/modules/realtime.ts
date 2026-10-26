@@ -88,8 +88,7 @@ export async function attachSocketServer(ctx: AppContext, server: HttpServer, op
       const p = locSchema.safeParse(raw);
       if (!p.success) return ack?.({ ok: false, error: 'VALIDATION_ERROR' });
       try {
-        const n = await ctx.limiter.hit(`sockloc:${userId}`, 10);
-        if (n > 30) return ack?.({ ok: false, error: 'RATE_LIMITED' });
+        if (!(await ctx.limiter.allow(`sockloc:${userId}`, 30, 10))) return ack?.({ ok: false, error: 'RATE_LIMITED' });
         ack?.({ ok: true, ...(await recordDriverLocation(ctx, userId, p.data)) });
       } catch (e: any) {
         ack?.({ ok: false, error: e.code ?? 'ERROR', message: e.message });

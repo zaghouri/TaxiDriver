@@ -21,7 +21,8 @@ const schema = z.object({
   ADMIN_BOOTSTRAP_EMAIL: z.string().optional().default(''),
   ADMIN_BOOTSTRAP_PASSWORD: z.string().optional().default(''),
   ADMIN_IP_ALLOWLIST: z.string().optional().default(''),
-  TRUST_PROXY: bool.default(true),
+  /** Number of reverse-proxy hops in front of the API (Caddy = 1). Never trust client-supplied X-Forwarded-For beyond that. */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
 
   EMAIL_PROVIDER: z.enum(['smtp', 'log']).default('log'),
   SMTP_HOST: z.string().optional().default(''),
