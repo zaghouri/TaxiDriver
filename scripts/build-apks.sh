@@ -14,14 +14,16 @@ else
   echo "WARNING: no release keystore (ANDROID_KEYSTORE); builds will be debug-signed and NOT installable over store builds"
 fi
 mkdir -p dist
-for app in rider driver; do
+for app in ${APPS:-rider driver}; do
   ( cd "apps/$app"
     version="$(grep -E '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)"
     maps=false; [ -n "${GOOGLE_MAPS_ANDROID_KEY:-}" ] && maps=true
     defines=(--dart-define=API_BASE_URL="$API_BASE_URL" --dart-define=MAPS_ENABLED="$maps" --dart-define=GOOGLE_PLACES_KEY="${GOOGLE_PLACES_KEY:-}")
     flutter pub get
+    echo "== $app: sideload APK"
     flutter build apk --release --flavor sideload --dart-define=FLAVOR=sideload "${defines[@]}"
     cp build/app/outputs/flutter-apk/app-sideload-release.apk "../../dist/ridema-$app-sideload-$version.apk"
+    echo "== $app: store AAB"
     flutter build appbundle --release --flavor store --dart-define=FLAVOR=store "${defines[@]}"
     cp build/app/outputs/bundle/storeRelease/app-store-release.aab "../../dist/ridema-$app-store-$version.aab"
   )

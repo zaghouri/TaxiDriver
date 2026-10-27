@@ -25,4 +25,4 @@
 - Backend tests: Postgres+PostGIS on :5433 (`docker start ridema-pg` or `docker run -d --name ridema-pg -p 5433:5432 -e POSTGRES_PASSWORD=postgres postgis/postgis:16-3.4`) and Redis on :6379 (`redis-server --daemonize yes --dir /tmp`).
 - Docker builds behind the sandbox's TLS proxy: `docker build --network=host --secret id=build_ca,src=/root/.ccr/ca-bundle.crt ...`.
 - Local stack: `docker compose --env-file infra/test.env -f infra/docker-compose.yml -f infra/docker-compose.local.yml up -d --no-build postgres redis migrate api worker caddy` → http://localhost:8080 (admin at /admin/, codes in `docker logs ridema-api-1`).
-- CI: GitHub Actions on every push; the `android` job uploads the `ridema-android` artifact (APKs + AABs).
+- CI: GitHub Actions on every push; the `android` job uploads the `ridema-android-rider` and `ridema-android-driver` artifacts (APKs + AABs).
