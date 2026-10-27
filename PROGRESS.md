@@ -12,6 +12,7 @@
 | 5 Driver app | `apps/driver` (Flutter) | analyze clean, 61 tests; contract test passes against the live backend; emulator tests written (B8/B16) |
 | 6 Rider app | `apps/rider` (Flutter) + `packages/ridema_core` (shared) | analyze clean, 55 + 93 tests; full ride against the live backend passes |
 | 7 Admin panel | `admin/` (React) | 83 UI tests (every admin action), smoke test PASS against the stack |
+| CI | GitHub Actions: backend + simulator, admin, Flutter analyze/test, Android release builds of both apps | run 40434368359 all green; artifacts `ridema-android-rider`, `ridema-android-driver` |
 | 8 Hardening | `docs/SECURITY_REVIEW.md` (OWASP API Top 10), load test (20 riders × 200 drivers, 60/60, p95 < 1 s), RTL check (screenshots), RUNBOOK.md, PHONE_TEST.md, docs/IOS_BUILD.md, CI (`.github/workflows/ci.yml`) building APKs/AABs on GitHub | see PRODUCTION_CHECKLIST.md |
 
 ## Open (needs the owner)

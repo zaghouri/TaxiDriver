@@ -49,7 +49,7 @@ Each line names where it lives and how it was verified.
 - [x] Feature flags and city settings from admin without redeploy — settings cache 5 s; `admin.test.ts › cities … applied without redeploy`
 
 ## Distribution before the stores
-- [~] Android flavors `sideload` (in-app update) and `store` (no REQUEST_INSTALL_PACKAGES), same package names + signing key — both apps: `REQUEST_INSTALL_PACKAGES` + FileProvider only in `src/sideload/AndroidManifest.xml`, one signing config; built by the CI `android` job (`scripts/build-apks.sh`); signed with the release key once the keystore secrets are set (B8)
+- [x] Android flavors `sideload` (in-app update) and `store` (no REQUEST_INSTALL_PACKAGES), same package names + signing key — `REQUEST_INSTALL_PACKAGES` + FileProvider only in `src/sideload/AndroidManifest.xml`, one signing config; **both apps build in CI** (run 40434368359: artifacts `ridema-android-rider` 95 MB, `ridema-android-driver` 106 MB, each = sideload APK + store AAB, ARM 32/64). Signed with the debug key until the keystore secrets are added (B8)
 - [x] Download page for APKs served by the backend — `/download` (+ SHA-256), `/apk/:file`; `scripts/publish-apk.sh`
 
 ## Load and hardening (phase 8)
