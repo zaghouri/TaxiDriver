@@ -90,9 +90,10 @@ android {
         release {
             // Falls back to the debug key when no release key is configured (local builds only).
             signingConfig = if (hasReleaseKey) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // R8 off (D55): it exhausted the CI runner's memory and can strip classes that plugins load by
+            // reflection (foreground service, WebRTC). Dart code is already tree-shaken by Flutter.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
