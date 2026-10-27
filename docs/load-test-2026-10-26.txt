@@ -1,0 +1,39 @@
+sim: 20 rider(s), 200 drivers, 3 ride(s) each against http://127.0.0.1:38171
+┌─────────┬──────────────────────────────────────┬──────┬─────┬─────┬──────┐
+│ (index) │ endpoint                             │ n    │ p50 │ p95 │ max  │
+├─────────┼──────────────────────────────────────┼──────┼─────┼─────┼──────┤
+│ 0       │ 'POST /v1/rides/:id/bids'            │ 6350 │ 110 │ 754 │ 1505 │
+│ 1       │ 'GET /v1/rides/:id'                  │ 6124 │ 12  │ 83  │ 755  │
+│ 2       │ 'POST /v1/auth/login'                │ 220  │ 277 │ 484 │ 691  │
+│ 3       │ 'POST /v1/driver/online'             │ 200  │ 129 │ 187 │ 256  │
+│ 4       │ 'POST /v1/driver/offline'            │ 200  │ 451 │ 740 │ 760  │
+│ 5       │ 'GET /v1/rides/:id/offers'           │ 161  │ 86  │ 919 │ 1009 │
+│ 6       │ 'POST /v1/rides/:id/rating'          │ 120  │ 17  │ 66  │ 143  │
+│ 7       │ 'POST /v1/rides/:id/bids/:id/accept' │ 62   │ 138 │ 759 │ 1287 │
+│ 8       │ 'POST /v1/rides/estimate'            │ 60   │ 22  │ 314 │ 341  │
+│ 9       │ 'POST /v1/rides'                     │ 60   │ 73  │ 602 │ 622  │
+│ 10      │ 'POST /v1/rides/:id/arrived'         │ 60   │ 35  │ 95  │ 312  │
+│ 11      │ 'POST /v1/rides/:id/start'           │ 60   │ 38  │ 102 │ 384  │
+│ 12      │ 'POST /v1/rides/:id/complete'        │ 60   │ 38  │ 406 │ 672  │
+│ 13      │ 'GET /v1/rides/:id/receipt'          │ 60   │ 9   │ 25  │ 66   │
+│ 14      │ 'POST /v1/rides/:id/raise'           │ 9    │ 191 │ 219 │ 219  │
+│ 15      │ 'POST /v1/rides/:id/share'           │ 1    │ 165 │ 165 │ 165  │
+│ 16      │ 'GET /v1/rides/active'               │ 1    │ 32  │ 32  │ 32   │
+│ 17      │ 'POST /v1/rides/:id/sos'             │ 1    │ 32  │ 32  │ 32   │
+│ 18      │ 'POST /v1/sos/:id/location'          │ 1    │ 8   │ 8   │ 8    │
+└─────────┴──────────────────────────────────────┴──────┴─────┴─────┴──────┘
+{
+  "completed_rides": 60,
+  "expected_rides": 60,
+  "driver_bids": 5109,
+  "driver_trips": 60,
+  "gps_points_sent": 96732,
+  "expected_conflicts": {
+    "RIDE_NOT_SEARCHING": 1185,
+    "COUNTER_TOO_LOW": 56,
+    "DRIVER_BUSY": 2
+  },
+  "errors": 0,
+  "seconds": 495
+}
+SIM PASS

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RideMA Chauffeur</string>
+    <string name="channel_ride_requests">Demandes de course</string>
+    <string name="channel_ride_requests_desc">Nouvelles demandes près de vous (avec son).</string>
+    <string name="channel_ride_updates">Suivi des courses</string>
+    <string name="channel_ride_updates_desc">Offre acceptée, course annulée par le client et autres changements.</string>
+    <string name="channel_offers">Offres et nouvelles</string>
+    <string name="channel_offers_desc">Messages de RideMA.</string>
+</resources>

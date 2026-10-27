@@ -1,0 +1,215 @@
+import 'package:flutter/widgets.dart';
+import 'package:ridema_core/ridema_core.dart';
+
+/// Rider-only strings that are not (yet) in `ridema_core`'s ARB files.
+///
+/// Kept small and app-local so the shared package stays untouched. Language
+/// follows the app locale (ar / fr / en, French fallback — D29).
+class RiderStrings {
+  const RiderStrings(this.languageCode);
+
+  final String languageCode;
+
+  static RiderStrings of(BuildContext context) => RiderStrings(Localizations.localeOf(context).languageCode);
+
+  String _t(Map<String, String> m) => m[languageCode] ?? m['fr']!;
+
+  String get pickFromContacts => _t({
+        'en': 'From my contacts',
+        'fr': 'Depuis mes contacts',
+        'ar': 'من جهات الاتصال',
+      });
+
+  String get contactsPermissionDenied => _t({
+        'en': 'Contacts are not allowed. Type the name and number instead.',
+        'fr': 'Accès aux contacts refusé. Tapez le nom et le numéro.',
+        'ar': 'الوصول إلى جهات الاتصال مرفوض. اكتب الاسم والرقم.',
+      });
+
+  String get contactNoPhone => _t({
+        'en': 'This contact has no phone number.',
+        'fr': 'Ce contact n’a pas de numéro.',
+        'ar': 'جهة الاتصال هذه بدون رقم هاتف.',
+      });
+
+  String get contactPhoneInvalid => _t({
+        'en': 'Enter a valid phone number (06…, 07… or +…).',
+        'fr': 'Entrez un numéro valide (06…, 07… ou +…).',
+        'ar': 'أدخل رقمًا صحيحًا (06… أو 07… أو +…).',
+      });
+
+  String get removeContact => _t({'en': 'Remove', 'fr': 'Retirer', 'ar': 'حذف'});
+
+  String get keepRide => _t({
+        'en': 'Keep my ride',
+        'fr': 'Garder ma course',
+        'ar': 'الاحتفاظ بالرحلة',
+      });
+
+  String get cancelAnyway => _t({
+        'en': 'Cancel anyway',
+        'fr': 'Annuler quand même',
+        'ar': 'إلغاء على أي حال',
+      });
+
+  String get cancelCountedTitle => _t({
+        'en': 'Cancel after the driver arrived?',
+        'fr': 'Annuler alors que le chauffeur est arrivé ?',
+        'ar': 'الإلغاء بعد وصول السائق؟',
+      });
+
+  String get reportAndCancel => _t({
+        'en': 'Report and cancel for free',
+        'fr': 'Signaler et annuler gratuitement',
+        'ar': 'الإبلاغ والإلغاء مجانًا',
+      });
+
+  String get carMismatchDetailsHint => _t({
+        'en': 'What is different? (optional)',
+        'fr': 'Qu’est-ce qui est différent ? (facultatif)',
+        'ar': 'ما المختلف؟ (اختياري)',
+      });
+
+  String get raiseAndRetry => _t({
+        'en': 'Raise fare and try again',
+        'fr': 'Augmenter le prix et réessayer',
+        'ar': 'رفع السعر والمحاولة مجددًا',
+      });
+
+  String get sameFareRetry => _t({
+        'en': 'Try again with the same fare',
+        'fr': 'Réessayer au même prix',
+        'ar': 'المحاولة بنفس السعر',
+      });
+
+  String get backToHome => _t({'en': 'Back to home', 'fr': 'Retour à l’accueil', 'ar': 'العودة إلى الرئيسية'});
+
+  String get mapUnavailable => _t({
+        'en': 'Map not available on this build',
+        'fr': 'Carte non disponible dans cette version',
+        'ar': 'الخريطة غير متوفرة في هذه النسخة',
+      });
+
+  String get noAddressFound => _t({
+        'en': 'No address found. Try another spelling.',
+        'fr': 'Aucune adresse trouvée. Essayez une autre orthographe.',
+        'ar': 'لم يتم العثور على عنوان. جرّب كتابة أخرى.',
+      });
+
+  String get findingLocation => _t({
+        'en': 'Finding your location…',
+        'fr': 'Recherche de votre position…',
+        'ar': 'جارٍ تحديد موقعك…',
+      });
+
+  String get choosePickup => _t({
+        'en': 'Choose your pickup point',
+        'fr': 'Choisissez votre point de départ',
+        'ar': 'اختر نقطة الانطلاق',
+      });
+
+  String get chooseDestination => _t({
+        'en': 'Choose your destination',
+        'fr': 'Choisissez votre destination',
+        'ar': 'اختر وجهتك',
+      });
+
+  String get gpsPoint => _t({'en': 'GPS point', 'fr': 'Point GPS', 'ar': 'نقطة GPS'});
+
+  String driversNotified(int count) => _t({
+        'en': '$count drivers nearby see your request',
+        'fr': '$count chauffeurs à proximité voient votre demande',
+        'ar': '$count سائقين بالقرب منك يرون طلبك',
+      });
+
+  String moreOffersWaiting(int count) => _t({
+        'en': '+$count more offers waiting',
+        'fr': '+$count autres offres en attente',
+        'ar': '+$count عروض أخرى في الانتظار',
+      });
+
+  String get tripCompletedTitle => _t({
+        'en': 'You have arrived',
+        'fr': 'Vous êtes arrivé',
+        'ar': 'لقد وصلت',
+      });
+
+  String get offerExpiresIn => _t({'en': 'Offer valid', 'fr': 'Offre valable', 'ar': 'العرض صالح'});
+
+  String get offerAboveYourFare => _t({
+        'en': 'Above your fare',
+        'fr': 'Au-dessus de votre prix',
+        'ar': 'أعلى من سعرك',
+      });
+
+  String get yourFare => _t({'en': 'Your fare', 'fr': 'Votre prix', 'ar': 'سعرك'});
+
+  String maxOffer(int amount) => _t({
+        'en': 'Maximum: $amount DH',
+        'fr': 'Maximum : $amount DH',
+        'ar': 'الحد الأقصى: $amount درهم',
+      });
+
+  String get enterFare => _t({
+        'en': 'Enter your fare in DH',
+        'fr': 'Entrez votre prix en DH',
+        'ar': 'أدخل سعرك بالدرهم',
+      });
+
+  String get decreaseFare => _t({'en': 'Lower by 5 DH', 'fr': 'Baisser de 5 DH', 'ar': 'تخفيض 5 دراهم'});
+  String get increaseFare => _t({'en': 'Raise by 5 DH', 'fr': 'Augmenter de 5 DH', 'ar': 'زيادة 5 دراهم'});
+
+  String get shareLinkCopied => _t({
+        'en': 'Link created. Choose an app to send it.',
+        'fr': 'Lien créé. Choisissez une application pour l’envoyer.',
+        'ar': 'تم إنشاء الرابط. اختر تطبيقًا لإرساله.',
+      });
+
+  String get menu => _t({'en': 'Menu', 'fr': 'Menu', 'ar': 'القائمة'});
+
+  String get myLocation => _t({'en': 'My location', 'fr': 'Ma position', 'ar': 'موقعي'});
+
+  String get driverLabel => _t({'en': 'Driver', 'fr': 'Chauffeur', 'ar': 'السائق'});
+
+  // ---------------------------------------------------------------- errors
+
+  /// Translations for API codes the shared package does not map.
+  String? errorForCode(String code) => switch (code) {
+        'RETRY' || 'CONFLICT' || 'INVALID_STATE' => _t({
+            'en': 'Something changed in the meantime. Please try again.',
+            'fr': 'Quelque chose a changé entre-temps. Réessayez.',
+            'ar': 'تغيّر شيء ما في الأثناء. حاول مجددًا.',
+          }),
+        'BAD_RESPONSE' || 'IDEMPOTENCY_KEY_REQUIRED' || 'NOTHING_TO_UPDATE' || 'VALUE_REQUIRED' || 'MULTIPART_REQUIRED' =>
+          _t({
+            'en': 'Something went wrong. Please try again.',
+            'fr': 'Un problème est survenu. Réessayez.',
+            'ar': 'حدث خطأ. حاول مجددًا.',
+          }),
+        'USER_NOT_FOUND' || 'CITY_NOT_FOUND' || 'LEGAL_NOT_FOUND' => _t({
+            'en': 'Not found.',
+            'fr': 'Introuvable.',
+            'ar': 'غير موجود.',
+          }),
+        'NOT_CONNECTED' => _t({
+            'en': 'Not connected. We keep trying…',
+            'fr': 'Pas connecté. Nous réessayons…',
+            'ar': 'غير متصل. نواصل المحاولة…',
+          }),
+        _ => null,
+      };
+}
+
+/// Friendly, localized text for any error: shared translations first, then
+/// rider-only codes, then the server message.
+String riderErrorText(BuildContext context, Object error) {
+  final l = context.l10n;
+  if (error is ApiException) {
+    final local = RiderStrings.of(context).errorForCode(error.code);
+    // The shared code table is private: probe it with a sentinel message.
+    const sentinel = '\u0000';
+    final sharedKnows = errorText(l, ApiException(error.code, sentinel)) != sentinel;
+    if (!sharedKnows && local != null) return local;
+  }
+  return errorText(l, error);
+}

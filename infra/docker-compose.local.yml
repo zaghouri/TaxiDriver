@@ -1,0 +1,76 @@
+# Local test override: backups go to a MinIO container, Caddy serves plain HTTP on :8080,
+# coturn/osrm only start with their profiles.
+#
+#   docker compose --env-file infra/test.env -f infra/docker-compose.yml -f infra/docker-compose.local.yml \
+#     up -d --build postgres backup
+#   scripts/backup-now.sh            (COMPOSE_FILES / ENV_FILE as below)
+#   ENV_FILE=infra/test.env scripts/restore-test.sh
+#
+# The MinIO values must match infra/test.env (restore-test.sh reads them from there).
+name: ridema
+
+services:
+  minio:
+    image: ridema/minio-local:latest
+    build:
+      context: ./minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${BACKUP_STORAGE_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${BACKUP_STORAGE_SECRET_KEY:-minioadmin-secret}
+    volumes:
+      - minio_data:/data
+    expose:
+      - "9000"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: ridema/minio-local:latest
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${BACKUP_STORAGE_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${BACKUP_STORAGE_SECRET_KEY:-minioadmin-secret}
+      BUCKET: ${BACKUP_STORAGE_BUCKET:-ridema-backups}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        mc mb --ignore-existing "local/$$BUCKET"
+
+  postgres:
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      BACKUP_STORAGE_ENDPOINT: http://minio:9000
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+
+  backup:
+    environment:
+      BACKUP_STORAGE_ENDPOINT: http://minio:9000
+
+  caddy:
+    ports: !override
+      - "8080:8080"
+    environment:
+      SITE_ADDRESS: "http://:8080"
+
+  osrm:
+    profiles: ["osrm"]
+
+  coturn:
+    profiles: ["turn"]
+
+volumes:
+  minio_data:

@@ -1,0 +1,4 @@
+"CFBundleDisplayName" = "RideMA";
+"NSLocationWhenInUseUsageDescription" = "RideMA uses your location while the app is open to set your pickup point.";
+"NSMicrophoneUsageDescription" = "RideMA uses the microphone for in-app calls with your driver. Your phone number is not shared.";
+"NSContactsUsageDescription" = "RideMA reads the contact you pick to share your trip link with them.";

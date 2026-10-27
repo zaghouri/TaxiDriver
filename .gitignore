@@ -1,19 +1,19 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.js
 
 # testing
-/coverage
+coverage
 
 # next.js
 /.next/
 /out/
 
 # production
-/build
+build
 
 # misc
 .DS_Store
@@ -34,3 +34,24 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# RideMA
+.env
+.env.*
+!.env.example
+secrets/
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+firebase-service-account.json
+node_modules/
+dist/
+coverage/
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+infra/data/
+backend/storage/
+dump.rdb

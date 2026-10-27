@@ -1,0 +1,1454 @@
+{
+  "@@locale": "en",
+  "ok": "OK",
+  "cancel": "Cancel",
+  "continueLabel": "Continue",
+  "notNow": "Not now",
+  "retry": "Try again",
+  "save": "Save",
+  "close": "Close",
+  "back": "Back",
+  "next": "Next",
+  "done": "Done",
+  "send": "Send",
+  "confirm": "Confirm",
+  "yes": "Yes",
+  "no": "No",
+  "loading": "Loading…",
+  "openSettings": "Open settings",
+  "read": "Read",
+  "copy": "Copy",
+  "copied": "Copied",
+  "share": "Share",
+  "edit": "Edit",
+  "delete": "Delete",
+  "required": "Required",
+  "optional": "Optional",
+  "priceDh": "{amount} DH",
+  "@priceDh": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "kmShort": "{km} km",
+  "@kmShort": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "ratingWithCount": "{rating} ★ ({count})",
+  "@ratingWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
+  "tripsCount": "{count} trips",
+  "@tripsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "newRating": "New",
+  "statusLabel": "Status",
+  "dateLabel": "Date",
+  "noConnectionBanner": "No internet connection. We keep trying…",
+  "languageTitle": "Choose your language",
+  "languageArabic": "العربية",
+  "languageFrench": "Français",
+  "languageEnglish": "English",
+  "languageLabel": "Language",
+  "languageChangeLater": "You can change it later in Profile.",
+  "bootLoading": "Starting…",
+  "bootOffline": "We could not reach {app}. Check your internet connection.",
+  "@bootOffline": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "updateTitle": "Update needed",
+  "updateBody": "This version of {app} is too old. Install version {version} to continue.",
+  "@updateBody": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDownload": "Download the update",
+  "updateDownloading": "Downloading… {percent}%",
+  "@updateDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "updateInstall": "Install",
+  "updateOpenStore": "Open the store",
+  "updateAllowInstall": "Android will ask you to allow installing apps from {app}. Allow it, then come back and tap Install.",
+  "@updateAllowInstall": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "updateFailed": "The download failed. Check your connection and try again.",
+  "updateAvailable": "A new version is available.",
+  "updateNoLink": "Ask support for the new version.",
+  "welcomeTitle": "Welcome to {app}",
+  "@welcomeTitle": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "welcomeRiderTagline": "You choose the price. Drivers nearby answer.",
+  "welcomeDriverTagline": "Receive rides near you. Accept the price or propose yours. 0% commission.",
+  "welcomeSignUp": "Create an account",
+  "welcomeLogIn": "I already have an account",
+  "welcomeCash": "Pay in cash, directly to the driver.",
+  "signUpTitle": "Create your account",
+  "fullNameLabel": "Full name",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "confirmPasswordLabel": "Confirm password",
+  "passwordHint": "At least 10 characters",
+  "showPassword": "Show password",
+  "errorNameShort": "Please enter your full name.",
+  "errorEmailInvalid": "This email address is not valid.",
+  "errorPasswordShort": "Use at least 10 characters.",
+  "errorPasswordMismatch": "The two passwords are different.",
+  "errorCodeFormat": "Enter the 6 digits.",
+  "consentsTitle": "Before you start",
+  "consentsIntro": "Please read and accept each item. Tap “Read” to see the full text.",
+  "consentTerms": "I accept the Terms of use",
+  "consentPrivacy": "I accept the Privacy policy",
+  "consentDataTransfer": "I agree that some of my data is processed by services outside Morocco",
+  "consentDataTransferExplain": "Google Maps shows the map, Firebase (Google) sends notifications and WhatsApp (Meta) sends your phone code. These companies may store data outside Morocco. Without them the app cannot work.",
+  "consentBackgroundLocation": "I agree that {app} uses my location in the background while I am online",
+  "@consentBackgroundLocation": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "consentBackgroundExplain": "Riders nearby can find you and follow the trip, even when the app is closed. When you go offline, we stop.",
+  "consentsAllRequired": "All boxes are needed to use the app.",
+  "consentsAccept": "Accept and create my account",
+  "consentsLoadFailed": "We could not load the texts. Check your connection and try again.",
+  "consentVersion": "Version {version}",
+  "@consentVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "consentsOutdated": "A text was updated. Please read it again.",
+  "verifyEmailTitle": "Check your email",
+  "verifyEmailBody": "We sent a 6-digit code to {email}. Enter it below, or tap the link in the email.",
+  "@verifyEmailBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyEmailSpam": "Not received? Look in the Spam folder.",
+  "codeLabel": "6-digit code",
+  "verifyButton": "Verify",
+  "resendCode": "Send a new code",
+  "resendIn": "New code in {seconds} s",
+  "@resendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "codeSent": "A new code was sent.",
+  "emailVerified": "Email verified",
+  "iVerifiedWithLink": "I used the link in the email",
+  "loginTitle": "Log in",
+  "loginButton": "Log in",
+  "forgotPasswordLink": "Forgot your password?",
+  "noAccountLink": "No account yet? Create one",
+  "wrongAppRider": "This is a driver account. Use the {app} Driver app.",
+  "@wrongAppRider": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "wrongAppDriver": "This is a rider account. Create a driver account with another email.",
+  "twoFactorTitle": "Security code",
+  "twoFactorEmailBody": "We sent a code to your email. Enter it below.",
+  "twoFactorTotpBody": "Open your authenticator app and enter the 6-digit code for {app}.",
+  "@twoFactorTotpBody": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "forgotTitle": "Reset your password",
+  "forgotBody": "Enter your email. If an account exists, we will send you a code.",
+  "forgotSend": "Send the code",
+  "resetTitle": "Choose a new password",
+  "resetBody": "Enter the code sent to {email} and your new password.",
+  "@resetBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "newPasswordLabel": "New password",
+  "resetDone": "Your password was changed. You can log in now.",
+  "resetButton": "Change password",
+  "verifyPhoneTitle": "Verify your phone",
+  "verifyPhoneBody": "We will send a code on WhatsApp to this number.",
+  "verifyPhoneWhyRider": "We need a verified number before your first ride.",
+  "verifyPhoneWhyDriver": "We need a verified number before you go online.",
+  "phoneLabel": "Phone number",
+  "phoneHint": "6XXXXXXXX",
+  "errorPhoneInvalid": "Enter the 9 digits after +212 (for example 612345678).",
+  "phoneCodesLimit": "You can ask for up to 3 codes per day for the same number. Each code works for 10 minutes. The number must have WhatsApp.",
+  "sendCodeWhatsapp": "Send the code on WhatsApp",
+  "phoneCodeSentTo": "Code sent on WhatsApp to {phone}.",
+  "@phoneCodeSentTo": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "changeNumber": "Change number",
+  "phoneVerified": "Phone verified",
+  "phonePrivacy": "Your number stays private: calls go through the app.",
+  "phoneChangeHint": "To change a verified number, send a correction request from Profile › My data.",
+  "locationTitle": "Your location",
+  "locationRiderBody": "We use your location while the app is open to set your pickup point.",
+  "locationRiderDetail": "Your driver sees your pickup point only during a ride. You can also type your address instead.",
+  "locationDriverBody": "{app} uses your location even when the app is closed or not in use while you are online, so riders nearby can find you and follow the trip.",
+  "@locationDriverBody": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "locationDriverDetail": "When you go offline, we stop using your location. On the next screen choose “Allow all the time”.",
+  "locationDeniedRider": "Location is off. You can type your pickup address.",
+  "locationNeededDriver": "Location is needed to go online",
+  "locationNeededDriverBody": "In Settings, set Location to “Allow all the time” for {app}.",
+  "@locationNeededDriverBody": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "locationServiceOff": "Your phone’s location (GPS) is turned off.",
+  "turnOnLocation": "Turn on location",
+  "allowLocation": "Allow location",
+  "notifTitle": "Stay informed",
+  "notifRiderBody": "We notify you when a driver makes an offer, arrives, or when your ride changes.",
+  "notifDriverBody": "We notify you when a new ride request arrives near you, even when the app is in the background.",
+  "notifAllow": "Allow notifications",
+  "notifDeniedBanner": "Notifications are off. You may miss ride offers.",
+  "profileTitle": "Profile",
+  "profileName": "Name",
+  "profileEmail": "Email",
+  "profilePhone": "Phone",
+  "phoneNotVerified": "Not verified",
+  "phoneVerifiedBadge": "Verified",
+  "verifyNow": "Verify now",
+  "profileSecurity": "Two-step login",
+  "profileChangePassword": "Change password",
+  "profileMyData": "My data",
+  "profileDeleteAccount": "Delete my account",
+  "profileLegal": "Legal information",
+  "profileTrips": "My trips",
+  "profileAppVersion": "App version {version}",
+  "@profileAppVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "profileRating": "Your rating",
+  "logout": "Log out",
+  "logoutConfirm": "Do you want to log out?",
+  "editName": "Change your name",
+  "saved": "Saved",
+  "sessionEnded": "Your session ended. Please log in again.",
+  "twoFactorSettingsTitle": "Two-step login",
+  "twoFactorExplain": "After your password, we ask for a second code. Even if someone knows your password, they cannot log in.",
+  "twoFactorOff": "Off",
+  "twoFactorEmail": "Code by email",
+  "twoFactorTotp": "Authenticator app",
+  "twoFactorCurrent": "Current: {method}",
+  "@twoFactorCurrent": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "twoFactorUseEmail": "Use email codes",
+  "twoFactorUseTotp": "Use an authenticator app",
+  "twoFactorTurnOff": "Turn off two-step login",
+  "twoFactorTotpStep1": "1. Add this key in your authenticator app (Google Authenticator, Microsoft Authenticator…).",
+  "twoFactorSecret": "Secret key",
+  "twoFactorOpenApp": "Open in my authenticator app",
+  "twoFactorTotpStep2": "2. Enter the 6-digit code shown in the app.",
+  "twoFactorEnabled": "Two-step login is on.",
+  "twoFactorDisabled": "Two-step login is off.",
+  "passwordConfirmPrompt": "Enter your password to confirm.",
+  "changePasswordTitle": "Change password",
+  "currentPasswordLabel": "Current password",
+  "passwordChanged": "Password changed.",
+  "myDataTitle": "My data",
+  "myDataIntro": "Under Moroccan law 09-08 you can get a copy of your personal data and ask us to correct it.",
+  "downloadMyData": "Download my data",
+  "myDataReady": "Your data file is ready.",
+  "dataRequestsTitle": "My requests",
+  "dataRequestsEmpty": "No requests yet.",
+  "newDataRequest": "New request",
+  "dataRequestAccess": "Access to my data",
+  "dataRequestCorrection": "Correct my data",
+  "dataRequestDeletion": "Delete my data",
+  "dataRequestDetails": "Explain your request",
+  "dataRequestDetailsHint": "For example: my name is spelled wrong, the right spelling is…",
+  "dataRequestSent": "Request sent. We answer within 30 days.",
+  "dataRequestOpen": "Pending",
+  "dataRequestDone": "Done",
+  "dataRequestRejected": "Rejected",
+  "dataRequestResponse": "Answer: {text}",
+  "@dataRequestResponse": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteTitle": "Delete my account",
+  "deleteIntro": "Your account is deleted right away. This cannot be undone.",
+  "deleteWhatGoes": "Deleted now: your name, email, phone number, password, devices, documents, trip addresses and GPS points.",
+  "deleteWhatStays": "Kept without your name, for the period required by law: trip records (date, price) so receipts and disputes stay valid.",
+  "deleteConfirmCheck": "I understand that this cannot be undone",
+  "deleteButton": "Delete my account",
+  "deleteDone": "Your account was deleted.",
+  "legalTitle": "Legal information",
+  "legalTerms": "Terms of use",
+  "legalPrivacy": "Privacy policy",
+  "legalDataTransfer": "Data transfer outside Morocco",
+  "legalBackgroundLocation": "Background location",
+  "companyTitle": "Company",
+  "companyName": "Name",
+  "companyRc": "RC",
+  "companyIce": "ICE",
+  "companyAddress": "Address",
+  "supportPhone": "Support phone",
+  "supportEmail": "Support email",
+  "receiptTitle": "Receipt",
+  "receiptNumber": "Receipt no. {number}",
+  "@receiptNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptFrom": "From",
+  "receiptTo": "To",
+  "receiptDistance": "Distance",
+  "receiptDuration": "Duration",
+  "receiptPrice": "Price",
+  "receiptDriver": "Driver",
+  "receiptRider": "Rider",
+  "receiptVehicle": "Vehicle",
+  "receiptPaidCash": "Paid in cash to the driver",
+  "receiptNoCommission": "{app} takes no commission and does not collect trip payments.",
+  "@receiptNoCommission": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "receiptShare": "Share receipt",
+  "tripHistoryTitle": "My trips",
+  "tripHistoryEmpty": "No trips yet.",
+  "loadMore": "Show more",
+  "rideStatusSearching": "Looking for a driver",
+  "rideStatusAccepted": "Driver on the way",
+  "rideStatusArrived": "Driver arrived",
+  "rideStatusInProgress": "On trip",
+  "rideStatusCompleted": "Completed",
+  "rideStatusCancelled": "Cancelled",
+  "rideStatusExpired": "No driver found",
+  "homeFrom": "From",
+  "homeTo": "To",
+  "homeCurrentLocation": "My current location",
+  "homeWhereTo": "Where are you going?",
+  "homeSearchAddress": "Search an address",
+  "homePickOnMap": "Choose on the map",
+  "offerYourFare": "Offer your fare",
+  "suggestedPrice": "Suggested: {amount} DH",
+  "@suggestedPrice": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "minOffer": "Minimum: {amount} DH",
+  "@minOffer": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "commentForDriver": "Comment for the driver (optional)",
+  "commentHint": "For example: I have a big suitcase",
+  "findDriver": "Find a driver",
+  "tripEstimate": "{km} km · about {minutes} min",
+  "@tripEstimate": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "searchingTitle": "Looking for drivers…",
+  "searchingTimeLeft": "{time} left",
+  "@searchingTimeLeft": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "raiseFare": "Raise fare",
+  "raiseFareTitle": "Raise your fare",
+  "raiseFareHint": "A higher fare gets more answers. You cannot lower it.",
+  "cancelRequest": "Cancel request",
+  "cancelRequestConfirm": "Cancel your request?",
+  "offersTitle": "Offers",
+  "offerCounter": "Counter-offer",
+  "offerEta": "{minutes} min away",
+  "@offerEta": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "accept": "Accept",
+  "decline": "Decline",
+  "noOffersYet": "Waiting for offers. Drivers nearby can see your request.",
+  "requestExpiredTitle": "No driver accepted",
+  "requestExpiredBody": "Try again with a higher fare.",
+  "offerNoLongerAvailable": "This offer is no longer available.",
+  "driverOnTheWay": "Your driver is on the way",
+  "driverArrivedTitle": "Your driver is here",
+  "onTripTitle": "On the way to your destination",
+  "etaMinutes": "Arrives in {minutes} min",
+  "@etaMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "pickupPin": "Pickup PIN",
+  "pickupPinHint": "Give this code to the driver to start the trip.",
+  "callButton": "Call",
+  "shareTrip": "Share trip",
+  "sosButton": "SOS",
+  "cancelRide": "Cancel",
+  "cancelFreeInfo": "You can cancel for free until the driver arrives.",
+  "cancelCountedWarning": "The driver has arrived. If you cancel now, it will be counted.",
+  "cancelReasonTitle": "Why do you cancel?",
+  "reasonChangedMind": "I changed my mind",
+  "reasonDriverTooFar": "The driver is too far",
+  "reasonDriverAsked": "The driver asked me to cancel",
+  "reasonWrongPickup": "Wrong pickup point",
+  "reasonRiderNoShow": "The rider did not come",
+  "reasonCarMismatch": "The car does not match",
+  "reasonSafety": "I do not feel safe",
+  "reasonOther": "Other reason",
+  "carMismatch": "Car doesn’t match?",
+  "carMismatchBody": "If the plate or the car is different, do not get in. Report it: you can then cancel for free.",
+  "reportSent": "Thank you, our team was alerted.",
+  "cancelWarningRecent": "You cancelled several rides recently. Please book only when you are ready.",
+  "rideCancelledByDriver": "The driver cancelled. You can request again.",
+  "rideCancelledByRider": "The rider cancelled the ride.",
+  "rateDriver": "How was your driver?",
+  "rateRider": "How was the rider?",
+  "rateComment": "Comment (optional)",
+  "rateSubmit": "Send rating",
+  "rateSkip": "Skip",
+  "fareToPay": "Fare: {amount} DH. Pay cash to the driver.",
+  "@fareToPay": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "thanksRating": "Thank you!",
+  "idCheckRequiredBody": "For safety, we need a photo of your ID card before your next ride.",
+  "shareTitle": "Share your trip",
+  "shareBody": "Add up to 5 contacts. They get a link to follow your trip live until 1 hour after it ends.",
+  "contactName": "Name",
+  "contactPhone": "Phone",
+  "addContact": "Add a contact",
+  "shareCreate": "Create the link and share",
+  "shareMessage": "Follow my {app} trip live: {url}",
+  "@shareMessage": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "shareMaxContacts": "You can add up to 5 contacts.",
+  "sosTitle": "Emergency",
+  "sosBody": "Tap a service: your phone calls it and the {app} team gets your live location.",
+  "@sosBody": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "sosPolice": "Police",
+  "sosGendarmerie": "Gendarmerie",
+  "sosAmbulance": "Ambulance",
+  "sosAlertSent": "Alert sent. Our team sees your location.",
+  "sosAlertFailed": "We could not send the alert. Call the number directly.",
+  "sosSharingLocation": "Your location is shared every 10 seconds while this screen is open.",
+  "sosSending": "Sending the alert…",
+  "callCalling": "Calling…",
+  "callRinging": "Ringing…",
+  "callIncoming": "Incoming call",
+  "callConnecting": "Connecting…",
+  "callActive": "In call",
+  "callEnded": "Call ended",
+  "callRejected": "Call declined",
+  "callFailed": "The call could not connect.",
+  "callMute": "Mute",
+  "callUnmute": "Unmute",
+  "callSpeaker": "Speaker",
+  "callHangUp": "Hang up",
+  "callAnswer": "Answer",
+  "callDecline": "Decline",
+  "callMicDenied": "Allow the microphone to make calls.",
+  "callPrivacy": "Your phone number is not shared.",
+  "callYourDriver": "Your driver",
+  "callYourRider": "Your rider",
+  "plateLabel": "Plate",
+  "carLabel": "Car",
+  "colourLabel": "Colour",
+  "goOnline": "Go online",
+  "goOffline": "Go offline",
+  "onlineLabel": "Online",
+  "offlineLabel": "Offline",
+  "onlineNotificationTitle": "{app} — you are online",
+  "@onlineNotificationTitle": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "onlineNotificationBody": "You receive ride requests near you.",
+  "offlineHint": "Go online to receive ride requests.",
+  "requestsTitle": "Ride requests",
+  "noRequests": "No requests right now. Stay online.",
+  "pickupDistance": "{km} km to pickup · {minutes} min",
+  "@pickupDistance": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "tripDistance": "Trip: {km} km",
+  "@tripDistance": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "pickupLabel": "Pickup",
+  "destinationLabel": "Destination",
+  "riderLabel": "Rider",
+  "riderComment": "Rider’s comment",
+  "acceptFor": "Accept for {amount} DH",
+  "@acceptFor": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "proposePrice": "Or propose your price",
+  "counterPlus": "+{amount} DH",
+  "@counterPlus": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "otherAmount": "Other amount",
+  "counterOfferFor": "Propose {amount} DH",
+  "@counterOfferFor": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "counterMax": "Maximum {amount} DH",
+  "@counterMax": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "waitingForRider": "Waiting for the rider… {time}",
+  "@waitingForRider": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "withdraw": "Withdraw my offer",
+  "bidAccepted": "The rider accepted your offer!",
+  "bidLost": "The rider chose another driver.",
+  "bidDeclined": "The rider declined your offer.",
+  "bidExpired": "Your offer expired.",
+  "bidOutdated": "The rider raised the fare. Make a new offer.",
+  "requestClosedTaken": "Another driver took this ride.",
+  "requestClosedGone": "This request is no longer available.",
+  "navigate": "Navigate",
+  "goingToPickup": "Go to the pickup point",
+  "iveArrived": "I’ve arrived",
+  "enterPinTitle": "Enter the rider’s PIN",
+  "enterPinHint": "Ask the rider for the 4-digit code shown in their app.",
+  "startTrip": "Start the trip",
+  "riderNoShow": "Rider didn’t come",
+  "riderNoShowInfo": "After 5 minutes of waiting you can cancel without penalty.",
+  "waitTime": "Waiting: {time}",
+  "@waitTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "completeTrip": "Complete the trip",
+  "collectCash": "Collect {amount} DH in cash",
+  "@collectCash": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "driverCancelWarning": "If you cancel now, you get a penalty point. Too many cancellations block you for a while.",
+  "blockedUntil": "You are paused until {time} because of cancellations.",
+  "@blockedUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "adminMessageTitle": "Message from {app}",
+  "@adminMessageTitle": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsTitle": "Earnings",
+  "earningsToday": "Today",
+  "earningsWeek": "Last 7 days",
+  "earningsTrips": "{count} trips",
+  "@earningsTrips": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "earningsCash": "{amount} DH in cash",
+  "@earningsCash": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "earningsNoCommission": "0% commission: everything you collect is yours.",
+  "documentsTitle": "My documents",
+  "docCinFront": "ID card (front)",
+  "docCinBack": "ID card (back)",
+  "docLicence": "Driving licence",
+  "docCarteGrise": "Registration (carte grise)",
+  "docInsurance": "Insurance",
+  "docVisiteTechnique": "Technical inspection",
+  "docSelfie": "Selfie",
+  "docStatusPending": "Under review",
+  "docStatusApproved": "Approved",
+  "docStatusRejected": "Rejected",
+  "docStatusExpired": "Expired",
+  "docStatusMissing": "Missing",
+  "docExpiresOn": "Expires on {date}",
+  "@docExpiresOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "docExpiringSoon": "{doc} expires in {days} days. Upload the new one now.",
+  "@docExpiringSoon": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "doc": {
+        "type": "String"
+      }
+    }
+  },
+  "docExpiredBlocked": "A document has expired. You cannot go online until you upload a valid one.",
+  "docUpload": "Upload",
+  "docReupload": "Upload again",
+  "docExpiryDate": "Expiry date",
+  "docRejectReason": "Reason: {reason}",
+  "@docRejectReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "docTakePhoto": "Take a photo",
+  "docChooseFile": "Choose a file",
+  "docPhotoTips": "Put the document on a table, in good light. All 4 corners must be visible and the text readable.",
+  "docUploaded": "Document sent for review.",
+  "onboardingTitle": "Become a driver",
+  "onboardingStep": "Step {step} of {total}",
+  "@onboardingStep": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "driverTypeTitle": "Type of driver",
+  "driverTypeTaxi": "Taxi",
+  "driverTypeLicensedOperator": "Licensed operator (VTC)",
+  "driverTypePrivateCar": "Private car",
+  "personalInfoTitle": "About you",
+  "cinLast4Label": "Last 4 characters of your ID card (CIN)",
+  "cinLast4Hint": "We keep only these characters, not the full number.",
+  "licenceIssuedLabel": "Driving licence issue date",
+  "vehicleTitle": "Your car",
+  "vehicleMake": "Make",
+  "vehicleModel": "Model",
+  "vehicleYear": "Year",
+  "vehicleColour": "Colour",
+  "vehiclePlate": "Plate number",
+  "vehicleDoors": "Number of doors",
+  "vehicleAc": "Air conditioning",
+  "errorCarTooOld": "The car must be from {year} or newer.",
+  "@errorCarTooOld": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "errorCarDoors": "The car must have 4 doors.",
+  "errorCarNoAc": "The car must have air conditioning.",
+  "errorLicenceRecent": "Your licence must be at least 3 years old.",
+  "documentsStepTitle": "Your documents",
+  "submitForReview": "Submit for review",
+  "underReviewTitle": "Under review",
+  "underReviewBody": "We are checking your documents. We will notify you, usually within 1 to 2 working days.",
+  "rejectedTitle": "Application not accepted",
+  "rejectedBody": "Reason: {reason}. Fix it and submit again.",
+  "@rejectedBody": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "suspendedTitle": "Account paused",
+  "suspendedBody": "Your driver account is paused. Contact support to know more.",
+  "approvedTitle": "You are approved!",
+  "batteryTitle": "Keep {app} running",
+  "@batteryTitle": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryIntro": "Some phones close apps in the background to save battery. Follow these steps once so you do not miss ride requests while online.",
+  "batteryChooseBrand": "Choose your phone brand",
+  "batteryOther": "Other brand",
+  "batteryOpenSettings": "Open {app} settings",
+  "@batteryOpenSettings": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryNamesDiffer": "Names can change a little between phone versions. Look for the closest one.",
+  "batteryDone": "I did it",
+  "batteryXiaomi1": "Long-press the {app} icon, then tap “App info” (ⓘ).",
+  "@batteryXiaomi1": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryXiaomi2": "Tap “Battery saver” and choose “No restrictions”.",
+  "batteryXiaomi3": "Turn on “Autostart”.",
+  "batteryXiaomi4": "Tap “Other permissions” and allow “Start in background” and “Show on lock screen”.",
+  "batteryXiaomi5": "Tap “Permissions” › “Location” › “Allow all the time”.",
+  "batteryXiaomi6": "Open recent apps, long-press the {app} card and tap the lock icon.",
+  "@batteryXiaomi6": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryTecno1": "Long-press the {app} icon, then tap “App info”.",
+  "@batteryTecno1": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryTecno2": "Tap “Battery” and choose “No restriction” (or turn on “Allow background activity”).",
+  "batteryTecno3": "In Settings › App management › “Auto-start”, turn {app} on.",
+  "@batteryTecno3": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryTecno4": "Open “Phone Master” › “Power saving” and remove {app} from the apps that are closed automatically.",
+  "@batteryTecno4": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryTecno5": "Tap “Permissions” › “Location” › “Allow all the time”.",
+  "batteryTecno6": "Open recent apps and pull the {app} card down (or tap the lock) to lock it.",
+  "@batteryTecno6": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryInfinix1": "Open Settings › “Battery” › “App launch” (or “Auto-start management”).",
+  "batteryInfinix2": "Find {app}, choose “Manage manually” and turn on “Auto-launch”, “Secondary launch” and “Run in background”.",
+  "@batteryInfinix2": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryInfinix3": "Long-press the {app} icon › “App info” › “Battery” › “Allow background activity”.",
+  "@batteryInfinix3": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryInfinix4": "In “Phone Master”, turn off auto-clean for {app}.",
+  "@batteryInfinix4": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryInfinix5": "In “Permissions” › “Location”, choose “Allow all the time”.",
+  "batteryInfinix6": "Open recent apps and lock the {app} card.",
+  "@batteryInfinix6": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryOppo1": "Long-press the {app} icon, then tap “App info”.",
+  "@batteryOppo1": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryOppo2": "Tap “Battery usage” and turn on “Allow background activity”, “Allow foreground activity” and “Allow auto launch”.",
+  "batteryOppo3": "On older phones: Settings › “Battery” › “More settings” › “Optimise battery use” › {app} › “Don’t optimise”.",
+  "@batteryOppo3": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryOppo4": "Tap “Permissions” › “Location” › “Allow all the time”.",
+  "batteryOppo5": "Open recent apps, tap the ⋮ menu on the {app} card and choose “Lock”.",
+  "@batteryOppo5": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batterySamsung1": "Long-press the {app} icon, then tap “App info”.",
+  "@batterySamsung1": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batterySamsung2": "Tap “Battery” and choose “Unrestricted”.",
+  "batterySamsung3": "Go to Settings › “Battery” (or “Device care” › “Battery”) › “Background usage limits”.",
+  "batterySamsung4": "Make sure {app} is not in “Sleeping apps” or “Deep sleeping apps”, and add it to “Never sleeping apps”.",
+  "@batterySamsung4": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batterySamsung5": "In App info › “Permissions” › “Location”, choose “Allow all the time”.",
+  "batteryGeneric1": "Open Settings › “Apps” › {app} (or long-press the icon › “App info”).",
+  "@batteryGeneric1": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryGeneric2": "In “Battery”, choose “Unrestricted” or “Don’t optimise”, or allow background activity.",
+  "batteryGeneric3": "If you see “Auto-start” or “Launch at startup”, turn it on for {app}.",
+  "@batteryGeneric3": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryGeneric4": "In “Permissions” › “Location”, choose “Allow all the time”.",
+  "batteryGeneric5": "While online, do not swipe {app} away from recent apps.",
+  "@batteryGeneric5": {
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionTitle": "Subscription",
+  "subscriptionPrice": "{amount} DH for {days} days",
+  "@subscriptionPrice": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionFreeRides": "{count} free rides per day",
+  "@subscriptionFreeRides": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionRidesToday": "Rides today: {count} / {limit}",
+  "@subscriptionRidesToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionActive": "Your subscription is active.",
+  "subscriptionInactive": "No active subscription.",
+  "subscriptionPayWith": "Pay with",
+  "payCashplus": "Cash at CashPlus",
+  "payWafacash": "Cash at Wafacash",
+  "payCard": "Bank card",
+  "payWallet": "Mobile wallet",
+  "payUnavailable": "Not available yet",
+  "subscriptionCashCode": "Go to a {agent} agency and give this code: {code}. Amount: {amount} DH. Valid for {hours} hours.",
+  "@subscriptionCashCode": {
+    "placeholders": {
+      "agent": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "int"
+      },
+      "code": {
+        "type": "String"
+      },
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionPending": "Payment pending",
+  "subscriptionOpenPayment": "Open the payment page",
+  "subscriptionOff": "Subscriptions are not needed for now. All rides are free.",
+  "deviceMockTitle": "Turn off fake GPS",
+  "deviceMockBody": "An app that fakes your location is active. Turn it off in Developer options, then try again.",
+  "deviceRootedTitle": "This phone cannot be used to drive",
+  "deviceRootedBody": "This phone has been modified (rooted). For everyone’s safety, please use another phone.",
+  "deviceCheckAgain": "Check again",
+  "errNetworkError": "No internet connection. Check your network and try again.",
+  "@errNetworkError": {
+    "description": "Error text for API code NETWORK_ERROR"
+  },
+  "errTimeout": "The server is taking too long. Try again.",
+  "@errTimeout": {
+    "description": "Error text for API code TIMEOUT"
+  },
+  "errInternal": "Something went wrong on our side. Try again in a moment.",
+  "@errInternal": {
+    "description": "Error text for API code INTERNAL"
+  },
+  "errRateLimited": "Too many attempts. Wait a little and try again.",
+  "@errRateLimited": {
+    "description": "Error text for API code RATE_LIMITED"
+  },
+  "errValidationError": "Some information is missing or not valid.",
+  "@errValidationError": {
+    "description": "Error text for API code VALIDATION_ERROR"
+  },
+  "errUpgradeRequired": "Please update the app to continue.",
+  "@errUpgradeRequired": {
+    "description": "Error text for API code UPGRADE_REQUIRED"
+  },
+  "errAuthRequired": "Please log in.",
+  "@errAuthRequired": {
+    "description": "Error text for API code AUTH_REQUIRED"
+  },
+  "errTokenInvalid": "Your session expired. Please log in again.",
+  "@errTokenInvalid": {
+    "description": "Error text for API code TOKEN_INVALID"
+  },
+  "errSessionExpired": "Your session expired. Please log in again.",
+  "@errSessionExpired": {
+    "description": "Error text for API code SESSION_EXPIRED"
+  },
+  "errRefreshInvalid": "Your session ended. Please log in again.",
+  "@errRefreshInvalid": {
+    "description": "Error text for API code REFRESH_INVALID"
+  },
+  "errRefreshReused": "For your safety we logged you out. Please log in again.",
+  "@errRefreshReused": {
+    "description": "Error text for API code REFRESH_REUSED"
+  },
+  "errSessionRevoked": "Your session ended. Please log in again.",
+  "@errSessionRevoked": {
+    "description": "Error text for API code SESSION_REVOKED"
+  },
+  "errAccountDisabled": "This account is suspended. Contact support.",
+  "@errAccountDisabled": {
+    "description": "Error text for API code ACCOUNT_DISABLED"
+  },
+  "errWrongRole": "This account cannot be used in this app.",
+  "@errWrongRole": {
+    "description": "Error text for API code WRONG_ROLE"
+  },
+  "errInvalidCredentials": "Wrong email or password.",
+  "@errInvalidCredentials": {
+    "description": "Error text for API code INVALID_CREDENTIALS"
+  },
+  "errEmailNotVerified": "Please verify your email first.",
+  "@errEmailNotVerified": {
+    "description": "Error text for API code EMAIL_NOT_VERIFIED"
+  },
+  "errEmailTaken": "An account already uses this email. Log in or reset your password.",
+  "@errEmailTaken": {
+    "description": "Error text for API code EMAIL_TAKEN"
+  },
+  "errLoginLocked": "Too many attempts. Try again in 15 minutes or reset your password.",
+  "@errLoginLocked": {
+    "description": "Error text for API code LOGIN_LOCKED"
+  },
+  "errMfaCodeInvalid": "Wrong code. Check it and try again.",
+  "@errMfaCodeInvalid": {
+    "description": "Error text for API code MFA_CODE_INVALID"
+  },
+  "errMfaLocked": "Too many wrong codes. Try again in 15 minutes.",
+  "@errMfaLocked": {
+    "description": "Error text for API code MFA_LOCKED"
+  },
+  "errMfaTokenInvalid": "This step expired. Please log in again.",
+  "@errMfaTokenInvalid": {
+    "description": "Error text for API code MFA_TOKEN_INVALID"
+  },
+  "errCodeInvalid": "Wrong code. Check it and try again.",
+  "@errCodeInvalid": {
+    "description": "Error text for API code CODE_INVALID"
+  },
+  "errCodeExpired": "This code expired. Ask for a new one.",
+  "@errCodeExpired": {
+    "description": "Error text for API code CODE_EXPIRED"
+  },
+  "errCodeTooManyAttempts": "Too many wrong tries. Ask for a new code.",
+  "@errCodeTooManyAttempts": {
+    "description": "Error text for API code CODE_TOO_MANY_ATTEMPTS"
+  },
+  "errResendTooSoon": "Wait a minute before asking for a new code.",
+  "@errResendTooSoon": {
+    "description": "Error text for API code RESEND_TOO_SOON"
+  },
+  "errLinkInvalid": "This link expired. Ask for a new code in the app.",
+  "@errLinkInvalid": {
+    "description": "Error text for API code LINK_INVALID"
+  },
+  "errConsentRequired": "Please accept all the required items.",
+  "@errConsentRequired": {
+    "description": "Error text for API code CONSENT_REQUIRED"
+  },
+  "errConsentOutdated": "A text was updated. Please read it again.",
+  "@errConsentOutdated": {
+    "description": "Error text for API code CONSENT_OUTDATED"
+  },
+  "errPhoneAlreadyVerified": "Your phone is already verified. To change it, send a correction request from Profile › My data.",
+  "@errPhoneAlreadyVerified": {
+    "description": "Error text for API code PHONE_ALREADY_VERIFIED"
+  },
+  "errPhoneInUse": "This number is already used by another account.",
+  "@errPhoneInUse": {
+    "description": "Error text for API code PHONE_IN_USE"
+  },
+  "errPhoneCodeLimit": "You reached 3 codes today for this number. Try again tomorrow.",
+  "@errPhoneCodeLimit": {
+    "description": "Error text for API code PHONE_CODE_LIMIT"
+  },
+  "errOtpSendFailed": "We could not send the WhatsApp code. Check that the number has WhatsApp and try again.",
+  "@errOtpSendFailed": {
+    "description": "Error text for API code OTP_SEND_FAILED"
+  },
+  "errPhoneNotVerified": "Please verify your phone number first.",
+  "@errPhoneNotVerified": {
+    "description": "Error text for API code PHONE_NOT_VERIFIED"
+  },
+  "errIdCheckRequired": "We need a photo of your ID card before your next ride.",
+  "@errIdCheckRequired": {
+    "description": "Error text for API code ID_CHECK_REQUIRED"
+  },
+  "errOfferTooLow": "Your fare is too low for this trip.",
+  "@errOfferTooLow": {
+    "description": "Error text for API code OFFER_TOO_LOW"
+  },
+  "errOfferTooHigh": "Your fare is too high for this trip.",
+  "@errOfferTooHigh": {
+    "description": "Error text for API code OFFER_TOO_HIGH"
+  },
+  "errOfferNotHigher": "The new fare must be higher than the current one.",
+  "@errOfferNotHigher": {
+    "description": "Error text for API code OFFER_NOT_HIGHER"
+  },
+  "errRideAlreadyActive": "You already have a ride in progress.",
+  "@errRideAlreadyActive": {
+    "description": "Error text for API code RIDE_ALREADY_ACTIVE"
+  },
+  "errOutOfServiceArea": "This place is outside our service area for now.",
+  "@errOutOfServiceArea": {
+    "description": "Error text for API code OUT_OF_SERVICE_AREA"
+  },
+  "errTripTooLong": "This trip is too long for the app.",
+  "@errTripTooLong": {
+    "description": "Error text for API code TRIP_TOO_LONG"
+  },
+  "errBidNotAvailable": "This offer is no longer available.",
+  "@errBidNotAvailable": {
+    "description": "Error text for API code BID_NOT_AVAILABLE"
+  },
+  "errRideNotSearching": "This ride is no longer looking for a driver.",
+  "@errRideNotSearching": {
+    "description": "Error text for API code RIDE_NOT_SEARCHING"
+  },
+  "errDriverBusy": "This driver just took another ride. Choose another offer.",
+  "@errDriverBusy": {
+    "description": "Error text for API code DRIVER_BUSY"
+  },
+  "errCannotCancel": "This ride cannot be cancelled now.",
+  "@errCannotCancel": {
+    "description": "Error text for API code CANNOT_CANCEL"
+  },
+  "errNoShowTooEarly": "You can use “Rider didn’t come” after 5 minutes of waiting.",
+  "@errNoShowTooEarly": {
+    "description": "Error text for API code NO_SHOW_TOO_EARLY"
+  },
+  "errRideNotActive": "This ride is not active any more.",
+  "@errRideNotActive": {
+    "description": "Error text for API code RIDE_NOT_ACTIVE"
+  },
+  "errRideNotFound": "Ride not found.",
+  "@errRideNotFound": {
+    "description": "Error text for API code RIDE_NOT_FOUND"
+  },
+  "errRideNotCompleted": "A receipt is available after the trip.",
+  "@errRideNotCompleted": {
+    "description": "Error text for API code RIDE_NOT_COMPLETED"
+  },
+  "errAlreadyRated": "You already rated this trip.",
+  "@errAlreadyRated": {
+    "description": "Error text for API code ALREADY_RATED"
+  },
+  "errRatingWindowClosed": "It is too late to rate this trip.",
+  "@errRatingWindowClosed": {
+    "description": "Error text for API code RATING_WINDOW_CLOSED"
+  },
+  "errBidAlreadyActive": "You already made an offer on this ride.",
+  "@errBidAlreadyActive": {
+    "description": "Error text for API code BID_ALREADY_ACTIVE"
+  },
+  "errBidDeclinedBefore": "The rider declined your offer on this ride.",
+  "@errBidDeclinedBefore": {
+    "description": "Error text for API code BID_DECLINED_BEFORE"
+  },
+  "errTooManyBids": "You made too many offers on this ride.",
+  "@errTooManyBids": {
+    "description": "Error text for API code TOO_MANY_BIDS"
+  },
+  "errCounterTooLow": "Your price must be higher than the rider’s offer.",
+  "@errCounterTooLow": {
+    "description": "Error text for API code COUNTER_TOO_LOW"
+  },
+  "errCounterTooHigh": "Your price is too high for this trip.",
+  "@errCounterTooHigh": {
+    "description": "Error text for API code COUNTER_TOO_HIGH"
+  },
+  "errTooFar": "You are too far from the pickup point.",
+  "@errTooFar": {
+    "description": "Error text for API code TOO_FAR"
+  },
+  "errSubscriptionRequired": "You reached the free rides for today. Subscribe to continue.",
+  "@errSubscriptionRequired": {
+    "description": "Error text for API code SUBSCRIPTION_REQUIRED"
+  },
+  "errDriverNotApproved": "Your driver account is not approved yet.",
+  "@errDriverNotApproved": {
+    "description": "Error text for API code DRIVER_NOT_APPROVED"
+  },
+  "errDriverBlocked": "You are paused for a while because of cancellations.",
+  "@errDriverBlocked": {
+    "description": "Error text for API code DRIVER_BLOCKED"
+  },
+  "errDriverOffline": "Go online first.",
+  "@errDriverOffline": {
+    "description": "Error text for API code DRIVER_OFFLINE"
+  },
+  "errDocumentsInvalid": "A document is missing, expired or not approved yet.",
+  "@errDocumentsInvalid": {
+    "description": "Error text for API code DOCUMENTS_INVALID"
+  },
+  "errDocumentsMissing": "Some documents are missing.",
+  "@errDocumentsMissing": {
+    "description": "Error text for API code DOCUMENTS_MISSING"
+  },
+  "errDocumentExpired": "This document has expired.",
+  "@errDocumentExpired": {
+    "description": "Error text for API code DOCUMENT_EXPIRED"
+  },
+  "errProfileIncomplete": "Please complete your information first.",
+  "@errProfileIncomplete": {
+    "description": "Error text for API code PROFILE_INCOMPLETE"
+  },
+  "errVehicleMissing": "Please add your car first.",
+  "@errVehicleMissing": {
+    "description": "Error text for API code VEHICLE_MISSING"
+  },
+  "errProfileLocked": "Your profile is under review and cannot be changed now.",
+  "@errProfileLocked": {
+    "description": "Error text for API code PROFILE_LOCKED"
+  },
+  "errAlreadySubmitted": "Your application was already sent.",
+  "@errAlreadySubmitted": {
+    "description": "Error text for API code ALREADY_SUBMITTED"
+  },
+  "errDriverTypeDisabled": "This type of driver is not open in your city yet.",
+  "@errDriverTypeDisabled": {
+    "description": "Error text for API code DRIVER_TYPE_DISABLED"
+  },
+  "errLicenceTooRecent": "Your licence must be at least 3 years old.",
+  "@errLicenceTooRecent": {
+    "description": "Error text for API code LICENCE_TOO_RECENT"
+  },
+  "errCarTooOld": "The car is too old.",
+  "@errCarTooOld": {
+    "description": "Error text for API code CAR_TOO_OLD"
+  },
+  "errCarDoors": "The car must have 4 doors.",
+  "@errCarDoors": {
+    "description": "Error text for API code CAR_DOORS"
+  },
+  "errCarNoAc": "The car must have air conditioning.",
+  "@errCarNoAc": {
+    "description": "Error text for API code CAR_NO_AC"
+  },
+  "errExpiryRequired": "Please enter the expiry date.",
+  "@errExpiryRequired": {
+    "description": "Error text for API code EXPIRY_REQUIRED"
+  },
+  "errFileType": "Send a photo (JPEG, PNG) or a PDF.",
+  "@errFileType": {
+    "description": "Error text for API code FILE_TYPE"
+  },
+  "errFileRequired": "Please choose a file.",
+  "@errFileRequired": {
+    "description": "Error text for API code FILE_REQUIRED"
+  },
+  "errMockLocation": "Turn off fake GPS to continue.",
+  "@errMockLocation": {
+    "description": "Error text for API code MOCK_LOCATION"
+  },
+  "errRootedDevice": "This phone cannot be used to drive.",
+  "@errRootedDevice": {
+    "description": "Error text for API code ROOTED_DEVICE"
+  },
+  "errIntegrityFailed": "We could not check this phone. Use the app from the official store or our website.",
+  "@errIntegrityFailed": {
+    "description": "Error text for API code INTEGRITY_FAILED"
+  },
+  "errSelfieRequired": "Please take a selfie before going online.",
+  "@errSelfieRequired": {
+    "description": "Error text for API code SELFIE_REQUIRED"
+  },
+  "errPinInvalid": "Wrong PIN. Ask the rider again.",
+  "@errPinInvalid": {
+    "description": "Error text for API code PIN_INVALID"
+  },
+  "errPinLocked": "Too many wrong PINs. Our team was alerted.",
+  "@errPinLocked": {
+    "description": "Error text for API code PIN_LOCKED"
+  },
+  "errActiveRide": "Finish or cancel your current ride first.",
+  "@errActiveRide": {
+    "description": "Error text for API code ACTIVE_RIDE"
+  },
+  "errFeatureDisabled": "This feature is turned off for now.",
+  "@errFeatureDisabled": {
+    "description": "Error text for API code FEATURE_DISABLED"
+  },
+  "errSosNotFound": "This alert is closed.",
+  "@errSosNotFound": {
+    "description": "Error text for API code SOS_NOT_FOUND"
+  },
+  "errShareNotFound": "This link expired.",
+  "@errShareNotFound": {
+    "description": "Error text for API code SHARE_NOT_FOUND"
+  },
+  "errTooManyPending": "You already have pending requests. Wait for the answer.",
+  "@errTooManyPending": {
+    "description": "Error text for API code TOO_MANY_PENDING"
+  },
+  "errRequestInProgress": "Still working on it. Try again in a moment.",
+  "@errRequestInProgress": {
+    "description": "Error text for API code REQUEST_IN_PROGRESS"
+  },
+  "errIdempotencyKeyReused": "Something went wrong. Try again.",
+  "@errIdempotencyKeyReused": {
+    "description": "Error text for API code IDEMPOTENCY_KEY_REUSED"
+  },
+  "errNotFound": "Not found.",
+  "@errNotFound": {
+    "description": "Error text for API code NOT_FOUND"
+  },
+  "errCityInactive": "The service is not open in this city yet.",
+  "@errCityInactive": {
+    "description": "Error text for API code CITY_INACTIVE"
+  },
+  "errNotADriver": "This is not a driver account.",
+  "@errNotADriver": {
+    "description": "Error text for API code NOT_A_DRIVER"
+  }
+}

@@ -1,0 +1,7 @@
+# Copy to android/key.properties (gitignored) or use env vars
+# ANDROID_KEYSTORE, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.
+# The SAME key signs the sideload and the store flavor.
+storeFile=/absolute/path/to/ridema-upload.jks
+storePassword=change-me
+keyAlias=ridema
+keyPassword=change-me

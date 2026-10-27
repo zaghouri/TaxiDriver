@@ -1,0 +1,21 @@
+{
+  "name": "@ridema/sim",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sim": "tsx src/run.ts",
+    "load": "tsx src/run.ts --riders 20 --drivers 200 --rides 3"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.2.2",
+    "bullmq": "^6.5.0",
+    "pg": "^8.23.1",
+    "socket.io-client": "^4.8.4",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "typescript": "^7.0.2"
+  }
+}
