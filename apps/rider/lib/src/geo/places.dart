@@ -32,7 +32,8 @@ abstract class PlacesService {
   Future<String?> reverse(LatLng p, {required String language});
 }
 
-/// `GET /v1/geo/search` (built-in list of Meknes places) — used when no Google key is set.
+/// `GET /v1/geo/search` (built-in list of Meknes places) and `GET /v1/geo/reverse`
+/// (street + nearest landmark) — used when no Google key is set, and as Google's fallback.
 class BackendPlacesService implements PlacesService {
   BackendPlacesService(this.api);
   final RideMaApi api;
@@ -49,7 +50,13 @@ class BackendPlacesService implements PlacesService {
       s.lat == null || s.lng == null ? null : Place(lat: s.lat!, lng: s.lng!, address: s.fullText);
 
   @override
-  Future<String?> reverse(LatLng p, {required String language}) async => null;
+  Future<String?> reverse(LatLng p, {required String language}) async {
+    try {
+      return (await api.geoReverse(p.lat, p.lng, locale: language)).label;
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 /// Google Places API (New) over HTTP: autocomplete + place details, and the
@@ -134,10 +141,10 @@ class GooglePlacesService implements PlacesService {
         queryParameters: {'latlng': '${p.lat},${p.lng}', 'key': apiKey, 'language': language},
       );
       final results = res.data?['results'] as List?;
-      if (results == null || results.isEmpty) return null;
-      return (results.first as Map)['formatted_address']?.toString();
+      final address = results == null || results.isEmpty ? null : (results.first as Map)['formatted_address']?.toString();
+      return address ?? await fallback.reverse(p, language: language);
     } catch (_) {
-      return null;
+      return fallback.reverse(p, language: language);
     }
   }
 }

@@ -38,6 +38,12 @@ class RideMaApi {
   Future<List<GeoPlace>> geoSearch(String q) async =>
       asJsonList(asJson(await client.get('/v1/geo/search', query: {'q': q}))['items']).map(GeoPlace.fromJson).toList();
 
+  /// [locale] is `ar`, `fr` or `en`; otherwise the server uses Accept-Language.
+  Future<ReverseGeocode> geoReverse(double lat, double lng, {String? locale}) async => ReverseGeocode.fromJson(await client.get(
+        '/v1/geo/reverse',
+        query: {'lat': lat, 'lng': lng, if (locale == 'ar' || locale == 'fr' || locale == 'en') 'locale': locale},
+      ));
+
   Future<TurnCredentials> turnCredentials() async => TurnCredentials.fromJson(await client.get('/v1/calls/turn-credentials'));
 
   // ------------------------------------------------------------------ auth

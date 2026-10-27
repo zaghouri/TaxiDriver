@@ -263,4 +263,32 @@ void main() {
       await expectLater(api.driverRequests(), throwsA(isA<ApiException>().having((e) => e.code, 'code', 'INTERNAL')));
     });
   });
+
+  group('geo', () {
+    test('geoReverse sends the point + a supported locale and reads the label', () async {
+      backend.on('GET', '/v1/geo/reverse', (_) => const Res(200, {
+            'lat': 33.8935,
+            'lng': -5.564,
+            'locale': 'fr',
+            'label': 'Avenue Moulay Ismail, près de Place El Hedim',
+            'street': 'Avenue Moulay Ismail',
+            'landmark': {'name': 'Place El Hedim', 'distance_m': 204},
+            'city': {'id': 'c1', 'name': 'Meknès'},
+            'sources': ['osrm', 'landmarks'],
+          }));
+      final r = await api.geoReverse(33.8935, -5.564, locale: 'fr');
+      expect(r.label, 'Avenue Moulay Ismail, près de Place El Hedim');
+      expect(r.street, 'Avenue Moulay Ismail');
+      expect(r.landmark, 'Place El Hedim');
+      expect(r.city, 'Meknès');
+      expect(backend.requests.single.query, {'lat': 33.8935, 'lng': -5.564, 'locale': 'fr'});
+
+      // An unsupported language is left to Accept-Language; an unknown point has no label.
+      backend.on('GET', '/v1/geo/reverse', (_) => const Res(200, {'label': null, 'street': null, 'landmark': null, 'city': null}));
+      final none = await api.geoReverse(31.63, -8, locale: 'es');
+      expect(none.label, isNull);
+      expect(none.city, isNull);
+      expect(backend.requests.last.query.containsKey('locale'), isFalse);
+    });
+  });
 }
