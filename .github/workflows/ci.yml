@@ -70,6 +70,10 @@ jobs:
       matrix:
         app: [rider, driver]
     steps:
+      - name: Free disk space (release builds of both flavors need ~20 GB)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/share/swift /usr/local/.ghcup || true
+          df -h /
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
