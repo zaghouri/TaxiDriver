@@ -68,7 +68,17 @@ export async function adminRoutes(app: FastifyInstance, ctx: AppContext) {
       user,
       driver: await driverView(ctx, driverId),
       penalties: await many(db, 'SELECT kind, points, ride_id, created_at FROM driver_penalties WHERE driver_id = $1 ORDER BY created_at DESC LIMIT 50', [driverId]),
-      recent_rides: await many(db, 'SELECT id, status, final_price, requested_at FROM rides WHERE driver_id = $1 ORDER BY requested_at DESC LIMIT 20', [driverId]),
+      recent_rides: await many(db, 'SELECT id, status, final_price, requested_at, eta_promised, arrived_late_s FROM rides WHERE driver_id = $1 ORDER BY requested_at DESC LIMIT 20', [driverId]),
+      // Punctuality over 30 days (D66): arrivals more than 2 min after the time the driver was due.
+      punctuality: await one(
+        db,
+        `SELECT count(*) FILTER (WHERE arrived_late_s IS NOT NULL)::int AS arrivals,
+                count(*) FILTER (WHERE arrived_late_s > 120)::int AS late,
+                count(*) FILTER (WHERE arrived_late_s > 120 AND eta_promised)::int AS late_promised,
+                COALESCE(round(avg(arrived_late_s) FILTER (WHERE arrived_late_s > 120)), 0)::int AS avg_late_s
+         FROM rides WHERE driver_id = $1 AND arrived_at > now() - interval '30 days'`,
+        [driverId],
+      ),
       devices: await many(db, 'SELECT device_id, platform, app_version, rooted, mock_location, integrity_verdict, last_seen_at FROM devices WHERE user_id = $1', [driverId]),
     };
   });

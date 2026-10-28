@@ -276,6 +276,17 @@ export const DICT: Record<string, [string, string]> = {
   event_log: ['Journal des événements', 'Event log'],
   bids: ['Offres', 'Bids'],
   ratings: ['Notes', 'Ratings'],
+  // Pickup punctuality (D66)
+  pickup_due: ['Attendu au départ', 'Due at pickup'],
+  eta_promised: ['délai promis par le chauffeur', 'time promised by the driver'],
+  eta_estimated: ['estimation du trajet', 'route estimate'],
+  late_by: ['en retard de {min} min', '{min} min late'],
+  on_time: ["à l'heure", 'on time'],
+  punctuality_30d: ['Ponctualité (30 j)', 'Punctuality (30 days)'],
+  punctuality_value: [
+    '{late} retard(s) sur {arrivals} arrivées · {promised} malgré un délai promis · {min} min en moyenne',
+    '{late} late of {arrivals} arrivals · {promised} after a promised time · {min} min on average',
+  ],
   // Rating reasons (D64): rr_<ratee role>_<reason>
   rating_quality: ['Raisons des notes (90 jours)', 'Rating reasons (90 days)'],
   ratings_received: ['Notes reçues', 'Ratings received'],

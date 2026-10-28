@@ -34,7 +34,8 @@ class ApiDriverBackend implements DriverBackend {
   @override
   Future<List<RideRequest>> requests() => api.driverRequests();
   @override
-  Future<Bid> placeBid(String rideId, {int? counterPrice}) => api.placeBid(rideId, counterPrice: counterPrice);
+  Future<Bid> placeBid(String rideId, {int? counterPrice, int? etaMin}) =>
+      api.placeBid(rideId, counterPrice: counterPrice, etaMin: etaMin);
   @override
   Future<void> withdrawBid(String rideId) => api.withdrawBid(rideId);
   @override

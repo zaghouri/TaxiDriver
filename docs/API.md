@@ -84,9 +84,9 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | POST | `/v1/sos/:id/location` | `{lat, lng}` | keep sending every ~10 s while the SOS screen is open |
 | POST | `/v1/rides/:id/reports` | `{kind:"car_mismatch"\|"dispute"\|"safety"\|"lost_item"\|"other", details?}` | `201 {id, kind, status, can_cancel_free}` |
 
-`Ride = {id, status:"searching"|"accepted"|"arrived"|"in_progress"|"completed"|"cancelled"|"expired", city_id, pickup:{lat,lng,address}, dropoff:{...}, distance_m, duration_s, suggested_price, offered_price, final_price, currency, payment_method:"cash", comment, requested_at, expires_at, accepted_at, arrived_at, started_at, completed_at, cancelled_at, cancelled_by, cancel_reason, pickup_pin? (rider only, accepted/arrived), driver?: {id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour, plate}, checks:{identity, car}}, rider: {id, first_name, rating, rating_count, trips}, my_rating, can_cancel_free? (rider), search? (rider/admin while searching): {wave, radius_m, drivers_notified}, can_edit_pickup? (rider), pickup_edited_at? — the request reaches drivers in waves of growing radius (D60)}`
+`Ride = {id, status:"searching"|"accepted"|"arrived"|"in_progress"|"completed"|"cancelled"|"expired", city_id, pickup:{lat,lng,address}, dropoff:{...}, distance_m, duration_s, suggested_price, offered_price, final_price, currency, payment_method:"cash", comment, requested_at, expires_at, accepted_at, arrived_at, started_at, completed_at, cancelled_at, cancelled_by, cancel_reason, pickup_pin? (rider only, accepted/arrived), driver?: {id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour, plate}, checks:{identity, car}}, rider: {id, first_name, rating, rating_count, trips}, my_rating, can_cancel_free? (rider), search? (rider/admin while searching): {wave, radius_m, drivers_notified}, can_edit_pickup? (rider), pickup_edited_at?, pickup_due_at?, eta_promised?, arrived_late_s? (from acceptance: when the driver is due at the pickup — the promised ETA, else the route estimate — and, after arrival, how many seconds late they were, D66) — the request reaches drivers in waves of growing radius (D60)}`
 
-`Bid = {id, ride_id, kind:"accept"|"counter", price, currency, eta_s, distance_m, status, created_at, expires_at, driver:{id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour}, checks:{identity, car}}}`
+`Bid = {id, ride_id, kind:"accept"|"counter", price, currency, eta_s, promised_eta_s (null when the driver promised nothing), distance_m, status, created_at, expires_at, driver:{id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour}, checks:{identity, car}}}`
 
 `checks` (D63): `identity` = CIN front + back, licence and selfie each have an approved copy that has not expired; `car` = carte grise, insurance and visite technique likewise; both need the driver account approved. Only these booleans are shared with riders.
 
@@ -103,7 +103,7 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | POST | `/v1/driver/offline` | `{}` | `{online:false}` |
 | POST | `/v1/driver/location` | `{lat, lng, heading?, speed?, accuracy?, mocked?, recorded_at?}` (no idempotency key) | `{on_ride, ride_id?}`; `403 MOCK_LOCATION` → driver forced offline |
 | GET | `/v1/driver/requests` | | `{items: Request[]}` open requests near the driver |
-| POST | `/v1/rides/:id/bids` | `{kind:"accept"}` or `{kind:"counter", price}` | `201 Bid`. Errors `RIDE_NOT_SEARCHING`, `BID_ALREADY_ACTIVE`, `BID_DECLINED_BEFORE`, `TOO_MANY_BIDS`, `COUNTER_TOO_LOW`, `COUNTER_TOO_HIGH` (details.max), `TOO_FAR`, `402 SUBSCRIPTION_REQUIRED`, `DRIVER_*` |
+| POST | `/v1/rides/:id/bids` | `{kind:"accept"}` or `{kind:"counter", price}`, plus optional `eta_min: 3\|5\|10\|15` (arrival time the driver promises, D66) | `201 Bid`. Errors `ETA_TOO_SHORT` (details `min_minutes`, `eta_s`: the promise is under 75 % of the route estimate to the pickup), `RIDE_NOT_SEARCHING`, `BID_ALREADY_ACTIVE`, `BID_DECLINED_BEFORE`, `TOO_MANY_BIDS`, `COUNTER_TOO_LOW`, `COUNTER_TOO_HIGH` (details.max), `TOO_FAR`, `402 SUBSCRIPTION_REQUIRED`, `DRIVER_*` |
 | DELETE | `/v1/rides/:id/bids/mine` | | `{withdrawn:true}` |
 | POST | `/v1/rides/:id/arrived` | `{}` | `Ride`. `422 TOO_FAR_FROM_PICKUP` (details `distance_m`, `max_m`) when the driver's last fresh fix (< 2 min) is farther than the city's `cancel_rules.arrive_max_distance_m` (default 250 m, 0 = off) from the pickup; without a fresh fix the step is allowed and the event logs `distance_m: null` |
 | POST | `/v1/rides/:id/start` | `{pin:"1234"}` | `Ride` (`PIN_INVALID`, `423 PIN_LOCKED`) |
@@ -141,7 +141,7 @@ Client → server (use emitWithAck; ack is `{ok:true,...}` or `{ok:false, error}
 Trip-share watchers connect with `auth: {share: <token>}` (no login).
 
 ## Admin (`/v1/admin/*`, admin role, TOTP session, IP allowlist; every write audited)
-`GET dashboard` · `GET drivers?status=&q=` · `GET drivers/:id` · `POST drivers/:id/approve|reject{reason}|suspend{reason}|unsuspend|unblock` ·
+`GET dashboard` · `GET drivers?status=&q=` · `GET drivers/:id` (with `punctuality:{arrivals, late, late_promised, avg_late_s}` over 30 days; late = more than 2 min after the due time, D66) · `POST drivers/:id/approve|reject{reason}|suspend{reason}|unsuspend|unblock` ·
 `GET documents?status=&driver_id=&expiring_within_days=` · `GET documents/:id/file` (binary, logged) · `GET documents/:id/access-log` · `POST documents/:id/approve{expires_on?}|reject{reason}` · `PATCH documents/:id {expires_on}` ·
 `GET id-checks?status=` · `GET id-checks/:id/file` · `POST id-checks/:id/pass|fail` ·
 `GET live` → `{drivers:[{id, full_name, city_id, driver_type, location:{lat,lng,heading,speed,at}|null}], rides:[{id, status, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng, offered_price, final_price, flagged, ...}], sos:[{id, ride_id, service, status, lat, lng, created_at}]}` ·

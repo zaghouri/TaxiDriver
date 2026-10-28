@@ -148,6 +148,10 @@ class _ActiveRideViewState extends State<ActiveRideView> {
 
     final List<Widget> main = switch (r.status) {
       RideStatus.accepted => [
+          if (r.etaPromised && r.pickupDueAt != null) ...[
+            Text(ds.etaPromisedTo(formatTime(r.pickupDueAt)), key: const ValueKey('eta_promised'), textAlign: TextAlign.center),
+            gap8,
+          ],
           PrimaryButton(key: const ValueKey('arrived_button'), label: l.iveArrived, busy: _busy, onPressed: () => _run(_c.markArrived)),
         ],
       RideStatus.arrived => [

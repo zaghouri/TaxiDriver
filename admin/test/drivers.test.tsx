@@ -32,6 +32,7 @@ describe('Drivers', () => {
     expect(screen.getByText('1 pt')).toBeInTheDocument();
     expect(screen.getByText('1.0.0')).toBeInTheDocument();
     expect(screen.getByText('25 DH')).toBeInTheDocument();
+    expect(screen.getByText('2 retard(s) sur 10 arrivées · 1 malgré un délai promis · 5 min en moyenne')).toBeInTheDocument();
   });
 
   it('approve → POST approve {}', async () => {

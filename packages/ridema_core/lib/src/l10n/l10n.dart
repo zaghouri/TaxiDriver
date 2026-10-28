@@ -55,6 +55,13 @@ String formatDateTime(String locale, DateTime? dt) {
       );
 }
 
+/// "14:05" in local time (24 h, Western digits).
+String formatTime(DateTime? dt) {
+  if (dt == null) return '—';
+  final t = dt.toLocal();
+  return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+}
+
 String formatDate(String locale, DateTime? dt) {
   if (dt == null) return '—';
   return DateFormat.yMMMd(locale).format(dt.toLocal()).replaceAllMapped(

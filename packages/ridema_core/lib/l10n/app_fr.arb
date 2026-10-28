@@ -623,5 +623,8 @@
   "rrRiderWrongPickup": "Mauvais point de départ",
   "rrRiderMessy": "A sali la voiture",
   "rrRiderPaymentProblem": "Problème de paiement",
-  "errRatingReasonInvalid": "Ces raisons ne correspondent pas à votre note. Choisissez à nouveau."
+  "errRatingReasonInvalid": "Ces raisons ne correspondent pas à votre note. Choisissez à nouveau.",
+  "errEtaTooShort": "Vous êtes plus loin que cela. Choisissez un délai plus long.",
+  "offerEtaPromised": "Promet {minutes} min",
+  "driverDueBy": "Arrivée promise : {time}"
 }

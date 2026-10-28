@@ -149,6 +149,12 @@ export function RideDetail() {
               [t('final_price'), money(r.final_price)],
               [t('payment'), t('cash')],
               [t('comment'), r.comment],
+              [
+                t('pickup_due'),
+                r.pickup_due_at
+                  ? `${fmtDate(r.pickup_due_at)} · ${r.eta_promised ? t('eta_promised') : t('eta_estimated')}${r.arrived_late_s != null ? ` · ${r.arrived_late_s > 120 ? t('late_by', { min: Math.round(r.arrived_late_s / 60) }) : t('on_time')}` : ''}`
+                  : '—',
+              ],
               ['PIN', r.pickup_pin ? `${r.pickup_pin} (${t('attempts')}: ${r.pin_attempts ?? 0})` : '—'],
               [t('requested_at'), fmtDate(r.requested_at)],
               [t('completed_at'), fmtDate(r.completed_at)],

@@ -313,10 +313,13 @@ class RideMaApi {
   Future<List<RideRequest>> driverRequests() async =>
       asJsonList(asJson(await client.get('/v1/driver/requests'))['items']).map(RideRequest.fromJson).toList();
 
-  /// `price` only for a counter-offer.
-  Future<Bid> placeBid(String rideId, {int? counterPrice}) async => Bid.fromJson(await client.post(
+  /// `price` only for a counter-offer; [etaMin] (3/5/10/15) is the arrival time the driver promises (D66).
+  Future<Bid> placeBid(String rideId, {int? counterPrice, int? etaMin}) async => Bid.fromJson(await client.post(
         '/v1/rides/$rideId/bids',
-        data: counterPrice == null ? {'kind': 'accept'} : {'kind': 'counter', 'price': counterPrice},
+        data: {
+          ...counterPrice == null ? {'kind': 'accept'} : {'kind': 'counter', 'price': counterPrice},
+          'eta_min': ?etaMin,
+        },
       ));
 
   Future<void> withdrawBid(String rideId) => client.delete('/v1/rides/$rideId/bids/mine');

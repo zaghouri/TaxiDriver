@@ -96,6 +96,13 @@ void main() {
     });
     expect(b.isCounter, isTrue);
     expect(b.driver!.checks, isNull);
+    expect(b.promisedEtaS, isNull);
+    expect(Bid.fromJson({'eta_s': 400, 'promised_eta_s': 300}).promisedEtaMinutes, 5);
+    final due = Ride.fromJson({'pickup_due_at': '2026-10-26T10:05:00.000Z', 'eta_promised': true, 'arrived_late_s': 90});
+    expect(due.etaPromised, isTrue);
+    expect(due.pickupDueAt, DateTime.utc(2026, 10, 26, 10, 5));
+    expect(due.arrivedLateS, 90);
+    expect(Ride.fromJson({}).etaPromised, isFalse);
     expect(b.etaMinutes, 5);
     expect(b.driver!.vehicle!.plate, isNull);
     expect(b.expiresAt!.difference(b.createdAt!), const Duration(seconds: 60));

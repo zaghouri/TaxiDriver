@@ -54,6 +54,12 @@ describe('Rides', () => {
     expect(screen.getByText('1234 (essais: 0)')).toBeInTheDocument();
   });
 
+  it('shows when the driver was due and how late they arrived (D66)', async () => {
+    mockApi({ [`GET ${R}`]: detail({ pickup_due_at: '2026-10-21T09:07:00Z', eta_promised: true, arrived_late_s: 420 }) });
+    renderPage(<RideDetail />, { route: `/rides/${RIDE_ID}`, path: '/rides/:id' });
+    expect(await screen.findByText(/délai promis par le chauffeur · en retard de 7 min/)).toBeInTheDocument();
+  });
+
   it('admin cancel → POST cancel {reason}', async () => {
     let cancelled = false;
     const m = mockApi({

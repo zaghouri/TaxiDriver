@@ -28,6 +28,7 @@ export const driverDetail = (over: Record<string, unknown> = {}) => ({
   driver: driverView(over),
   penalties: [{ kind: 'cancel', points: 1, ride_id: RIDE_ID, created_at: '2026-10-21T10:00:00Z' }],
   recent_rides: [{ id: RIDE_ID, status: 'completed', final_price: 25, requested_at: '2026-10-21T09:00:00Z' }],
+  punctuality: { arrivals: 10, late: 2, late_promised: 1, avg_late_s: 300 },
   devices: [{ device_id: 'device-abcdef12', platform: 'android', app_version: '1.0.0', rooted: false, mock_location: false, integrity_verdict: null, last_seen_at: '2026-10-21T10:00:00Z' }],
 });
 

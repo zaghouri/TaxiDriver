@@ -1490,5 +1490,27 @@
   "errRatingReasonInvalid": "These reasons don’t match your stars. Please choose again.",
   "@errRatingReasonInvalid": {
     "description": "Error text for API code RATING_REASON_INVALID"
+  },
+  "errEtaTooShort": "You are farther than that. Choose a longer arrival time.",
+  "@errEtaTooShort": {
+    "description": "Error text for API code ETA_TOO_SHORT"
+  },
+  "offerEtaPromised": "Promises {minutes} min",
+  "@offerEtaPromised": {
+    "description": "On a driver offer: the arrival time the driver promised (D66).",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "driverDueBy": "Promised arrival: {time}",
+  "@driverDueBy": {
+    "description": "Rider driver card: time by which the driver promised to be at the pickup (D66).",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   }
 }

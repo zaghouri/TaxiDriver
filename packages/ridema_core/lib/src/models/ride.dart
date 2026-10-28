@@ -192,6 +192,9 @@ class Ride {
     this.search,
     this.canEditPickup,
     this.pickupEditedAt,
+    this.pickupDueAt,
+    this.etaPromised = false,
+    this.arrivedLateS,
   });
 
   final String id;
@@ -235,6 +238,14 @@ class Ride {
   /// Set once the rider moved the pickup point.
   final DateTime? pickupEditedAt;
 
+  /// When the driver should be at the pickup (D66): the ETA promised in the
+  /// bid when [etaPromised], else the route estimate at acceptance.
+  final DateTime? pickupDueAt;
+  final bool etaPromised;
+
+  /// Seconds after [pickupDueAt] the driver arrived (0 = on time).
+  final int? arrivedLateS;
+
   /// Price the rider pays: final price once agreed, else the current offer.
   int get price => finalPrice ?? offeredPrice;
 
@@ -271,6 +282,9 @@ class Ride {
       search: j['search'] is Map ? RideSearch.fromJson(j['search']) : null,
       canEditPickup: j['can_edit_pickup'] is bool ? j['can_edit_pickup'] as bool : null,
       pickupEditedAt: asDate(j['pickup_edited_at']),
+      pickupDueAt: asDate(j['pickup_due_at']),
+      etaPromised: j['eta_promised'] == true,
+      arrivedLateS: asInt(j['arrived_late_s']),
     );
   }
 }
@@ -302,6 +316,7 @@ class Bid {
     this.createdAt,
     this.expiresAt,
     this.driver,
+    this.promisedEtaS,
   });
 
   final String id;
@@ -320,8 +335,12 @@ class Bid {
   final DateTime? expiresAt;
   final PersonCard? driver;
 
+  /// Arrival time the driver promised with the bid (D66), if any.
+  final int? promisedEtaS;
+
   bool get isCounter => kind == 'counter';
   int get etaMinutes => (etaS / 60).ceil();
+  int? get promisedEtaMinutes => promisedEtaS == null ? null : (promisedEtaS! / 60).ceil();
 
   factory Bid.fromJson(Object? json) {
     final j = asJson(json);
@@ -337,6 +356,7 @@ class Bid {
       createdAt: asDate(j['created_at']),
       expiresAt: asDate(j['expires_at']),
       driver: j['driver'] is Map ? PersonCard.fromJson(j['driver']) : null,
+      promisedEtaS: asInt(j['promised_eta_s']),
     );
   }
 }

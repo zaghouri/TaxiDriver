@@ -11,7 +11,7 @@ export const RIDE_COLUMNS = `r.id, r.city_id, r.rider_id, r.driver_id, r.status,
   r.distance_m, r.duration_s, r.suggested_price, r.offered_price, r.final_price, r.accepted_bid_id, r.vehicle_id,
   r.pickup_pin, r.pin_attempts, r.rider_comment, r.flagged, r.cancelled_by, r.cancel_reason,
   r.requested_at, r.expires_at, r.accepted_at, r.arrived_at, r.started_at, r.completed_at, r.cancelled_at,
-  r.search_wave, r.search_radius_m, r.drivers_notified, r.pickup_edited_at`;
+  r.search_wave, r.search_radius_m, r.drivers_notified, r.pickup_edited_at, r.pickup_due_at, r.eta_promised, r.arrived_late_s`;
 
 export interface RideRow {
   id: string;
@@ -49,6 +49,9 @@ export interface RideRow {
   search_radius_m: number | null;
   drivers_notified: number;
   pickup_edited_at: Date | null;
+  pickup_due_at: Date | null;
+  eta_promised: boolean;
+  arrived_late_s: number | null;
 }
 
 export async function getRide(q: Queryable, id: string, lock = false): Promise<RideRow | null> {
@@ -152,6 +155,12 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
   if (isRider) view.can_cancel_free = r.status === 'searching' || r.status === 'accepted';
   if (isRider) view.can_edit_pickup = r.status === 'accepted' && !r.pickup_edited_at;
   if (r.pickup_edited_at) view.pickup_edited_at = r.pickup_edited_at;
+  if (r.pickup_due_at) {
+    // When the driver should be at the pickup: the ETA they promised in the bid, else the route estimate (D66).
+    view.pickup_due_at = r.pickup_due_at;
+    view.eta_promised = r.eta_promised;
+    view.arrived_late_s = r.arrived_late_s;
+  }
   if ((isRider || isAdmin) && r.status === 'searching') {
     view.search = { wave: r.search_wave, radius_m: r.search_radius_m, drivers_notified: r.drivers_notified };
   }
@@ -188,6 +197,7 @@ export interface BidRow {
   kind: 'accept' | 'counter';
   price: number;
   eta_s: number;
+  promised_eta_s: number | null;
   distance_m: number;
   status: string;
   created_at: Date;
@@ -206,6 +216,7 @@ export function bidViewWith(b: BidRow, driver: any) {
     price: b.price,
     currency: 'DH',
     eta_s: b.eta_s,
+    promised_eta_s: b.promised_eta_s,
     distance_m: b.distance_m,
     status: b.status,
     created_at: b.created_at,
@@ -214,13 +225,13 @@ export function bidViewWith(b: BidRow, driver: any) {
   };
 }
 
-/** Offers ranking (D10): price, then ETA, then rating — ranked in SQL, full cards built only for the shown ones. */
+/** Offers ranking (D10): price, then ETA (the later of the route estimate and the driver's promise, so promising less never ranks higher — D66), then rating — ranked in SQL, full cards built only for the shown ones. */
 export async function rankedOffers(q: Queryable, rideId: string, limit: number) {
   const rows = await many<BidRow & { total: number }>(
     q,
     `SELECT b.*, count(*) OVER () AS total FROM bids b JOIN users u ON u.id = b.driver_id
      WHERE b.ride_id = $1 AND b.status = 'active' AND b.expires_at > now()
-     ORDER BY b.price, b.eta_s,
+     ORDER BY b.price, GREATEST(b.eta_s, COALESCE(b.promised_eta_s, 0)),
        CASE WHEN u.rating_count > 0 THEN u.rating_sum::numeric / u.rating_count ELSE 0 END
          - 0.05 * (SELECT COALESCE(sum(points), 0) FROM driver_penalties p WHERE p.driver_id = b.driver_id AND p.created_at > now() - interval '30 days') DESC
      LIMIT $2`,

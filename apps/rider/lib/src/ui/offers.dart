@@ -118,10 +118,17 @@ class OfferCard extends StatelessWidget {
                           color: BrandColors.ink,
                         ),
                       ),
-                    Text(
-                      l.offerEta(bid.etaMinutes),
-                      style: TextStyle(color: Colors.grey.shade800),
-                    ),
+                    if (bid.promisedEtaMinutes != null)
+                      Text(
+                        l.offerEtaPromised(bid.promisedEtaMinutes!),
+                        key: const ValueKey('offer_eta_promised'),
+                        style: const TextStyle(fontWeight: FontWeight.w700, color: BrandColors.primary),
+                      )
+                    else
+                      Text(
+                        l.offerEta(bid.etaMinutes),
+                        style: TextStyle(color: Colors.grey.shade800),
+                      ),
                   ],
                 ),
               ],
