@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../brand.dart';
@@ -272,4 +274,60 @@ class InitialsAvatar extends StatelessWidget {
           style: TextStyle(color: BrandColors.primary, fontSize: radius * 0.8, fontWeight: FontWeight.w700),
         ),
       );
+}
+
+/// Wait at the pickup (D70): "Free waiting: 2:13 left", then the fee so far. Ticks every second.
+class WaitingFeeLine extends StatefulWidget {
+  const WaitingFeeLine({super.key, required this.rules, required this.arrivedAt, this.now});
+  final WaitingRules rules;
+  final DateTime arrivedAt;
+  final DateTime Function()? now;
+
+  @override
+  State<WaitingFeeLine> createState() => _WaitingFeeLineState();
+}
+
+class _WaitingFeeLineState extends State<WaitingFeeLine> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final rules = widget.rules;
+    final waited = (widget.now ?? DateTime.now)().difference(widget.arrivedAt);
+    final fee = rules.feeFor(waited);
+    final free = fee == 0;
+    return Container(
+      key: const ValueKey('waiting_fee_line'),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: (free ? BrandColors.success : BrandColors.accent).withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(children: [
+        Icon(free ? Icons.hourglass_bottom : Icons.payments_outlined, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            free ? l.waitFreeLeft(formatMmSs(rules.freeLeft(waited))) : l.waitFeeSoFar(fee, rules.perMin, rules.max),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ]),
+    );
+  }
 }

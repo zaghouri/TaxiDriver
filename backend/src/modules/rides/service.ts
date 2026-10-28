@@ -10,6 +10,7 @@ import { abuseAlert } from '../../core/abuse.js';
 import type { City } from '../../core/settings.js';
 import { getUser } from '../users.js';
 import { allowedReasons } from './rating-reasons.js';
+import { waitingFee, waitingRules } from './waiting.js';
 import { bidView, bidViewWith, driverCard, getRide, rankedOffers, requestView, rideView, RIDE_COLUMNS, type BidRow, type RideRow } from './views.js';
 
 export const CANCEL_REASONS = ['changed_mind', 'driver_too_far', 'driver_asked', 'wrong_pickup', 'rider_no_show', 'car_mismatch', 'safety', 'driver_late', 'other'] as const;
@@ -571,6 +572,10 @@ export async function arrived(ctx: AppContext, driverId: string, rideId: string)
     ],
     { distance_m: distanceM, late_s: lateS, eta_promised: r0.eta_promised },
   );
+  const wr = waitingRules(city.cancel_rules);
+  if (wr && wr.free_s > 60) {
+    await ctx.scheduler.schedule('wait-reminder', { rideId }, (wr.free_s - 60) * 1000, `wait-reminder-${rideId}`);
+  }
   return rideView(ctx.db, r, { id: driverId, role: 'driver' });
 }
 
@@ -587,15 +592,17 @@ export async function startTrip(ctx: AppContext, driverId: string, rideId: strin
       throw unprocessable('PIN_INVALID', 'Wrong PIN. Ask the rider for the 4 digits shown in their app.');
     }
   }
-  const r2 = await driverStep(ctx, driverId, rideId, 'arrived', 'in_progress', 'started_at = now()', 'started', (r3) => [
+  const waitedS = r.arrived_at ? Math.max(0, Math.round((Date.now() - new Date(r.arrived_at).getTime()) / 1000)) : 0;
+  const fee = waitingFee(waitingRules(city.cancel_rules), waitedS);
+  const r2 = await driverStep(ctx, driverId, rideId, 'arrived', 'in_progress', `started_at = now(), waiting_s = ${waitedS}, waiting_fee = ${fee}`, 'started', (r3) => [
     { topic: 'push', payload: { user_ids: [r3.rider_id], title: 'push_trip_started_title', body: 'push_trip_started_body', vars: { place: r3.dropoff_address ?? '' }, data: { type: 'trip_started', ride_id: r3.id }, channel: 'ride_updates', tag: liveTag(r3.id) } },
-  ]);
+  ], { waiting_s: waitedS, waiting_fee: fee });
   return rideView(ctx.db, r2, { id: driverId, role: 'driver' });
 }
 
 export async function completeTrip(ctx: AppContext, driverId: string, rideId: string) {
   const r2 = await driverStep(ctx, driverId, rideId, 'in_progress', 'completed', 'completed_at = now()', 'completed', (r3) => [
-    { topic: 'push', payload: { user_ids: [r3.rider_id], title: 'push_trip_completed_title', body: 'push_trip_completed_body', vars: { price: r3.final_price ?? r3.offered_price }, data: { type: 'trip_completed', ride_id: r3.id }, channel: 'ride_updates', tag: liveTag(r3.id) } },
+    { topic: 'push', payload: { user_ids: [r3.rider_id], title: 'push_trip_completed_title', body: 'push_trip_completed_body', vars: { price: (r3.final_price ?? r3.offered_price) + r3.waiting_fee }, data: { type: 'trip_completed', ride_id: r3.id }, channel: 'ride_updates', tag: liveTag(r3.id) } },
   ]);
   await ctx.geo.setAvailable(driverId, r2.city_id, true);
   await ctx.db.query(`UPDATE trip_shares SET expires_at = now() + interval '1 hour' WHERE ride_id = $1`, [rideId]);
@@ -718,7 +725,11 @@ export async function receipt(ctx: AppContext, rideId: string, user: { id: strin
     to: view.dropoff,
     distance_km: Math.round(r.distance_m / 100) / 10,
     duration_min: Math.round((new Date(r.completed_at!).getTime() - new Date(r.started_at ?? r.completed_at!).getTime()) / 60000),
-    price: r.final_price,
+    // Agreed fare + paid waiting (D70) = what the rider paid.
+    fare: r.final_price,
+    waiting_fee: r.waiting_fee,
+    waiting_min: r.waiting_s == null ? 0 : Math.round(r.waiting_s / 60),
+    price: (r.final_price ?? 0) + r.waiting_fee,
     currency: 'DH',
     payment_method: 'cash',
     commission: 0,
@@ -759,6 +770,22 @@ export async function expireBid(ctx: AppContext, bidId: string): Promise<boolean
     ]);
     return true;
   });
+}
+
+/** One minute before the free wait ends (D70): remind the rider, if the driver is still waiting. */
+export async function remindFreeWait(ctx: AppContext, rideId: string): Promise<boolean> {
+  const r = await getRide(ctx.db, rideId);
+  if (!r || r.status !== 'arrived') return false;
+  const rules = waitingRules((await ctx.settings.city(r.city_id)).cancel_rules);
+  if (!rules) return false;
+  await withTx(ctx.db, async (tx) => {
+    await addEvent(tx, rideId, 'wait_reminder', { role: 'system' }, { free_s: rules.free_s });
+    await enqueue(tx, {
+      topic: 'push',
+      payload: { user_ids: [r.rider_id], title: 'push_wait_reminder_title', body: 'push_wait_reminder_body', vars: { fee: rules.per_min }, data: { type: 'wait_reminder', ride_id: rideId }, channel: 'ride_updates', tag: liveTag(rideId) },
+    });
+  });
+  return true;
 }
 
 /** Minutes past the due time before the rider is offered a free re-book (`cancel_rules.driver_late_after_s`, 0 = off). */

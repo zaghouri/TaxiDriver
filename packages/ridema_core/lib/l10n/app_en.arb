@@ -1517,5 +1517,52 @@
   "errDriverNotLate": "Your driver is not late yet. You can still cancel with another reason.",
   "@errDriverNotLate": {
     "description": "Error text for API code DRIVER_NOT_LATE"
+  },
+  "waitFreeLeft": "Free waiting: {time} left",
+  "@waitFreeLeft": {
+    "description": "Countdown of the free wait at the pickup (D70).",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "waitFeeSoFar": "Waiting fee: {amount} DH so far ({perMin} DH/min, max {max} DH)",
+  "@waitFeeSoFar": {
+    "description": "Paid waiting so far (D70).",
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      },
+      "perMin": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "waitRulesInfo": "{free} min of free waiting, then {perMin} DH per minute (max {max} DH), added to the cash fare.",
+  "@waitRulesInfo": {
+    "placeholders": {
+      "free": {
+        "type": "int"
+      },
+      "perMin": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "receiptFare": "Agreed fare",
+  "receiptWaitingFee": "Waiting fee ({minutes} min)",
+  "@receiptWaitingFee": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
   }
 }

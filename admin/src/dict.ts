@@ -276,6 +276,9 @@ export const DICT: Record<string, [string, string]> = {
   event_log: ['Journal des événements', 'Event log'],
   bids: ['Offres', 'Bids'],
   ratings: ['Notes', 'Ratings'],
+  // Paid waiting (D70)
+  waiting_fee: ["Frais d'attente", 'Waiting fee'],
+  total: ['Total', 'Total'],
   // Pickup punctuality (D66)
   pickup_due: ['Attendu au départ', 'Due at pickup'],
   eta_promised: ['délai promis par le chauffeur', 'time promised by the driver'],

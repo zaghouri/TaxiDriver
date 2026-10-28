@@ -55,9 +55,10 @@ describe('Rides', () => {
   });
 
   it('shows when the driver was due and how late they arrived (D66)', async () => {
-    mockApi({ [`GET ${R}`]: detail({ pickup_due_at: '2026-10-21T09:07:00Z', eta_promised: true, arrived_late_s: 420 }) });
+    mockApi({ [`GET ${R}`]: detail({ pickup_due_at: '2026-10-21T09:07:00Z', eta_promised: true, arrived_late_s: 420, waiting_fee: 4, waiting_s: 290, final_price: 22, total_price: 26 }) });
     renderPage(<RideDetail />, { route: `/rides/${RIDE_ID}`, path: '/rides/:id' });
     expect(await screen.findByText(/délai promis par le chauffeur · en retard de 7 min/)).toBeInTheDocument();
+    expect(screen.getByText('4 DH (5 min) · Total 26 DH')).toBeInTheDocument();
   });
 
   it('admin cancel → POST cancel {reason}', async () => {

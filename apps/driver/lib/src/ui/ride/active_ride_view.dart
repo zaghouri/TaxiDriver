@@ -113,7 +113,7 @@ class _ActiveRideViewState extends State<ActiveRideView> {
     final c = context.watch<DriverController>();
     final features = context.watch<BootController>().appConfigOrDefault;
     final r = widget.ride;
-    final price = r.finalPrice ?? r.offeredPrice;
+    final price = r.price;
     final pinOn = features.feature('pickup_pin', fallback: true);
     final callsOn = features.feature('voice_calls', fallback: true);
 
@@ -166,6 +166,10 @@ class _ActiveRideViewState extends State<ActiveRideView> {
                 key: const ValueKey('wait_timer'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           ),
           gap8,
+          if (r.waitingRules != null && r.arrivedAt != null) ...[
+            WaitingFeeLine(rules: r.waitingRules!, arrivedAt: r.arrivedAt!, now: () => c.now),
+            gap8,
+          ],
           if (pinOn)
             PinKeypad(
               key: const ValueKey('pin_keypad'),

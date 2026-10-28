@@ -99,6 +99,10 @@ class DriverRideCard extends StatelessWidget {
         ],
         gap8,
         CarCard(vehicle: vehicle, driver: ride.driver),
+        if (arrived && ride.waitingRules != null && ride.arrivedAt != null) ...[
+          gap8,
+          WaitingFeeLine(rules: ride.waitingRules!, arrivedAt: ride.arrivedAt!),
+        ],
         if (pin != null) ...[
           gap8,
           Center(child: PinDisplay(key: const ValueKey('ride_pin'), pin: pin!, highlight: arrived)),

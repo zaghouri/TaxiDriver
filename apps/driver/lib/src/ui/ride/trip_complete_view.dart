@@ -43,7 +43,7 @@ class _TripCompleteViewState extends State<TripCompleteView> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final r = widget.ride;
-    final price = r.finalPrice ?? r.offeredPrice;
+    final price = r.price;
     return Scaffold(
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(20), children: [
@@ -58,6 +58,12 @@ class _TripCompleteViewState extends State<TripCompleteView> {
               const Icon(Icons.payments_outlined, size: 40),
               Text(l.collectCash(price),
                   key: const ValueKey('collect_cash'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+              if (r.waitingFee > 0)
+                Text(
+                  '${l.receiptFare}: ${l.priceDh(r.fare)} · ${l.receiptWaitingFee(((r.waitingS ?? 0) / 60).round())}: ${l.priceDh(r.waitingFee)}',
+                  key: const ValueKey('collect_breakdown'),
+                  textAlign: TextAlign.center,
+                ),
             ]),
           ),
           gap8,

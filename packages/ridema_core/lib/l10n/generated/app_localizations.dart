@@ -3873,6 +3873,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your driver is not late yet. You can still cancel with another reason.'**
   String get errDriverNotLate;
+
+  /// Countdown of the free wait at the pickup (D70).
+  ///
+  /// In en, this message translates to:
+  /// **'Free waiting: {time} left'**
+  String waitFreeLeft(String time);
+
+  /// Paid waiting so far (D70).
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting fee: {amount} DH so far ({perMin} DH/min, max {max} DH)'**
+  String waitFeeSoFar(int amount, int perMin, int max);
+
+  /// No description provided for @waitRulesInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'{free} min of free waiting, then {perMin} DH per minute (max {max} DH), added to the cash fare.'**
+  String waitRulesInfo(int free, int perMin, int max);
+
+  /// No description provided for @receiptFare.
+  ///
+  /// In en, this message translates to:
+  /// **'Agreed fare'**
+  String get receiptFare;
+
+  /// No description provided for @receiptWaitingFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting fee ({minutes} min)'**
+  String receiptWaitingFee(int minutes);
 }
 
 class _AppLocalizationsDelegate

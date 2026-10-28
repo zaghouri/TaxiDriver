@@ -1,6 +1,7 @@
 import type { Queryable } from '../../db/pool.js';
 import { many, one } from '../../db/pool.js';
 import { effectiveRating, firstName } from '../users.js';
+import { waitingRules } from './waiting.js';
 
 export const ACTIVE_STATUSES = ['accepted', 'arrived', 'in_progress'] as const;
 export type RideStatus = 'searching' | 'accepted' | 'arrived' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
@@ -11,7 +12,7 @@ export const RIDE_COLUMNS = `r.id, r.city_id, r.rider_id, r.driver_id, r.status,
   r.distance_m, r.duration_s, r.suggested_price, r.offered_price, r.final_price, r.accepted_bid_id, r.vehicle_id,
   r.pickup_pin, r.pin_attempts, r.rider_comment, r.flagged, r.cancelled_by, r.cancel_reason,
   r.requested_at, r.expires_at, r.accepted_at, r.arrived_at, r.started_at, r.completed_at, r.cancelled_at,
-  r.search_wave, r.search_radius_m, r.drivers_notified, r.pickup_edited_at, r.pickup_due_at, r.eta_promised, r.arrived_late_s, r.driver_late_at`;
+  r.search_wave, r.search_radius_m, r.drivers_notified, r.pickup_edited_at, r.pickup_due_at, r.eta_promised, r.arrived_late_s, r.driver_late_at, r.waiting_s, r.waiting_fee`;
 
 export interface RideRow {
   id: string;
@@ -53,6 +54,8 @@ export interface RideRow {
   eta_promised: boolean;
   arrived_late_s: number | null;
   driver_late_at: Date | null;
+  waiting_s: number | null;
+  waiting_fee: number;
 }
 
 export async function getRide(q: Queryable, id: string, lock = false): Promise<RideRow | null> {
@@ -131,6 +134,9 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
     suggested_price: r.suggested_price,
     offered_price: r.offered_price,
     final_price: r.final_price,
+    // Paid waiting (D70): added to the agreed price once the trip starts; total_price is what the rider pays in cash.
+    waiting_fee: r.waiting_fee,
+    total_price: r.final_price == null ? null : r.final_price + r.waiting_fee,
     currency: 'DH',
     payment_method: 'cash',
     comment: r.rider_comment,
@@ -163,6 +169,13 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
     view.arrived_late_s = r.arrived_late_s;
   }
   // The driver is past the due time by the city's margin (D67): the rider may wait, call, or rebook for free.
+  if (r.waiting_s != null) view.waiting_s = r.waiting_s;
+  if (r.status === 'arrived') {
+    // Both apps count the free wait down from arrived_at and show the fee as it grows (D70).
+    const c = await one<{ cancel_rules: Record<string, any> }>(q, 'SELECT cancel_rules FROM cities WHERE id = $1', [r.city_id]);
+    const rules = c ? waitingRules(c.cancel_rules) : null;
+    if (rules) view.waiting_rules = rules;
+  }
   if (r.driver_late_at) view.driver_late_at = r.driver_late_at;
   if (isRider || isDriver || isAdmin) view.driver_late = r.status === 'accepted' && !!r.driver_late_at;
   if ((isRider || isAdmin) && r.status === 'searching') {
