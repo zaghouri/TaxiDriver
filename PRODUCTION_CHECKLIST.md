@@ -26,6 +26,7 @@ Each line names where it lives and how it was verified.
 - [x] Trip sharing link for up to 5 contacts (public live page) — `POST /v1/rides/:id/share`, `/s/:token` (Leaflet, live via socket), expires 1 h after the trip; `safety-realtime.test.ts › trip sharing`
 - [x] In-app voice calls; real phone numbers never shown — WebRTC signalling relayed only between ride parties, TURN credentials, coturn; `safety-realtime.test.ts › voice call signalling`; call UI in ridema_core
 - [x] "I've arrived" only within 250 m of the pickup (city setting, D57) — `rides.test.ts › I've arrived only at the pickup`; driver controller test
+- [x] Off-app warning in the rider cancel flow; "driver asked me to cancel" flags the ride + report (D58) — `rides.test.ts`, rider widget test
 - [x] Pickup PIN; plate/model/colour before pickup; "car doesn't match" report — `rides.test.ts › full ride lifecycle` (PIN rider-only, wrong PIN refused), reports + free cancel (`admin.test.ts`)
 - [x] Destination shown to driver before accepting; rider rating visible to drivers — `ride:request` payload; `rides.test.ts › sends the request only to eligible nearby drivers, with destination and rider rating`
 - [x] Full trip log (state changes + route points) — append-only `ride_events`, `ride_route_points`; `rides.test.ts`, simulator invariants

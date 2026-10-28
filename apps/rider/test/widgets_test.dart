@@ -274,6 +274,47 @@ void main() {
       h.c.dispose();
       await tester.pumpWidget(const SizedBox());
     });
+
+    testWidgets('off-app warning; "the driver asked me" offers to keep the ride in the app first (D58)', (tester) async {
+      await _setPhone(tester);
+      final h = Harness();
+      await h.c.start();
+      h.rt.rideUpdate.add(mkRide(status: 'accepted', pin: '4821', withDriver: true));
+      h.api.onCancel = (id, _) async => {'ride': rideJson(id: id, status: 'cancelled', cancelledBy: 'rider'), 'cancels_recent': 1, 'warning': false};
+      await tester.pumpWidget(wrapApp(
+        Scaffold(
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: SingleChildScrollView(child: ActiveRidePanel(onCall: () {}, onShare: () {}, onSos: () {})),
+          ),
+        ),
+        controller: h.c,
+      ));
+      await tester.pump();
+      Future<void> pickDriverAsked() async {
+        await tester.tap(find.byKey(const ValueKey('ride_cancel')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('off_app_warning')), findsOneWidget);
+        expect(find.textContaining('Never cancel to pay the driver outside the app'), findsOneWidget);
+        await tester.tap(find.byKey(const ValueKey('reason_driver_asked')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('off_app_dialog')), findsOneWidget);
+        expect(find.text('Did the driver ask you to cancel?'), findsOneWidget);
+      }
+
+      await pickDriverAsked();
+      await tester.tap(find.byKey(const ValueKey('off_app_keep')));
+      await tester.pumpAndSettle();
+      expect(h.api.calls.where((c) => c.startsWith('cancel')), isEmpty);
+      expect(h.c.phase, RiderPhase.accepted);
+
+      await pickDriverAsked();
+      await tester.tap(find.byKey(const ValueKey('off_app_cancel')));
+      await tester.pumpAndSettle();
+      expect(h.api.calls, contains('cancel:driver_asked'));
+      h.c.dispose();
+      await tester.pumpWidget(const SizedBox());
+    });
   });
 
   group('Share trip', () {

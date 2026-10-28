@@ -42,6 +42,9 @@ void main() {
       final s = RiderStrings(lang);
       expect(s.pickFromContacts, isNotEmpty);
       expect(s.cancelAnyway, isNotEmpty);
+      for (final t in [s.offAppWarning, s.offAppTitle, s.offAppBody, s.keepInApp]) {
+        expect(t, isNotEmpty);
+      }
       expect(s.maxOffer(75), contains('75'));
     }
     expect(RiderStrings('es').keepRide, RiderStrings('fr').keepRide, reason: 'French fallback (D29)');

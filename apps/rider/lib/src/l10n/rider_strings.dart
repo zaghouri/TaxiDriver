@@ -46,6 +46,31 @@ class RiderStrings {
         'ar': 'الاحتفاظ بالرحلة',
       });
 
+  /// Off-app rides (REA P1 #5, D58): a driver asking the rider to cancel and pay directly.
+  String get offAppWarning => _t({
+        'en': 'Never cancel to pay the driver outside the app. Only rides in RideMA are tracked, with SOS and support.',
+        'fr': 'N’annulez jamais pour payer le chauffeur hors de l’application. Seules les courses RideMA sont suivies, avec SOS et assistance.',
+        'ar': 'لا تلغِ الرحلة أبدًا لتدفع للسائق خارج التطبيق. وحدها رحلات RideMA تُتابَع، مع زر الطوارئ والمساعدة.',
+      });
+
+  String get offAppTitle => _t({
+        'en': 'Did the driver ask you to cancel?',
+        'fr': 'Le chauffeur vous a demandé d’annuler ?',
+        'ar': 'هل طلب منك السائق الإلغاء؟',
+      });
+
+  String get offAppBody => _t({
+        'en': 'Don’t agree to continue the same trip outside the app. Without RideMA there is no trip log, no shared trip and no SOS alert to our team. Keep the ride in the app and pay the price shown here. If you cancel, we will check this ride.',
+        'fr': 'N’acceptez pas de faire la même course hors de l’application. Sans RideMA, pas de suivi du trajet, pas de partage et pas d’alerte SOS à notre équipe. Gardez la course dans l’application et payez le prix affiché ici. Si vous annulez, nous vérifierons cette course.',
+        'ar': 'لا توافق على إكمال نفس الرحلة خارج التطبيق. بدون RideMA لا يوجد سجل للرحلة ولا مشاركة لها ولا تنبيه طوارئ لفريقنا. احتفظ بالرحلة في التطبيق وادفع السعر المعروض هنا. إذا ألغيت، سنتحقق من هذه الرحلة.',
+      });
+
+  String get keepInApp => _t({
+        'en': 'Keep the ride in the app',
+        'fr': 'Garder la course dans l’app',
+        'ar': 'الاحتفاظ بالرحلة في التطبيق',
+      });
+
   String get cancelAnyway => _t({
         'en': 'Cancel anyway',
         'fr': 'Annuler quand même',

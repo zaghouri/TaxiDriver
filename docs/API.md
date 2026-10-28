@@ -75,7 +75,7 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | POST | `/v1/rides/:id/raise` | `{offered_price}` | `Ride` (`OFFER_NOT_HIGHER`) |
 | POST | `/v1/rides/:id/bids/:bidId/accept` | `{}` | `Ride` (status accepted, with `pickup_pin`, `driver.vehicle.plate`). `409 BID_NOT_AVAILABLE \| RIDE_NOT_SEARCHING \| DRIVER_BUSY` → refresh offers |
 | POST | `/v1/rides/:id/bids/:bidId/decline` | `{}` | `{declined:true}` |
-| POST | `/v1/rides/:id/cancel` | `{reason}` reasons: changed_mind, driver_too_far, driver_asked, wrong_pickup, rider_no_show, car_mismatch, safety, other | rider: `{ride, cancels_recent, warning:boolean}`; driver: `{ride, penalty:boolean, blocked_until}`. Errors `CANNOT_CANCEL`, `NO_SHOW_TOO_EARLY` |
+| POST | `/v1/rides/:id/cancel` | `{reason}` reasons: changed_mind, driver_too_far, driver_asked, wrong_pickup, rider_no_show, car_mismatch, safety, other | rider: `{ride, cancels_recent, warning:boolean}`; driver: `{ride, penalty:boolean, blocked_until}`. Errors `CANNOT_CANCEL`, `NO_SHOW_TOO_EARLY`. A rider cancel with `driver_asked` after acceptance flags the ride and opens a `dispute` report (`off_app_suspected`, D58) |
 | POST | `/v1/rides/:id/rating` | `{stars 1-5, comment?}` | `{rated:true}` |
 | GET | `/v1/rides/:id/receipt` | | `{receipt_number, ride_id, date, from, to, distance_km, duration_min, price, currency:"DH", payment_method:"cash", commission:0, driver:{first_name, vehicle}, rider:{first_name}, company:{name, rc, ice, address}, note}` |
 | POST | `/v1/rides/:id/share` | `{contacts:[{name, phone}] (≤5)}` | `201/200 {url, token, contacts}` |

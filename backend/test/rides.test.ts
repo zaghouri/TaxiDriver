@@ -466,6 +466,25 @@ describe('cancellations', () => {
     r = await call(env, 'POST', `/v1/rides/${acc.id}/cancel`, { reason: 'changed_mind' }, rider);
     expect(r.json().ride.status).toBe('cancelled');
   });
+
+  it('"the driver asked me to cancel" flags the ride and opens a report (possible off-app ride)', async () => {
+    const d = await onlineDriver(env);
+    const rider = await newUser(env, 'rider');
+    const acc = await acceptedRide(rider, d);
+    const r = await call(env, 'POST', `/v1/rides/${acc.id}/cancel`, { reason: 'driver_asked' }, rider);
+    expect(r.json().ride.status).toBe('cancelled');
+    const ride = (await env.ctx.db.query('SELECT flagged FROM rides WHERE id = $1', [acc.id])).rows[0];
+    expect(ride.flagged).toBe(true);
+    const rep = (await env.ctx.db.query('SELECT kind, details, reporter_id, status FROM reports WHERE ride_id = $1', [acc.id])).rows;
+    expect(rep).toHaveLength(1);
+    expect(rep[0]).toMatchObject({ kind: 'dispute', reporter_id: rider.userId, status: 'open' });
+    expect(rep[0].details).toContain('off_app_suspected');
+
+    // Other reasons stay ordinary cancels.
+    const acc2 = await acceptedRide(rider, d);
+    await call(env, 'POST', `/v1/rides/${acc2.id}/cancel`, { reason: 'changed_mind' }, rider);
+    expect((await env.ctx.db.query('SELECT count(*)::int AS n FROM reports WHERE ride_id = $1', [acc2.id])).rows[0].n).toBe(0);
+  });
 });
 
 describe("I've arrived only at the pickup", () => {
