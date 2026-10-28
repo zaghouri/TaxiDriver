@@ -102,7 +102,10 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | POST | `/v1/driver/online` | `{lat, lng, mock_location:bool, rooted:bool, integrity_token?}` | `{online:true, integrity}`. Errors `DRIVER_NOT_APPROVED`, `DRIVER_BLOCKED`, `DOCUMENTS_INVALID` (details list), `MOCK_LOCATION`, `ROOTED_DEVICE`, `INTEGRITY_FAILED`, `SELFIE_REQUIRED`, `OUT_OF_SERVICE_AREA`, `PHONE_NOT_VERIFIED`, `EMAIL_NOT_VERIFIED` |
 | POST | `/v1/driver/offline` | `{}` | `{online:false}` |
 | POST | `/v1/driver/location` | `{lat, lng, heading?, speed?, accuracy?, mocked?, recorded_at?}` (no idempotency key) | `{on_ride, ride_id?}`; `403 MOCK_LOCATION` → driver forced offline |
-| GET | `/v1/driver/requests` | | `{items: Request[]}` open requests near the driver |
+| GET | `/v1/driver/requests` | | `{items: Request[]}` open requests near the driver (without the ones this driver hid or reported) |
+| POST | `/v1/driver/requests/:id/hide` | `{}` | `{hidden:true}` — this driver only (D68). `409 BID_ALREADY_ACTIVE` while the driver has an offer on it; `404 RIDE_NOT_FOUND` unless the request is open in the driver's city or was sent to them |
+| POST | `/v1/driver/requests/:id/report` | `{reason:"fake_request"\|"offensive"\|"wrong_place"\|"other", details?}` | `201 {id, kind:"request", status, created_at}`; also hides it; operators see it in reports (kind `request`) |
+| PUT | `/v1/driver/preferences` | `{max_pickup_km: 0.5–20 \| null}` | `{max_pickup_km}` — request notifications (socket + push) only for pickups within this distance; the list still shows every request (D68) |
 | POST | `/v1/rides/:id/bids` | `{kind:"accept"}` or `{kind:"counter", price}`, plus optional `eta_min: 3\|5\|10\|15` (arrival time the driver promises, D66) | `201 Bid`. Errors `ETA_TOO_SHORT` (details `min_minutes`, `eta_s`: the promise is under 75 % of the route estimate to the pickup), `RIDE_NOT_SEARCHING`, `BID_ALREADY_ACTIVE`, `BID_DECLINED_BEFORE`, `TOO_MANY_BIDS`, `COUNTER_TOO_LOW`, `COUNTER_TOO_HIGH` (details.max), `TOO_FAR`, `402 SUBSCRIPTION_REQUIRED`, `DRIVER_*` |
 | DELETE | `/v1/rides/:id/bids/mine` | | `{withdrawn:true}` |
 | POST | `/v1/rides/:id/arrived` | `{}` | `Ride`. `422 TOO_FAR_FROM_PICKUP` (details `distance_m`, `max_m`) when the driver's last fresh fix (< 2 min) is farther than the city's `cancel_rules.arrive_max_distance_m` (default 250 m, 0 = off) from the pickup; without a fresh fix the step is allowed and the event logs `distance_m: null` |
@@ -114,7 +117,7 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 
 `Request = {id, status, pickup, dropoff, distance_m, duration_s, offered_price, suggested_price, currency, comment, expires_at, rider:{id, first_name, rating, rating_count, trips}, pickup_distance_m, pickup_eta_s, my_bid?}`
 
-`DriverProfile = {status:"draft"|"pending"|"approved"|"rejected"|"suspended", status_reason, city:{id, slug, name_*, enabled_driver_types}, driver_type, cin_last4, licence_issued_on, online, blocked_until, submitted_at, vehicle:{id, make, model, year, colour, plate, doors, has_ac}|null, documents:[{id, type, status, expires_on, reject_reason, created_at, reviewed_at}], document_problems:[{type, problem:"missing"|"expired"|"pending"|"rejected"}], can_go_online, problem:{code, message}|null}`
+`DriverProfile = {status:"draft"|"pending"|"approved"|"rejected"|"suspended", status_reason, city:{id, slug, name_*, enabled_driver_types}, driver_type, cin_last4, licence_issued_on, online, blocked_until, submitted_at, vehicle:{id, make, model, year, colour, plate, doors, has_ac}|null, documents:[{id, type, status, expires_on, reject_reason, created_at, reviewed_at}], document_problems:[{type, problem:"missing"|"expired"|"pending"|"rejected"}], can_go_online, problem:{code, message}|null, max_pickup_km:number|null}`
 
 ## Realtime (Socket.IO v4, path `/ws`, websocket transport)
 Connect with `auth: {token: <access_token>}`. Connect errors carry the error code as message (`TOKEN_INVALID` → refresh then reconnect; `ACCOUNT_DISABLED`/`SESSION_REVOKED` → logout).

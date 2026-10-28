@@ -322,6 +322,18 @@ class RideMaApi {
         },
       ));
 
+  /// Request feed (D68): hide a request for this driver only.
+  Future<void> hideRequest(String rideId) => client.post('/v1/driver/requests/$rideId/hide');
+
+  /// [reason]: fake_request / offensive / wrong_place / other. Also hides the request.
+  Future<void> reportRequest(String rideId, String reason, {String? details}) => client.post(
+        '/v1/driver/requests/$rideId/report',
+        data: {'reason': reason, if (details != null && details.trim().isNotEmpty) 'details': details.trim()},
+      );
+
+  /// Alerts only for pickups within [maxPickupKm] (null = any distance).
+  Future<void> setMaxPickupKm(double? maxPickupKm) => client.put('/v1/driver/preferences', data: {'max_pickup_km': maxPickupKm});
+
   Future<void> withdrawBid(String rideId) => client.delete('/v1/rides/$rideId/bids/mine');
 
   Future<Ride> arrived(String rideId) async => Ride.fromJson(await client.post('/v1/rides/$rideId/arrived'));

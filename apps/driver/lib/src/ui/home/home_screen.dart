@@ -481,6 +481,24 @@ class _RequestsSheet extends StatelessWidget {
               myBid: controller.bidFor(r.id),
               now: () => controller.now,
               onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => RequestDetailScreen(rideId: r.id))),
+              onHide: () async {
+                try {
+                  await controller.hideRequest(r.id);
+                  if (context.mounted) showInfoSnack(context, context.ds.requestHidden);
+                } catch (e) {
+                  if (context.mounted) showErrorSnack(context, e);
+                }
+              },
+              onReport: () async {
+                final reason = await askReportReason(context);
+                if (reason == null || !context.mounted) return;
+                try {
+                  await controller.reportRequest(r.id, reason);
+                  if (context.mounted) showInfoSnack(context, context.ds.requestReported);
+                } catch (e) {
+                  if (context.mounted) showErrorSnack(context, e);
+                }
+              },
             );
           },
         ),
@@ -525,6 +543,22 @@ class DriverDrawer extends StatelessWidget {
           title: Text(ds.readyMenu),
           onTap: () => push(ReadinessScreen(checks: checks, onBatteryGuide: () => _openBatteryGuide(context))),
         ),
+      ListTile(
+        key: const ValueKey('menu_alerts'),
+        leading: const Icon(Icons.notifications_active_outlined),
+        title: Text(ds.alertsMenu),
+        onTap: () {
+          final pc = context.read<DriverProfileController>();
+          showRequestAlertsDialog(context, current: pc.profile?.maxPickupKm, onSave: (km) async {
+            try {
+              await context.read<DriverController>().setMaxPickupKm(km);
+              await pc.load();
+            } catch (e) {
+              if (context.mounted) showErrorSnack(context, e);
+            }
+          });
+        },
+      ),
       ListTile(
         key: const ValueKey('menu_battery'),
         leading: const Icon(Icons.battery_charging_full),

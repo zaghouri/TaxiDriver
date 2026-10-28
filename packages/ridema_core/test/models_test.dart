@@ -291,6 +291,11 @@ void main() {
     }
   });
 
+  test('driver profile alert distance (D68)', () {
+    expect(DriverProfile.fromJson({'status': 'approved', 'max_pickup_km': 2}).maxPickupKm, 2);
+    expect(DriverProfile.fromJson({'status': 'approved'}).maxPickupKm, isNull);
+  });
+
   test('driver trust badges (D63)', () {
     final p = PersonCard.fromJson({'id': 'd', 'first_name': 'Y', 'checks': {'identity': true, 'car': false}});
     expect(p.checks!.identity, isTrue);

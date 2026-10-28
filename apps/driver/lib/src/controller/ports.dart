@@ -56,6 +56,9 @@ abstract class DriverBackend {
   Future<List<RideRequest>> requests();
   Future<Bid> placeBid(String rideId, {int? counterPrice, int? etaMin});
   Future<void> withdrawBid(String rideId);
+  Future<void> hideRequest(String rideId);
+  Future<void> reportRequest(String rideId, String reason);
+  Future<void> setMaxPickupKm(double? km);
   Future<ActiveRide> activeRide();
   Future<Ride> ride(String id);
   Future<Ride> arrived(String rideId);

@@ -36,6 +36,24 @@ class DriverStrings {
   String etaChoiceMin(int min) => _f('etaChoiceMin', {'min': min});
   String etaPromisedTo(String time) => _f('etaPromisedTo', {'time': time});
   String get youAreLate => _t('youAreLate');
+  // Request feed: hide / report, alert distance (D68).
+  String get requestMore => _t('requestMore');
+  String get hideRequest => _t('hideRequest');
+  String get reportRequest => _t('reportRequest');
+  String get reportRequestTitle => _t('reportRequestTitle');
+  String reportReason(String reason) => _t(switch (reason) {
+        'fake_request' => 'reportFake',
+        'offensive' => 'reportOffensive',
+        'wrong_place' => 'reportWrongPlace',
+        _ => 'reportOther',
+      });
+  String get requestHidden => _t('requestHidden');
+  String get requestReported => _t('requestReported');
+  String get alertsMenu => _t('alertsMenu');
+  String get alertsTitle => _t('alertsTitle');
+  String get alertsAny => _t('alertsAny');
+  String alertsKm(String km) => _f('alertsKm', {'km': km});
+  String get alertsHint => _t('alertsHint');
   // "Ready to drive" checklist (D62).
   String get readyTitle => _t('readyTitle');
   String get readyMenu => _t('readyMenu');
@@ -228,6 +246,21 @@ class DriverStrings {
       'etaChoiceMin': '{min} min',
       'etaPromisedTo': 'You promised to be there by {time}',
       'youAreLate': 'You are late for the pickup. The rider can now cancel for free.',
+      'requestMore': 'More actions',
+      'hideRequest': 'Hide this request',
+      'reportRequest': 'Report this request',
+      'reportRequestTitle': 'What is wrong with this request?',
+      'reportFake': 'Looks fake or a joke',
+      'reportOffensive': 'Offensive comment',
+      'reportWrongPlace': 'Pickup or destination makes no sense',
+      'reportOther': 'Something else',
+      'requestHidden': 'Request hidden. You won’t see it again.',
+      'requestReported': 'Thanks. Our team will check this request.',
+      'alertsMenu': 'Request alerts',
+      'alertsTitle': 'Alert me for pickups within',
+      'alertsAny': 'Any distance',
+      'alertsKm': '{km} km',
+      'alertsHint': 'Farther requests still appear in the list, without a sound or notification.',
     },
     'fr': {
       'fileTooLarge': 'Fichier trop lourd (8 Mo max). Prenez plutôt une photo.',
@@ -313,6 +346,21 @@ class DriverStrings {
       'etaChoiceMin': '{min} min',
       'etaPromisedTo': 'Vous avez promis d’être là à {time}',
       'youAreLate': 'Vous êtes en retard au départ. Le passager peut maintenant annuler gratuitement.',
+      'requestMore': 'Plus d’actions',
+      'hideRequest': 'Masquer cette demande',
+      'reportRequest': 'Signaler cette demande',
+      'reportRequestTitle': 'Quel est le problème avec cette demande ?',
+      'reportFake': 'Semble fausse ou une blague',
+      'reportOffensive': 'Commentaire insultant',
+      'reportWrongPlace': 'Départ ou destination incohérents',
+      'reportOther': 'Autre chose',
+      'requestHidden': 'Demande masquée. Vous ne la verrez plus.',
+      'requestReported': 'Merci. Notre équipe va vérifier cette demande.',
+      'alertsMenu': 'Alertes de demandes',
+      'alertsTitle': 'M’alerter pour les départs à moins de',
+      'alertsAny': 'Toute distance',
+      'alertsKm': '{km} km',
+      'alertsHint': 'Les demandes plus lointaines restent dans la liste, sans son ni notification.',
     },
     'ar': {
       'fileTooLarge': 'الملف كبير جدًا (8 ميغابايت كحد أقصى). التقط صورة بدلًا منه.',
@@ -398,6 +446,21 @@ class DriverStrings {
       'etaChoiceMin': '{min} د',
       'etaPromisedTo': 'وعدت بالوصول قبل {time}',
       'youAreLate': 'أنت متأخر عن نقطة الانطلاق. يمكن للراكب الآن الإلغاء مجانًا.',
+      'requestMore': 'إجراءات أخرى',
+      'hideRequest': 'إخفاء هذا الطلب',
+      'reportRequest': 'الإبلاغ عن هذا الطلب',
+      'reportRequestTitle': 'ما المشكلة في هذا الطلب؟',
+      'reportFake': 'يبدو مزيفًا أو مزحة',
+      'reportOffensive': 'تعليق مسيء',
+      'reportWrongPlace': 'نقطة الانطلاق أو الوجهة غير منطقية',
+      'reportOther': 'شيء آخر',
+      'requestHidden': 'تم إخفاء الطلب. لن تراه مجددًا.',
+      'requestReported': 'شكرًا. سيتحقق فريقنا من هذا الطلب.',
+      'alertsMenu': 'تنبيهات الطلبات',
+      'alertsTitle': 'نبّهني للطلبات ضمن مسافة',
+      'alertsAny': 'أي مسافة',
+      'alertsKm': '{km} كم',
+      'alertsHint': 'تبقى الطلبات الأبعد في القائمة، بدون صوت أو إشعار.',
     },
   };
 

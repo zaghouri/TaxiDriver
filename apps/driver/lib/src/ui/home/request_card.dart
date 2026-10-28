@@ -8,12 +8,16 @@ import '../widgets.dart';
 /// One ride request in the list: price (large), pickup distance + ETA, pickup,
 /// destination, trip distance, rider first name + rating, comment, countdown.
 class RequestCard extends StatelessWidget {
-  const RequestCard({super.key, required this.request, this.myBid, this.onTap, this.now});
+  const RequestCard({super.key, required this.request, this.myBid, this.onTap, this.now, this.onHide, this.onReport});
 
   final RideRequest request;
   final MyBidState? myBid;
   final VoidCallback? onTap;
   final DateTime Function()? now;
+
+  /// Hide / report menu (D68); hidden while the driver has an active offer on it.
+  final VoidCallback? onHide;
+  final VoidCallback? onReport;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +54,26 @@ class RequestCard extends StatelessWidget {
                     label: Text(formatMmSs(left), textDirection: TextDirection.ltr),
                   ),
                 ),
+              if ((onHide != null || onReport != null) && !(bid?.isActive ?? false))
+                PopupMenuButton<String>(
+                  key: ValueKey('request_menu_${r.id}'),
+                  tooltip: context.ds.requestMore,
+                  onSelected: (v) => (v == 'hide' ? onHide : onReport)?.call(),
+                  itemBuilder: (_) => [
+                    if (onHide != null)
+                      PopupMenuItem(
+                        key: const ValueKey('request_hide'),
+                        value: 'hide',
+                        child: ListTile(leading: const Icon(Icons.visibility_off_outlined), title: Text(context.ds.hideRequest)),
+                      ),
+                    if (onReport != null)
+                      PopupMenuItem(
+                        key: const ValueKey('request_report'),
+                        value: 'report',
+                        child: ListTile(leading: const Icon(Icons.flag_outlined), title: Text(context.ds.reportRequest)),
+                      ),
+                  ],
+                ),
             ]),
             const SizedBox(height: 6),
             RouteLines(pickup: r.pickup, dropoff: r.dropoff),
@@ -71,4 +95,48 @@ class RequestCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Why a driver reports a request (D68). Returns the API reason or null.
+Future<String?> askReportReason(BuildContext context) {
+  final ds = context.ds;
+  return showModalBottomSheet<String>(
+    context: context,
+    useSafeArea: true,
+    builder: (c) => SafeArea(
+      child: ListView(shrinkWrap: true, children: [
+        ListTile(title: Text(ds.reportRequestTitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18))),
+        for (final reason in const ['fake_request', 'offensive', 'wrong_place', 'other'])
+          ListTile(key: ValueKey('report_$reason'), title: Text(ds.reportReason(reason)), onTap: () => Navigator.pop(c, reason)),
+        TextButton(onPressed: () => Navigator.pop(c), child: Text(context.l10n.cancel)),
+      ]),
+    ),
+  );
+}
+
+/// "Request alerts": notify only for pickups within N km (D68). Returns true when saved.
+Future<void> showRequestAlertsDialog(BuildContext context, {required double? current, required Future<void> Function(double? km) onSave}) async {
+  final ds = context.ds;
+  final l = context.l10n;
+  const choices = <double?>[null, 1, 2, 3, 5];
+  final picked = await showDialog<({double? km})>(
+    context: context,
+    builder: (c) => SimpleDialog(
+      key: const ValueKey('alerts_dialog'),
+      title: Text(ds.alertsTitle),
+      children: [
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 24), child: Text(ds.alertsHint, style: const TextStyle(fontSize: 14))),
+        for (final km in choices)
+          ListTile(
+            key: ValueKey('alerts_${km?.toInt() ?? 'any'}'),
+            leading: Icon(km == current ? Icons.radio_button_checked : Icons.radio_button_off),
+            title: Text(km == null ? ds.alertsAny : ds.alertsKm(km.toInt().toString())),
+            onTap: () => Navigator.pop(c, (km: km)),
+          ),
+        TextButton(onPressed: () => Navigator.pop(c), child: Text(l.cancel)),
+      ],
+    ),
+  );
+  if (picked == null || picked.km == current) return;
+  await onSave(picked.km);
 }
