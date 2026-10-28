@@ -64,6 +64,8 @@ class DriverRideCard extends StatelessWidget {
               Text(l.etaMinutes(etaMinutes!), key: const ValueKey('ride_eta'), style: const TextStyle(fontWeight: FontWeight.w700)),
           ],
         ),
+        if (phase == RiderPhase.accepted && ride.etaPromised && ride.pickupDueAt != null)
+          Text(l.driverDueBy(formatTime(ride.pickupDueAt)), key: const ValueKey('ride_due_by'), style: TextStyle(color: Colors.grey.shade800)),
         gap8,
         CarCard(vehicle: vehicle, driver: ride.driver),
         if (pin != null) ...[

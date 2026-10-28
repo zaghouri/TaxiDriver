@@ -585,21 +585,27 @@ class DriverController extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /// Accept the rider's price.
-  Future<void> acceptRequest(String rideId) => _bid(rideId, null);
+  /// Accept the rider's price. [etaMin]: optional arrival-time promise (D66).
+  Future<void> acceptRequest(String rideId, {int? etaMin}) => _bid(rideId, null, etaMin);
 
   /// Counter-offer [price] (must be above the rider's offer).
-  Future<void> counterOffer(String rideId, int price) {
+  Future<void> counterOffer(String rideId, int price, {int? etaMin}) {
     final r = _requests[rideId];
     if (r != null && price <= r.offeredPrice) {
       return Future.error(DriverFailure(DriverFailure.counterTooLow, '', {'min': r.offeredPrice + 1}));
     }
-    return _bid(rideId, price);
+    return _bid(rideId, price, etaMin);
   }
 
-  Future<void> _bid(String rideId, int? counter) async {
+  /// Arrival times a driver can promise (minutes, D66).
+  static const etaChoices = [3, 5, 10, 15];
+
+  /// A promise shorter than 75 % of the estimated time to the pickup is refused by the server.
+  static bool etaChoiceAllowed(int minutes, int? pickupEtaS) => pickupEtaS == null || minutes * 60 >= pickupEtaS * 0.75;
+
+  Future<void> _bid(String rideId, int? counter, [int? etaMin]) async {
     try {
-      final b = await api.placeBid(rideId, counterPrice: counter);
+      final b = await api.placeBid(rideId, counterPrice: counter, etaMin: etaMin);
       _bids[rideId] = MyBidState.fromBid(b);
       _notify();
     } on ApiException catch (e) {

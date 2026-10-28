@@ -30,6 +30,11 @@ class DriverStrings {
   String get mapPlaceholder => _t('mapPlaceholder');
   String get you => _t('you');
   String counterAbove(int amount) => _f('counterAbove', {'amount': amount});
+  // Arrival-time promise with the bid (D66).
+  String get etaChoiceTitle => _t('etaChoiceTitle');
+  String get etaChoiceHint => _t('etaChoiceHint');
+  String etaChoiceMin(int min) => _f('etaChoiceMin', {'min': min});
+  String etaPromisedTo(String time) => _f('etaPromisedTo', {'time': time});
   // "Ready to drive" checklist (D62).
   String get readyTitle => _t('readyTitle');
   String get readyMenu => _t('readyMenu');
@@ -217,6 +222,10 @@ class DriverStrings {
       'yearInvalid': 'Enter a valid year.',
       'plateFormat': 'Type the plate as written on the car, for example 12345-A-6.',
       'expiryPast': 'This document has expired. Upload a valid one.',
+      'etaChoiceTitle': 'I can be at the pickup in (optional)',
+      'etaChoiceHint': 'The rider sees your promise. Arriving late is recorded.',
+      'etaChoiceMin': '{min} min',
+      'etaPromisedTo': 'You promised to be there by {time}',
     },
     'fr': {
       'fileTooLarge': 'Fichier trop lourd (8 Mo max). Prenez plutôt une photo.',
@@ -297,6 +306,10 @@ class DriverStrings {
       'yearInvalid': 'Entrez une année valide.',
       'plateFormat': 'Tapez la plaque comme sur la voiture, par exemple 12345-A-6.',
       'expiryPast': 'Ce document a expiré. Envoyez un document valide.',
+      'etaChoiceTitle': 'Je peux être au départ dans (facultatif)',
+      'etaChoiceHint': 'Le passager voit votre promesse. Les retards sont enregistrés.',
+      'etaChoiceMin': '{min} min',
+      'etaPromisedTo': 'Vous avez promis d’être là à {time}',
     },
     'ar': {
       'fileTooLarge': 'الملف كبير جدًا (8 ميغابايت كحد أقصى). التقط صورة بدلًا منه.',
@@ -377,6 +390,10 @@ class DriverStrings {
       'yearInvalid': 'أدخل سنة صحيحة.',
       'plateFormat': 'اكتب رقم اللوحة كما هو على السيارة، مثلًا 12345-A-6.',
       'expiryPast': 'هذه الوثيقة منتهية الصلاحية. أرسل وثيقة صالحة.',
+      'etaChoiceTitle': 'يمكنني الوصول إلى نقطة الانطلاق خلال (اختياري)',
+      'etaChoiceHint': 'يرى الراكب وعدك. يُسجَّل التأخر.',
+      'etaChoiceMin': '{min} د',
+      'etaPromisedTo': 'وعدت بالوصول قبل {time}',
     },
   };
 

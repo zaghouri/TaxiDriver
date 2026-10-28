@@ -159,6 +159,12 @@ export function DriverDetail() {
               [t('cin_last4'), d.cin_last4],
               [t('licence_issued_on'), d.licence_issued_on],
               [t('rating'), u.rating ? `${u.rating} (${u.rating_count})` : '—'],
+              [
+                t('punctuality_30d'),
+                data.punctuality?.arrivals
+                  ? t('punctuality_value', { late: data.punctuality.late, arrivals: data.punctuality.arrivals, promised: data.punctuality.late_promised, min: Math.round(data.punctuality.avg_late_s / 60) })
+                  : '—',
+              ],
               [t('online'), d.online ? t('yes') : t('no')],
               [t('blocked_until'), blocked ? fmtDate(d.blocked_until) : '—'],
               [t('submitted_at'), fmtDate(d.submitted_at)],

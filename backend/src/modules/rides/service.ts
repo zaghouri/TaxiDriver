@@ -287,9 +287,10 @@ export async function acceptBid(ctx: AppContext, riderId: string, rideId: string
       const upd = await one(
         tx,
         `UPDATE rides SET status = 'accepted', driver_id = $2, final_price = $3, accepted_bid_id = $4, pickup_pin = $5, accepted_at = now(), updated_at = now(),
-           vehicle_id = (SELECT id FROM vehicles WHERE driver_id = $2 AND active)
+           vehicle_id = (SELECT id FROM vehicles WHERE driver_id = $2 AND active),
+           pickup_due_at = now() + make_interval(secs => $6), eta_promised = $7
          WHERE id = $1 AND status = 'searching' RETURNING id`,
-        [rideId, bid.driver_id, bid.price, bid.id, pin],
+        [rideId, bid.driver_id, bid.price, bid.id, pin, bid.promised_eta_s ?? bid.eta_s, bid.promised_eta_s !== null],
       );
       if (!upd) throw conflict('RIDE_NOT_SEARCHING', 'This request is no longer open.');
       const lost = await many<BidRow>(
@@ -297,7 +298,9 @@ export async function acceptBid(ctx: AppContext, riderId: string, rideId: string
         `UPDATE bids SET status = 'lost', updated_at = now() WHERE status = 'active' AND (ride_id = $1 OR driver_id = $2) AND id <> $3 RETURNING *`,
         [rideId, bid.driver_id, bid.id],
       );
-      await addEvent(tx, rideId, 'accepted', { id: riderId, role: 'rider' }, { bid_id: bid.id, driver_id: bid.driver_id, price: bid.price, kind: bid.kind });
+      await addEvent(tx, rideId, 'accepted', { id: riderId, role: 'rider' }, {
+        bid_id: bid.id, driver_id: bid.driver_id, price: bid.price, kind: bid.kind, eta_s: bid.eta_s, promised_eta_s: bid.promised_eta_s,
+      });
       const r2 = (await getRide(tx, rideId))!;
       const extra: OutboxMessage[] = [
         { topic: 'realtime', payload: { target: { cityDrivers: r.city_id }, event: 'ride:request_closed', data: { id: rideId, reason: 'taken' } } },
@@ -387,7 +390,12 @@ export async function cancelByRider(ctx: AppContext, riderId: string, rideId: st
 
 // ---------- Driver actions ----------
 
-export async function placeBid(ctx: AppContext, driverId: string, rideId: string, input: { kind: 'accept' | 'counter'; price?: number }) {
+/** Arrival times a driver can promise with a bid (minutes, D66). */
+export const ETA_CHOICES_MIN = [3, 5, 10, 15] as const;
+/** A promise may be this much shorter than the route estimate (traffic estimates are rough), not more. */
+const ETA_PROMISE_MIN_RATIO = 0.75;
+
+export async function placeBid(ctx: AppContext, driverId: string, rideId: string, input: { kind: 'accept' | 'counter'; price?: number; eta_min?: number }) {
   const problem = await driverProblem(ctx.db, driverId, { requireOnline: true });
   if (problem) throw forbidden(problem.code, problem.message);
   const r0 = await getRide(ctx.db, rideId);
@@ -401,6 +409,11 @@ export async function placeBid(ctx: AppContext, driverId: string, rideId: string
   const pickup = { lat: r0.pickup_lat, lng: r0.pickup_lng };
   if (loc && haversineM(loc, pickup) > city.search_radius_km * 1000 * 1.5) throw unprocessable('TOO_FAR', 'You are too far from the pickup point.');
   const eta = loc ? await ctx.router.route(loc, pickup) : { distance_m: 0, duration_s: 0 };
+  const promisedS = input.eta_min ? input.eta_min * 60 : null;
+  if (promisedS !== null && promisedS < eta.duration_s * ETA_PROMISE_MIN_RATIO) {
+    const minMinutes = Math.ceil((eta.duration_s * ETA_PROMISE_MIN_RATIO) / 60);
+    throw unprocessable('ETA_TOO_SHORT', `You are about ${Math.ceil(eta.duration_s / 60)} min away. Choose a longer arrival time.`, { min_minutes: minMinutes, eta_s: eta.duration_s });
+  }
   const rules = city.cancel_rules;
   const card = await driverCard(ctx.db, driverId, null, false);
 
@@ -421,11 +434,11 @@ export async function placeBid(ctx: AppContext, driverId: string, rideId: string
       }
       const b = await one<BidRow>(
         tx,
-        `INSERT INTO bids (ride_id, driver_id, kind, price, eta_s, distance_m, expires_at)
-         VALUES ($1,$2,$3,$4,$5,$6, now() + make_interval(secs => $7)) RETURNING *`,
-        [rideId, driverId, input.kind, price, eta.duration_s, eta.distance_m, city.bid_timeout_s],
+        `INSERT INTO bids (ride_id, driver_id, kind, price, eta_s, distance_m, expires_at, promised_eta_s)
+         VALUES ($1,$2,$3,$4,$5,$6, now() + make_interval(secs => $7), $8) RETURNING *`,
+        [rideId, driverId, input.kind, price, eta.duration_s, eta.distance_m, city.bid_timeout_s, promisedS],
       );
-      await addEvent(tx, rideId, 'bid_created', { id: driverId, role: 'driver' }, { bid_id: b!.id, kind: input.kind, price });
+      await addEvent(tx, rideId, 'bid_created', { id: driverId, role: 'driver' }, { bid_id: b!.id, kind: input.kind, price, eta_s: eta.duration_s, promised_eta_s: promisedS });
       const view = bidViewWith(b!, card);
       await enqueueMany(tx, [
         { topic: 'realtime', payload: { target: { user: r.rider_id }, event: 'bid:new', data: view } },
@@ -525,9 +538,17 @@ export async function arrived(ctx: AppContext, driverId: string, rideId: string)
   if (r0.status === 'accepted' && maxM > 0 && distanceM !== null && distanceM > maxM) {
     throw unprocessable('TOO_FAR_FROM_PICKUP', `You are ${distanceM} m from the pickup point. Tap again when you are there.`, { distance_m: distanceM, max_m: maxM });
   }
-  const r = await driverStep(ctx, driverId, rideId, 'accepted', 'arrived', 'arrived_at = now()', 'arrived', (r2) => [
-    { topic: 'push', payload: { user_ids: [r2.rider_id], title: 'push_arrived_title', body: 'push_arrived_body', vars: { car: '', plate: '' }, data: { type: 'driver_arrived', ride_id: r2.id }, channel: 'ride_updates' } },
-  ], { distance_m: distanceM });
+  // Late arrival is recorded against the time the driver was due (their promise, else the route estimate — D66).
+  const lateS = r0.pickup_due_at ? Math.max(0, Math.round((Date.now() - new Date(r0.pickup_due_at).getTime()) / 1000)) : null;
+  const r = await driverStep(
+    ctx, driverId, rideId, 'accepted', 'arrived',
+    `arrived_at = now(), arrived_late_s = CASE WHEN pickup_due_at IS NULL THEN NULL ELSE GREATEST(0, extract(epoch FROM now() - pickup_due_at))::int END`,
+    'arrived',
+    (r2) => [
+      { topic: 'push', payload: { user_ids: [r2.rider_id], title: 'push_arrived_title', body: 'push_arrived_body', vars: { car: '', plate: '' }, data: { type: 'driver_arrived', ride_id: r2.id }, channel: 'ride_updates' } },
+    ],
+    { distance_m: distanceM, late_s: lateS, eta_promised: r0.eta_promised },
+  );
   return rideView(ctx.db, r, { id: driverId, role: 'driver' });
 }
 

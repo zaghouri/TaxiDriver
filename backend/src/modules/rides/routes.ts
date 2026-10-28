@@ -83,7 +83,14 @@ export async function rideRoutes(app: FastifyInstance, ctx: AppContext) {
 
   // Driver side
   app.post('/v1/rides/:id/bids', { config: { auth: 'driver' } }, async (req, reply) => {
-    const b = parse(z.object({ kind: z.enum(['accept', 'counter']), price: price.optional() }), req.body);
+    const b = parse(
+      z.object({
+        kind: z.enum(['accept', 'counter']),
+        price: price.optional(),
+        eta_min: z.number().int().refine((m) => (svc.ETA_CHOICES_MIN as readonly number[]).includes(m), 'eta_min must be 3, 5, 10 or 15').optional(),
+      }),
+      req.body,
+    );
     return reply.status(201).send(await svc.placeBid(ctx, req.user!.id, parse(uuid, (req.params as any).id), b));
   });
   app.delete('/v1/rides/:id/bids/mine', { config: { auth: 'driver' } }, async (req) => svc.withdrawBid(ctx, req.user!.id, parse(uuid, (req.params as any).id)));

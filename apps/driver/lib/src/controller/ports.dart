@@ -54,7 +54,7 @@ abstract class DriverBackend {
   Future<void> goOffline();
   Future<Json> sendLocation(Map<String, dynamic> location);
   Future<List<RideRequest>> requests();
-  Future<Bid> placeBid(String rideId, {int? counterPrice});
+  Future<Bid> placeBid(String rideId, {int? counterPrice, int? etaMin});
   Future<void> withdrawBid(String rideId);
   Future<ActiveRide> activeRide();
   Future<Ride> ride(String id);

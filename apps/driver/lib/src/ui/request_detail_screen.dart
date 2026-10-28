@@ -28,6 +28,9 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   bool _busy = false;
   RideRequest? _last;
 
+  /// Arrival time promised with the bid (D66); null = no promise.
+  int? _eta;
+
   @override
   void initState() {
     super.initState();
@@ -122,7 +125,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     );
     ctrl.dispose();
     if (amount == null || !mounted) return;
-    await _run(() => context.read<DriverController>().counterOffer(r.id, amount));
+    await _run(() => context.read<DriverController>().counterOffer(r.id, amount, etaMin: _eta));
   }
 
   @override
@@ -170,11 +173,27 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 : expired
                     ? InfoBox(ds.requestExpired)
                     : Column(mainAxisSize: MainAxisSize.min, children: [
+                        Text(ds.etaChoiceTitle, style: TextStyle(color: Colors.grey.shade800)),
+                        gap8,
+                        Wrap(spacing: 8, runSpacing: 4, alignment: WrapAlignment.center, children: [
+                          for (final m in DriverController.etaChoices)
+                            ChoiceChip(
+                              key: ValueKey('eta_$m'),
+                              label: Text(ds.etaChoiceMin(m), style: const TextStyle(fontSize: 16)),
+                              selected: _eta == m,
+                              onSelected: _busy || !DriverController.etaChoiceAllowed(m, r.pickupEtaS)
+                                  ? null
+                                  : (on) => setState(() => _eta = on ? m : null),
+                            ),
+                        ]),
+                        if (_eta != null)
+                          Text(ds.etaChoiceHint, key: const ValueKey('eta_hint'), textAlign: TextAlign.center, style: const TextStyle(fontSize: 13)),
+                        gap8,
                         PrimaryButton(
                           key: const ValueKey('accept_button'),
                           label: l.acceptFor(r.offeredPrice),
                           busy: _busy,
-                          onPressed: () => _run(() => c.acceptRequest(r.id)),
+                          onPressed: () => _run(() => c.acceptRequest(r.id, etaMin: _eta)),
                         ),
                         gap8,
                         Text(l.proposePrice, style: TextStyle(color: Colors.grey.shade800)),
@@ -186,7 +205,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                               label: Text(l.priceDh(r.offeredPrice + step),
                                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                               tooltip: l.counterPlus(step),
-                              onPressed: _busy ? null : () => _run(() => c.counterOffer(r.id, r.offeredPrice + step)),
+                              onPressed: _busy ? null : () => _run(() => c.counterOffer(r.id, r.offeredPrice + step, etaMin: _eta)),
                             ),
                           ActionChip(
                             key: const ValueKey('counter_other'),

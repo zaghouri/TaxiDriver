@@ -3843,6 +3843,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'These reasons don’t match your stars. Please choose again.'**
   String get errRatingReasonInvalid;
+
+  /// Error text for API code ETA_TOO_SHORT
+  ///
+  /// In en, this message translates to:
+  /// **'You are farther than that. Choose a longer arrival time.'**
+  String get errEtaTooShort;
+
+  /// On a driver offer: the arrival time the driver promised (D66).
+  ///
+  /// In en, this message translates to:
+  /// **'Promises {minutes} min'**
+  String offerEtaPromised(int minutes);
+
+  /// Rider driver card: time by which the driver promised to be at the pickup (D66).
+  ///
+  /// In en, this message translates to:
+  /// **'Promised arrival: {time}'**
+  String driverDueBy(String time);
 }
 
 class _AppLocalizationsDelegate

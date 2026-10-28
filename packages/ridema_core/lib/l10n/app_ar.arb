@@ -623,5 +623,8 @@
   "rrRiderWrongPickup": "نقطة انطلاق خاطئة",
   "rrRiderMessy": "ترك السيارة متّسخة",
   "rrRiderPaymentProblem": "مشكلة في الدفع",
-  "errRatingReasonInvalid": "هذه الأسباب لا تناسب تقييمك. اختر من جديد."
+  "errRatingReasonInvalid": "هذه الأسباب لا تناسب تقييمك. اختر من جديد.",
+  "errEtaTooShort": "أنت أبعد من ذلك. اختر مدة وصول أطول.",
+  "offerEtaPromised": "يعد بـ {minutes} د",
+  "driverDueBy": "الوصول الموعود: {time}"
 }

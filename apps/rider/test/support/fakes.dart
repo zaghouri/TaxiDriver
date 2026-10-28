@@ -34,6 +34,7 @@ Map<String, dynamic> rideJson({
   bool? canCancelFree,
   DateTime? completedAt,
   DateTime? cancelledAt,
+  DateTime? pickupDueAt,
 }) =>
     {
       'id': id,
@@ -56,6 +57,7 @@ Map<String, dynamic> rideJson({
       'can_cancel_free': canCancelFree ?? (status == 'searching' || status == 'accepted'),
       'completed_at': completedAt?.toIso8601String(),
       'cancelled_at': cancelledAt?.toIso8601String(),
+      if (pickupDueAt != null) ...{'pickup_due_at': pickupDueAt.toIso8601String(), 'eta_promised': true},
       if (withDriver)
         'driver': {
           'id': 'drv-1',
@@ -109,10 +111,12 @@ Bid mkBid(
   DateTime? createdAt,
   DateTime? expiresAt,
   String name = 'Driver',
+  int? promisedEtaS,
 }) {
   final created = createdAt ?? t0;
   return Bid.fromJson({
     'id': id,
+    'promised_eta_s': promisedEtaS,
     'ride_id': rideId,
     'kind': kind,
     'price': price,

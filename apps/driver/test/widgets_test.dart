@@ -157,6 +157,38 @@ void main() {
   });
 
   group('request detail', () {
+    testWidgets('optional arrival-time chips go with the bid (D66)', (tester) async {
+      final h = await Harness.create();
+      h.api.bidExpiry = h.clock.now.add(const Duration(seconds: 60));
+      await h.controller.goOnline();
+      h.rt.rideRequest.add(request('r1', price: 30, expiresAt: h.clock.now.add(const Duration(minutes: 4))));
+      await tester.pumpWidget(h.wrap(const RequestDetailScreen(rideId: 'r1'), locale: 'en'));
+      await tester.pump();
+      expect(find.text('I can be at the pickup in (optional)'), findsOneWidget);
+      for (final m in [3, 5, 10, 15]) {
+        expect(find.byKey(ValueKey('eta_$m')), findsOneWidget);
+      }
+      expect(find.byKey(const ValueKey('eta_hint')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('eta_10')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('eta_5')));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('eta_hint')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const ValueKey('accept_button')));
+      await tester.tap(find.byKey(const ValueKey('accept_button')));
+      await tester.pump();
+      await tester.pump();
+      expect(h.api.calls, contains('bid:r1:accept:eta5'));
+      await teardown(tester, h);
+    });
+
+    test('arrival-time promises shorter than 75 % of the pickup ETA are not offered', () {
+      expect(DriverController.etaChoiceAllowed(3, 150), isTrue);
+      expect(DriverController.etaChoiceAllowed(3, 300), isFalse);
+      expect(DriverController.etaChoiceAllowed(5, 400), isTrue);
+      expect(DriverController.etaChoiceAllowed(15, null), isTrue);
+    });
+
     testWidgets('Accept for NN DH, counter chips, then waiting + withdraw', (tester) async {
       final h = await Harness.create();
       h.api.bidExpiry = h.clock.now.add(const Duration(seconds: 60));

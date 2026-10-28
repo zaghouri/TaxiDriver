@@ -127,8 +127,8 @@ class FakeDriverBackend implements DriverBackend {
   }
 
   @override
-  Future<Bid> placeBid(String rideId, {int? counterPrice}) async {
-    calls.add(counterPrice == null ? 'bid:$rideId:accept' : 'bid:$rideId:counter:$counterPrice');
+  Future<Bid> placeBid(String rideId, {int? counterPrice, int? etaMin}) async {
+    calls.add('${counterPrice == null ? 'bid:$rideId:accept' : 'bid:$rideId:counter:$counterPrice'}${etaMin == null ? '' : ':eta$etaMin'}');
     if (bidError != null) _throw(bidError!);
     bidSeq++;
     return bid(rideId, id: 'b$bidSeq', kind: counterPrice == null ? 'accept' : 'counter', price: counterPrice ?? 30, expiresAt: bidExpiry);

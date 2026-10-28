@@ -2143,4 +2143,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errRatingReasonInvalid =>
       'These reasons don’t match your stars. Please choose again.';
+
+  @override
+  String get errEtaTooShort =>
+      'You are farther than that. Choose a longer arrival time.';
+
+  @override
+  String offerEtaPromised(int minutes) {
+    return 'Promises $minutes min';
+  }
+
+  @override
+  String driverDueBy(String time) {
+    return 'Promised arrival: $time';
+  }
 }

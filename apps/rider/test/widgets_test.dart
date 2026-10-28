@@ -162,6 +162,18 @@ void main() {
           locale: locale,
         );
 
+    testWidgets('a promised arrival time replaces the estimate on the offer (D66)', (tester) async {
+      await _setPhone(tester);
+      await tester.pumpWidget(wrapApp(Scaffold(
+        body: Column(children: [
+          OfferCard(bid: mkBid('b1', etaS: 400, promisedEtaS: 300), progress: 1, onAccept: () {}, onDecline: () {}),
+          OfferCard(bid: mkBid('b2', etaS: 240), progress: 1, onAccept: () {}, onDecline: () {}),
+        ]),
+      )));
+      expect(find.text('Promises 5 min'), findsOneWidget);
+      expect(find.byKey(const ValueKey('offer_eta_promised')), findsOneWidget);
+    });
+
     testWidgets('driver, rating, trips, car, ETA, price; Decline left and Accept right', (tester) async {
       await _setPhone(tester);
       var accepted = 0, declined = 0;
@@ -309,6 +321,7 @@ void main() {
         expect(find.text(d), findsOneWidget);
       }
       expect(find.text('Arrives in 4 min'), findsOneWidget);
+      expect(find.byKey(const ValueKey('ride_due_by')), findsNothing, reason: 'no promise');
       expect(find.text('Documents checked by RideMA'), findsOneWidget);
       expect(find.text('Identity'), findsOneWidget);
       expect(find.text('Car papers'), findsOneWidget);
