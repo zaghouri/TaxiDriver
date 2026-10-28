@@ -3861,6 +3861,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Promised arrival: {time}'**
   String driverDueBy(String time);
+
+  /// No description provided for @reasonDriverLate.
+  ///
+  /// In en, this message translates to:
+  /// **'The driver is late'**
+  String get reasonDriverLate;
+
+  /// Error text for API code DRIVER_NOT_LATE
+  ///
+  /// In en, this message translates to:
+  /// **'Your driver is not late yet. You can still cancel with another reason.'**
+  String get errDriverNotLate;
 }
 
 class _AppLocalizationsDelegate

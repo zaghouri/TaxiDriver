@@ -2188,4 +2188,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String driverDueBy(String time) {
     return 'Arrivée promise : $time';
   }
+
+  @override
+  String get reasonDriverLate => 'Le chauffeur est en retard';
+
+  @override
+  String get errDriverNotLate =>
+      'Votre chauffeur n’est pas encore en retard. Vous pouvez annuler avec une autre raison.';
 }

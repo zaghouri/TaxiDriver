@@ -626,5 +626,7 @@
   "errRatingReasonInvalid": "Ces raisons ne correspondent pas à votre note. Choisissez à nouveau.",
   "errEtaTooShort": "Vous êtes plus loin que cela. Choisissez un délai plus long.",
   "offerEtaPromised": "Promet {minutes} min",
-  "driverDueBy": "Arrivée promise : {time}"
+  "driverDueBy": "Arrivée promise : {time}",
+  "reasonDriverLate": "Le chauffeur est en retard",
+  "errDriverNotLate": "Votre chauffeur n’est pas encore en retard. Vous pouvez annuler avec une autre raison."
 }

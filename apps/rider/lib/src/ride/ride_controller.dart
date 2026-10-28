@@ -37,6 +37,9 @@ enum RiderNotice {
   cancelWarning,
   reportSent,
   rideAlreadyActive,
+
+  /// The driver is late (D67): keep waiting, call, or find a new driver for free.
+  driverLate,
 }
 
 /// Why the current fare cannot be sent.
@@ -643,6 +646,23 @@ class RideController extends ChangeNotifier {
     return requestRide();
   }
 
+  /// Ride whose "driver late" prompt was already shown (once per ride).
+  String? _lateNoticeFor;
+
+  /// The driver is late: the rider may rebook for free (D67).
+  bool get driverLate => _phase == RiderPhase.accepted && _ride?.driverLate == true;
+
+  /// "Find a new driver" after the late prompt: free cancel (`driver_late`), then the same request again
+  /// with the rider's own fare.
+  Future<bool> findNewDriver() async {
+    final r = _ride;
+    if (r == null || !driverLate) return false;
+    if (!await cancel(CancelReason.driverLate)) return false;
+    if (_estimate == null) await refreshEstimate();
+    _fare = r.offeredPrice;
+    return requestRide();
+  }
+
   /// "Edit request" after the driver cancelled: stay on Home with the same details.
   void dismissSearchAgain() => _searchAgainFare = null;
 
@@ -778,6 +798,10 @@ class RideController extends ChangeNotifier {
         _phase = RiderPhase.accepted;
         _bids.clear();
         _startTicker();
+        if (r.driverLate && _lateNoticeFor != r.id) {
+          _lateNoticeFor = r.id;
+          _notice = RiderNotice.driverLate;
+        }
       case RideStatus.arrived:
         _phase = RiderPhase.arrived;
         _bids.clear();

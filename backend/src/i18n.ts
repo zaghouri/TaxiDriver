@@ -41,6 +41,18 @@ const t = {
   push_pickup_changed_title: { en: 'Pickup point moved', fr: 'Point de prise en charge déplacé', ar: 'تم تغيير نقطة الانطلاق' },
   push_pickup_changed_body: { en: 'The rider moved the pickup point. Check the new route.', fr: 'Le passager a déplacé le point de prise en charge. Vérifiez le nouvel itinéraire.', ar: 'غيّر الراكب نقطة الانطلاق. تحقق من المسار الجديد.' },
   push_arrived_body: { en: '{car} · {plate}', fr: '{car} · {plate}', ar: '{car} · {plate}' },
+  push_driver_late_title: { en: 'Your driver is running late', fr: 'Votre chauffeur est en retard', ar: 'سائقك متأخر' },
+  push_driver_late_body: {
+    en: '{min} min past the expected time. Keep waiting, call, or find a new driver for free.',
+    fr: '{min} min après l’heure prévue. Patientez, appelez-le ou trouvez un autre chauffeur gratuitement.',
+    ar: '{min} د بعد الوقت المتوقع. انتظر أو اتصل به أو ابحث عن سائق آخر مجانًا.',
+  },
+  push_you_are_late_title: { en: 'You are late for the pickup', fr: 'Vous êtes en retard au départ', ar: 'أنت متأخر عن نقطة الانطلاق' },
+  push_you_are_late_body: {
+    en: '{min} min past the expected time. The rider can now cancel for free.',
+    fr: '{min} min après l’heure prévue. Le passager peut maintenant annuler gratuitement.',
+    ar: '{min} د بعد الوقت المتوقع. يمكن للراكب الآن الإلغاء مجانًا.',
+  },
   push_cancelled_title: { en: 'Ride cancelled', fr: 'Course annulée', ar: 'أُلغيت الرحلة' },
   push_cancelled_body: { en: 'The ride was cancelled.', fr: 'La course a été annulée.', ar: 'تم إلغاء الرحلة.' },
   push_expired_title: { en: 'No driver found', fr: 'Aucun chauffeur trouvé', ar: 'لم يتم العثور على سائق' },

@@ -11,7 +11,7 @@ export const RIDE_COLUMNS = `r.id, r.city_id, r.rider_id, r.driver_id, r.status,
   r.distance_m, r.duration_s, r.suggested_price, r.offered_price, r.final_price, r.accepted_bid_id, r.vehicle_id,
   r.pickup_pin, r.pin_attempts, r.rider_comment, r.flagged, r.cancelled_by, r.cancel_reason,
   r.requested_at, r.expires_at, r.accepted_at, r.arrived_at, r.started_at, r.completed_at, r.cancelled_at,
-  r.search_wave, r.search_radius_m, r.drivers_notified, r.pickup_edited_at, r.pickup_due_at, r.eta_promised, r.arrived_late_s`;
+  r.search_wave, r.search_radius_m, r.drivers_notified, r.pickup_edited_at, r.pickup_due_at, r.eta_promised, r.arrived_late_s, r.driver_late_at`;
 
 export interface RideRow {
   id: string;
@@ -52,6 +52,7 @@ export interface RideRow {
   pickup_due_at: Date | null;
   eta_promised: boolean;
   arrived_late_s: number | null;
+  driver_late_at: Date | null;
 }
 
 export async function getRide(q: Queryable, id: string, lock = false): Promise<RideRow | null> {
@@ -161,6 +162,9 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
     view.eta_promised = r.eta_promised;
     view.arrived_late_s = r.arrived_late_s;
   }
+  // The driver is past the due time by the city's margin (D67): the rider may wait, call, or rebook for free.
+  if (r.driver_late_at) view.driver_late_at = r.driver_late_at;
+  if (isRider || isDriver || isAdmin) view.driver_late = r.status === 'accepted' && !!r.driver_late_at;
   if ((isRider || isAdmin) && r.status === 'searching') {
     view.search = { wave: r.search_wave, radius_m: r.search_radius_m, drivers_notified: r.drivers_notified };
   }

@@ -3,7 +3,7 @@ import { Queue, Worker } from 'bullmq';
 import { loadConfig } from './config.js';
 import { createContext, closeContext } from './context.js';
 import { TIMEOUT_QUEUE } from './core/scheduler.js';
-import { expireBid, expireRide, runSearchWave, sweepTimeouts } from './modules/rides/service.js';
+import { expireBid, expireRide, markDriverLate, runSearchWave, sweepTimeouts } from './modules/rides/service.js';
 import { runDocumentExpiry, runRetention, runStaleDrivers, runSubscriptionExpiry } from './jobs/maintenance.js';
 
 const MAINT_QUEUE = 'ridema-maintenance';
@@ -23,6 +23,7 @@ export async function startWorker() {
       if (job.name === 'ride-expire') return expireRide(ctx, job.data.rideId);
       if (job.name === 'bid-expire') return expireBid(ctx, job.data.bidId);
       if (job.name === 'ride-wave') return runSearchWave(ctx, job.data.rideId, Number(job.data.wave));
+      if (job.name === 'ride-late') return markDriverLate(ctx, job.data.rideId);
     },
     { connection, prefix, concurrency: 20 },
   );

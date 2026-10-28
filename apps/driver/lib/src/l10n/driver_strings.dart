@@ -35,6 +35,7 @@ class DriverStrings {
   String get etaChoiceHint => _t('etaChoiceHint');
   String etaChoiceMin(int min) => _f('etaChoiceMin', {'min': min});
   String etaPromisedTo(String time) => _f('etaPromisedTo', {'time': time});
+  String get youAreLate => _t('youAreLate');
   // "Ready to drive" checklist (D62).
   String get readyTitle => _t('readyTitle');
   String get readyMenu => _t('readyMenu');
@@ -226,6 +227,7 @@ class DriverStrings {
       'etaChoiceHint': 'The rider sees your promise. Arriving late is recorded.',
       'etaChoiceMin': '{min} min',
       'etaPromisedTo': 'You promised to be there by {time}',
+      'youAreLate': 'You are late for the pickup. The rider can now cancel for free.',
     },
     'fr': {
       'fileTooLarge': 'Fichier trop lourd (8 Mo max). Prenez plutôt une photo.',
@@ -310,6 +312,7 @@ class DriverStrings {
       'etaChoiceHint': 'Le passager voit votre promesse. Les retards sont enregistrés.',
       'etaChoiceMin': '{min} min',
       'etaPromisedTo': 'Vous avez promis d’être là à {time}',
+      'youAreLate': 'Vous êtes en retard au départ. Le passager peut maintenant annuler gratuitement.',
     },
     'ar': {
       'fileTooLarge': 'الملف كبير جدًا (8 ميغابايت كحد أقصى). التقط صورة بدلًا منه.',
@@ -394,6 +397,7 @@ class DriverStrings {
       'etaChoiceHint': 'يرى الراكب وعدك. يُسجَّل التأخر.',
       'etaChoiceMin': '{min} د',
       'etaPromisedTo': 'وعدت بالوصول قبل {time}',
+      'youAreLate': 'أنت متأخر عن نقطة الانطلاق. يمكن للراكب الآن الإلغاء مجانًا.',
     },
   };
 

@@ -56,6 +56,7 @@ String? apiErrorTextForCode(AppLocalizations l, String code) => switch (code) {
       'ALREADY_RATED' => l.errAlreadyRated,
       'RATING_REASON_INVALID' => l.errRatingReasonInvalid,
       'ETA_TOO_SHORT' => l.errEtaTooShort,
+      'DRIVER_NOT_LATE' => l.errDriverNotLate,
       'RATING_WINDOW_CLOSED' => l.errRatingWindowClosed,
       'BID_ALREADY_ACTIVE' => l.errBidAlreadyActive,
       'BID_DECLINED_BEFORE' => l.errBidDeclinedBefore,

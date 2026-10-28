@@ -148,6 +148,10 @@ class _ActiveRideViewState extends State<ActiveRideView> {
 
     final List<Widget> main = switch (r.status) {
       RideStatus.accepted => [
+          if (r.driverLate) ...[
+            InfoBox(ds.youAreLate, icon: Icons.schedule, color: BrandColors.danger, key: const ValueKey('you_are_late')),
+            gap8,
+          ],
           if (r.etaPromised && r.pickupDueAt != null) ...[
             Text(ds.etaPromisedTo(formatTime(r.pickupDueAt)), key: const ValueKey('eta_promised'), textAlign: TextAlign.center),
             gap8,

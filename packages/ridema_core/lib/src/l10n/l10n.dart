@@ -88,6 +88,7 @@ String cancelReasonText(AppLocalizations l, CancelReason r) => switch (r) {
       CancelReason.riderNoShow => l.reasonRiderNoShow,
       CancelReason.carMismatch => l.reasonCarMismatch,
       CancelReason.safety => l.reasonSafety,
+      CancelReason.driverLate => l.reasonDriverLate,
       CancelReason.other => l.reasonOther,
     };
 

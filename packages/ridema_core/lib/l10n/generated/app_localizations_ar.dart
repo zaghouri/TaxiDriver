@@ -2131,4 +2131,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String driverDueBy(String time) {
     return 'الوصول الموعود: $time';
   }
+
+  @override
+  String get reasonDriverLate => 'السائق متأخر';
+
+  @override
+  String get errDriverNotLate =>
+      'سائقك ليس متأخرًا بعد. يمكنك الإلغاء بسبب آخر.';
 }
