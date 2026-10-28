@@ -91,6 +91,11 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
   /// Live ride status on the lock screen while a driver is assigned (D69).
   final _live = LiveRideNotificationSync(const ChannelRideNotifier());
 
+  /// Ride chat with the driver (D72), one per ride while a driver is assigned.
+  ChatController? _chat;
+  StreamSubscription<ChatMessage>? _chatSub;
+  bool _chatOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -104,6 +109,7 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
     WidgetsBinding.instance.removeObserver(this);
     _c.removeListener(_onController);
     unawaited(_live.update(null, null));
+    _closeChat();
     super.dispose();
   }
 
@@ -199,6 +205,7 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
     final n = _c.takeNotice();
     if (n != null) _showNotice(n);
     final r = _c.ride;
+    _syncChat(r);
     unawaited(_live.update(
       r?.id,
       liveRideContent(ride: r, phase: _c.phase, etaMinutes: _c.etaMinutes, l: context.l10n, rs: RiderStrings.of(context)),
@@ -267,6 +274,58 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
     } else {
       _c.dismissSearchAgain();
     }
+  }
+
+  /// Keeps one chat controller for the ride while a driver is assigned (D72).
+  void _syncChat(Ride? r) {
+    final active = r != null && r.driver != null && const {RiderPhase.accepted, RiderPhase.arrived, RiderPhase.inProgress}.contains(_c.phase);
+    if (!active) {
+      if (_chat != null && !_chatOpen) _closeChat();
+      return;
+    }
+    if (_chat?.rideId == r.id) return;
+    _closeChat();
+    // Tests provide their own transport.
+    final transport = Provider.of<ChatTransport?>(context, listen: false) ?? CoreChatTransport(_s.api, _s.realtime);
+    final chat = ChatController(transport: transport, rideId: r.id, myRole: 'rider')
+      ..addListener(() {
+        if (mounted) setState(() {});
+      });
+    _chatSub = chat.onMessageFromOther.listen((m) {
+      if (!mounted || _chatOpen) return;
+      final l = context.l10n;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+        content: Text(l.chatNewFrom(_c.ride?.driver?.firstName ?? '')),
+        action: SnackBarAction(label: l.chatOpen, onPressed: _openChat),
+      ));
+    });
+    _chat = chat;
+    unawaited(chat.start());
+  }
+
+  void _closeChat() {
+    _chatSub?.cancel();
+    _chatSub = null;
+    _chat?.dispose();
+    _chat = null;
+  }
+
+  Future<void> _openChat() async {
+    final chat = _chat;
+    if (chat == null || _chatOpen) return;
+    _chatOpen = true;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => ListenableBuilder(
+        listenable: _c,
+        builder: (_, _) => ChatScreen(
+          controller: chat,
+          peerName: _c.ride?.driver?.firstName ?? '',
+          open: _c.ride?.id == chat.rideId && const {RiderPhase.accepted, RiderPhase.arrived, RiderPhase.inProgress}.contains(_c.phase),
+        ),
+      ),
+    ));
+    _chatOpen = false;
+    if (mounted) _syncChat(_c.ride);
   }
 
   /// The driver is late (D67): keep waiting (default), call, or find a new driver for free.
@@ -446,6 +505,8 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
           onSos: () => showSosSheet(context, rideId: r!.id, position: _sosPosition),
           onEditPickup: _movePickup,
           onFindNewDriver: _findNewDriver,
+          onMessage: _chat == null ? null : _openChat,
+          unreadMessages: _chat?.unread ?? 0,
         ),
       RiderPhase.completed => const RateDriverPanel(),
     };

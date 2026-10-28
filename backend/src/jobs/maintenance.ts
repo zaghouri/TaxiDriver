@@ -66,6 +66,7 @@ export async function runRetention(ctx: AppContext): Promise<Record<string, numb
       'UPDATE sos_alerts SET ride_id = NULL WHERE ride_id = ANY($1)',
       'UPDATE driver_penalties SET ride_id = NULL WHERE ride_id = ANY($1)',
       'DELETE FROM ride_events WHERE ride_id = ANY($1)',
+      'DELETE FROM ride_messages WHERE ride_id = ANY($1)',
       'DELETE FROM ride_route_points WHERE ride_id = ANY($1)',
       'UPDATE rides SET accepted_bid_id = NULL WHERE id = ANY($1)',
       'DELETE FROM bids WHERE ride_id = ANY($1)',

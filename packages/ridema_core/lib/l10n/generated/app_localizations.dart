@@ -3993,6 +3993,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This contact no longer exists.'**
   String get errContactNotFound;
+
+  /// No description provided for @chatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get chatTitle;
+
+  /// No description provided for @chatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a message'**
+  String get chatHint;
+
+  /// No description provided for @chatSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get chatSend;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet. Tap a quick reply or write below.'**
+  String get chatEmpty;
+
+  /// No description provided for @chatClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages are closed: this ride is over.'**
+  String get chatClosed;
+
+  /// No description provided for @chatFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent. Tap to try again.'**
+  String get chatFailed;
+
+  /// No description provided for @chatPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages are kept with the trip. Our team reads them only if there is a problem. Never share your phone number.'**
+  String get chatPrivacy;
+
+  /// No description provided for @messageButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get messageButton;
+
+  /// No description provided for @chatNewFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'New message from {name}'**
+  String chatNewFrom(String name);
+
+  /// No description provided for @chatOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get chatOpen;
+
+  /// No description provided for @chatQuickComing.
+  ///
+  /// In en, this message translates to:
+  /// **'I’m coming'**
+  String get chatQuickComing;
+
+  /// No description provided for @chatQuickAtPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'I’m at the pickup point'**
+  String get chatQuickAtPickup;
+
+  /// No description provided for @chatQuickWaitPlease.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait 2 minutes'**
+  String get chatQuickWaitPlease;
+
+  /// No description provided for @chatQuickWhereAreYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Where are you?'**
+  String get chatQuickWhereAreYou;
+
+  /// No description provided for @chatQuickHere.
+  ///
+  /// In en, this message translates to:
+  /// **'I’m here'**
+  String get chatQuickHere;
+
+  /// No description provided for @chatQuickOnMyWay.
+  ///
+  /// In en, this message translates to:
+  /// **'On my way'**
+  String get chatQuickOnMyWay;
+
+  /// No description provided for @chatQuickTraffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Stuck in traffic, a few more minutes'**
+  String get chatQuickTraffic;
+
+  /// No description provided for @chatQuickCantFindYou.
+  ///
+  /// In en, this message translates to:
+  /// **'I can’t find you. Where exactly are you?'**
+  String get chatQuickCantFindYou;
+
+  /// Error text for API code CHAT_CLOSED
+  ///
+  /// In en, this message translates to:
+  /// **'Messages are open only during the ride.'**
+  String get errChatClosed;
 }
 
 class _AppLocalizationsDelegate

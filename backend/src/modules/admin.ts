@@ -8,6 +8,7 @@ import { parse, uuid, password } from '../lib/validation.js';
 import { enqueue, enqueueMany } from '../core/outbox.js';
 import { CITY_COLUMNS } from '../core/settings.js';
 import { documentProblems, driverView } from './drivers.js';
+import { messagesFor } from './chat.js';
 import { deleteAccount } from './me.js';
 import { addEvent, notifyRideUpdate } from './rides/service.js';
 import { getRide, rideView } from './rides/views.js';
@@ -277,6 +278,7 @@ export async function adminRoutes(app: FastifyInstance, ctx: AppContext) {
       reports: await many(db, 'SELECT * FROM reports WHERE ride_id = $1 ORDER BY created_at', [rideId]),
       sos: await many(db, 'SELECT id, service, status, user_id, created_at, note FROM sos_alerts WHERE ride_id = $1', [rideId]),
       ratings: await many(db, 'SELECT rater_id, ratee_id, stars, comment, reasons, created_at FROM ratings WHERE ride_id = $1', [rideId]),
+      messages: await messagesFor(ctx, rideId, req.user!),
     };
   });
 

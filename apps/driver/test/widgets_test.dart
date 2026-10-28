@@ -169,6 +169,28 @@ void main() {
       await teardown(tester, h);
     });
 
+    testWidgets('ride chat: a message from the rider shows a badge; the driver answers with a quick reply (D72)', (tester) async {
+      final h = await Harness.create();
+      h.api.active = ActiveRide(ride: makeRide('r1', 'accepted'));
+      await h.controller.refreshActive();
+      await tester.pumpWidget(h.wrap(const HomeScreen(), locale: 'en'));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('chat_button')), findsOneWidget);
+      h.chat.incomingCtrl.add(ChatMessage(id: 'x1', rideId: 'r1', fromRole: 'rider', quick: 'coming', createdAt: DateTime.now()));
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('1'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('chat_button')));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(find.text('I’m coming'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('quick_on_my_way')));
+      await tester.pump();
+      expect(h.chat.sent, ['on_my_way']);
+      await teardown(tester, h);
+    });
+
     testWidgets('active ride replaces the list (going to pickup)', (tester) async {
       final h = await Harness.create();
       h.api.active = ActiveRide(ride: makeRide('r1', 'accepted'));

@@ -16,12 +16,15 @@ export 'src/auth/auth_controller.dart';
 export 'src/config/app_config.dart';
 export 'src/config/firebase_services.dart';
 export 'src/config/remote_config_service.dart';
+export 'src/chat/chat_controller.dart';
+export 'src/chat/chat_screen.dart';
 export 'src/core_services.dart';
 // Localisation
 export 'src/l10n/l10n.dart';
 export 'src/l10n/locale_controller.dart';
 // Models
 export 'src/models/app_models.dart';
+export 'src/models/chat.dart';
 export 'src/models/driver.dart';
 export 'src/models/json.dart' show Json;
 export 'src/models/rating_reasons.dart';

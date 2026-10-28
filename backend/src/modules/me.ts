@@ -70,6 +70,7 @@ export async function exportData(ctx: AppContext, userId: string) {
     vehicles: await q('SELECT make, model, year, colour, plate, created_at FROM vehicles WHERE driver_id = $1'),
     documents: await q('SELECT type, status, expires_on, created_at FROM documents WHERE driver_id = $1'),
     sos_alerts: await q('SELECT ride_id, service, status, created_at FROM sos_alerts WHERE user_id = $1'),
+    messages_sent: await q('SELECT ride_id, body, quick, created_at FROM ride_messages WHERE sender_id = $1 ORDER BY created_at'),
     emergency_contacts: await q('SELECT name, phone, created_at FROM emergency_contacts WHERE user_id = $1'),
     reports: await q('SELECT ride_id, kind, details, status, created_at FROM reports WHERE reporter_id = $1'),
     subscriptions: await q('SELECT status, amount, provider, period_start, period_end, created_at FROM subscriptions WHERE driver_id = $1'),

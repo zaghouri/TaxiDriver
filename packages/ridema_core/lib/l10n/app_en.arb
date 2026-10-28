@@ -1599,5 +1599,34 @@
   "errContactNotFound": "This contact no longer exists.",
   "@errContactNotFound": {
     "description": "Error text for API code CONTACT_NOT_FOUND"
+  },
+  "chatTitle": "Messages",
+  "chatHint": "Write a message",
+  "chatSend": "Send",
+  "chatEmpty": "No messages yet. Tap a quick reply or write below.",
+  "chatClosed": "Messages are closed: this ride is over.",
+  "chatFailed": "Not sent. Tap to try again.",
+  "chatPrivacy": "Messages are kept with the trip. Our team reads them only if there is a problem. Never share your phone number.",
+  "messageButton": "Message",
+  "chatNewFrom": "New message from {name}",
+  "@chatNewFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chatOpen": "Open",
+  "chatQuickComing": "I’m coming",
+  "chatQuickAtPickup": "I’m at the pickup point",
+  "chatQuickWaitPlease": "Please wait 2 minutes",
+  "chatQuickWhereAreYou": "Where are you?",
+  "chatQuickHere": "I’m here",
+  "chatQuickOnMyWay": "On my way",
+  "chatQuickTraffic": "Stuck in traffic, a few more minutes",
+  "chatQuickCantFindYou": "I can’t find you. Where exactly are you?",
+  "errChatClosed": "Messages are open only during the ride.",
+  "@errChatClosed": {
+    "description": "Error text for API code CHAT_CLOSED"
   }
 }

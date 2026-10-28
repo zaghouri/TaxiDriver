@@ -61,6 +61,7 @@ String? apiErrorTextForCode(AppLocalizations l, String code) => switch (code) {
       'EMERGENCY_CONTACT_EXISTS' => l.errEmergencyContactExists,
       'EMERGENCY_CONTACT_SELF' => l.errEmergencyContactSelf,
       'CONTACT_NOT_FOUND' => l.errContactNotFound,
+      'CHAT_CLOSED' => l.errChatClosed,
       'RATING_WINDOW_CLOSED' => l.errRatingWindowClosed,
       'BID_ALREADY_ACTIVE' => l.errBidAlreadyActive,
       'BID_DECLINED_BEFORE' => l.errBidDeclinedBefore,

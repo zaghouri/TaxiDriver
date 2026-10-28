@@ -330,6 +330,21 @@ void main() {
       }
     });
 
+    testWidgets('Message button with the unread count opens the chat (D72)', (tester) async {
+      await _setPhone(tester);
+      var opened = 0;
+      final r = mkRide(status: 'accepted', pin: '4821', withDriver: true);
+      await tester.pumpWidget(wrapApp(Scaffold(
+        body: SingleChildScrollView(
+          child: DriverRideCard(ride: r, phase: RiderPhase.accepted, pin: '4821', onMessage: () => opened++, unreadMessages: 3),
+        ),
+      )));
+      expect(find.text('Message'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('ride_chat')));
+      expect(opened, 1);
+    });
+
     testWidgets('late driver: banner with "Find a new driver" (D67)', (tester) async {
       await _setPhone(tester);
       var rebooked = 0;
