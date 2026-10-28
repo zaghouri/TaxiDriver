@@ -2195,4 +2195,27 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errDriverNotLate =>
       'Votre chauffeur n’est pas encore en retard. Vous pouvez annuler avec une autre raison.';
+
+  @override
+  String waitFreeLeft(String time) {
+    return 'Attente gratuite : encore $time';
+  }
+
+  @override
+  String waitFeeSoFar(int amount, int perMin, int max) {
+    return 'Frais d’attente : $amount DH pour l’instant ($perMin DH/min, max $max DH)';
+  }
+
+  @override
+  String waitRulesInfo(int free, int perMin, int max) {
+    return '$free min d’attente gratuite, puis $perMin DH par minute (max $max DH), ajoutés au prix en espèces.';
+  }
+
+  @override
+  String get receiptFare => 'Prix convenu';
+
+  @override
+  String receiptWaitingFee(int minutes) {
+    return 'Frais d’attente ($minutes min)';
+  }
 }

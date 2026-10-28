@@ -57,6 +57,12 @@ const t = {
   push_trip_started_body: { en: 'On the way to {place}', fr: 'En route vers {place}', ar: 'في الطريق إلى {place}' },
   push_trip_completed_title: { en: 'You have arrived', fr: 'Vous êtes arrivé', ar: 'لقد وصلت' },
   push_trip_completed_body: { en: 'Pay {price} DH in cash to the driver, then rate the trip.', fr: 'Payez {price} DH en espèces au chauffeur, puis notez la course.', ar: 'ادفع {price} درهم نقدًا للسائق، ثم قيّم الرحلة.' },
+  push_wait_reminder_title: { en: 'Your driver is waiting', fr: 'Votre chauffeur vous attend', ar: 'سائقك ينتظرك' },
+  push_wait_reminder_body: {
+    en: 'The free wait ends in 1 minute. After that, waiting costs {fee} DH per minute.',
+    fr: 'L’attente gratuite se termine dans 1 minute. Ensuite, l’attente coûte {fee} DH par minute.',
+    ar: 'ينتهي الانتظار المجاني بعد دقيقة واحدة. بعد ذلك، يكلّف الانتظار {fee} درهم للدقيقة.',
+  },
   push_cancelled_title: { en: 'Ride cancelled', fr: 'Course annulée', ar: 'أُلغيت الرحلة' },
   push_cancelled_body: { en: 'The ride was cancelled.', fr: 'La course a été annulée.', ar: 'تم إلغاء الرحلة.' },
   push_expired_title: { en: 'No driver found', fr: 'Aucun chauffeur trouvé', ar: 'لم يتم العثور على سائق' },

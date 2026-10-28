@@ -165,6 +165,9 @@ class Receipt {
     required this.distanceKm,
     required this.durationMin,
     required this.price,
+    this.fare,
+    this.waitingFee = 0,
+    this.waitingMin = 0,
     this.startedAt,
     this.currency = 'DH',
     this.paymentMethod = 'cash',
@@ -184,7 +187,12 @@ class Receipt {
   final Place to;
   final double distanceKm;
   final int durationMin;
+
+  /// Total paid: [fare] + [waitingFee] (D70).
   final int price;
+  final int? fare;
+  final int waitingFee;
+  final int waitingMin;
   final String currency;
   final String paymentMethod;
   final int commission;
@@ -210,6 +218,9 @@ class Receipt {
       distanceKm: asDouble(j['distance_km']) ?? 0,
       durationMin: asIntOr(j['duration_min']),
       price: asIntOr(j['price']),
+      fare: asInt(j['fare']),
+      waitingFee: asIntOr(j['waiting_fee']),
+      waitingMin: asIntOr(j['waiting_min']),
       currency: asStringOr(j['currency'], 'DH'),
       paymentMethod: asStringOr(j['payment_method'], 'cash'),
       commission: asIntOr(j['commission']),

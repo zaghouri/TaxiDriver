@@ -291,6 +291,21 @@ void main() {
     }
   });
 
+  test('waiting fee rules and total price (D70)', () {
+    const w = WaitingRules(freeS: 180, perMin: 2, max: 10);
+    expect(w.feeFor(const Duration(seconds: 180)), 0);
+    expect(w.feeFor(const Duration(seconds: 181)), 2);
+    expect(w.feeFor(const Duration(minutes: 30)), 10);
+    expect(w.freeLeft(const Duration(seconds: 100)), const Duration(seconds: 80));
+    expect(w.freeLeft(const Duration(minutes: 9)), Duration.zero);
+    final r = Ride.fromJson({'final_price': 30, 'offered_price': 25, 'waiting_fee': 4, 'waiting_rules': {'free_s': 180, 'per_min': 2, 'max': 10}});
+    expect(r.fare, 30);
+    expect(r.price, 34);
+    expect(r.waitingRules!.perMin, 2);
+    final rc = Receipt.fromJson({'price': 34, 'fare': 30, 'waiting_fee': 4, 'waiting_min': 5});
+    expect((rc.fare, rc.waitingFee, rc.waitingMin), (30, 4, 5));
+  });
+
   test('driver profile alert distance (D68)', () {
     expect(DriverProfile.fromJson({'status': 'approved', 'max_pickup_km': 2}).maxPickupKm, 2);
     expect(DriverProfile.fromJson({'status': 'approved'}).maxPickupKm, isNull);

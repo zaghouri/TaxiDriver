@@ -248,6 +248,28 @@ void main() {
       expect(find.text('Papiers de la voiture'), findsNothing);
     });
 
+    testWidgets('waiting line: free countdown, then the fee; receipt breakdown (D70)', (tester) async {
+      phone(tester);
+      final s = await buildTestServices();
+      var now = DateTime.utc(2026, 10, 26, 10, 1, 40);
+      final arrived = DateTime.utc(2026, 10, 26, 10);
+      await tester.pumpWidget(testApp(
+        s,
+        Scaffold(body: WaitingFeeLine(rules: const WaitingRules(freeS: 180, perMin: 2, max: 10), arrivedAt: arrived, now: () => now)),
+        locale: 'en',
+      ));
+      expect(find.text('Free waiting: 1:20 left'), findsOneWidget);
+      now = DateTime.utc(2026, 10, 26, 10, 4, 10);
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('Waiting fee: 4 DH so far (2 DH/min, max 10 DH)'), findsOneWidget);
+
+      final r = Receipt.fromJson({'receipt_number': 'R-2', 'price': 34, 'fare': 30, 'waiting_fee': 4, 'waiting_min': 5, 'from': {}, 'to': {}});
+      await tester.pumpWidget(testApp(s, Scaffold(body: SingleChildScrollView(child: ReceiptView(receipt: r))), locale: 'en'));
+      expect(find.byKey(const ValueKey('receipt_waiting_fee')), findsOneWidget);
+      expect(find.text('Waiting fee (5 min)'), findsOneWidget);
+      expect(find.text('34 DH'), findsOneWidget);
+    });
+
     testWidgets('receipt view shows price, cash, company RC/ICE', (tester) async {
       phone(tester);
       final s = await buildTestServices();

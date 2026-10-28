@@ -628,5 +628,10 @@
   "offerEtaPromised": "Promet {minutes} min",
   "driverDueBy": "Arrivée promise : {time}",
   "reasonDriverLate": "Le chauffeur est en retard",
-  "errDriverNotLate": "Votre chauffeur n’est pas encore en retard. Vous pouvez annuler avec une autre raison."
+  "errDriverNotLate": "Votre chauffeur n’est pas encore en retard. Vous pouvez annuler avec une autre raison.",
+  "waitFreeLeft": "Attente gratuite : encore {time}",
+  "waitFeeSoFar": "Frais d’attente : {amount} DH pour l’instant ({perMin} DH/min, max {max} DH)",
+  "waitRulesInfo": "{free} min d’attente gratuite, puis {perMin} DH par minute (max {max} DH), ajoutés au prix en espèces.",
+  "receiptFare": "Prix convenu",
+  "receiptWaitingFee": "Frais d’attente ({minutes} min)"
 }

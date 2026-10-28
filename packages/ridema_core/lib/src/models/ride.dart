@@ -199,6 +199,9 @@ class Ride {
     this.etaPromised = false,
     this.arrivedLateS,
     this.driverLate = false,
+    this.waitingFee = 0,
+    this.waitingS,
+    this.waitingRules,
   });
 
   final String id;
@@ -253,8 +256,20 @@ class Ride {
   /// The driver is past [pickupDueAt] by the city margin and not there yet (D67).
   final bool driverLate;
 
-  /// Price the rider pays: final price once agreed, else the current offer.
-  int get price => finalPrice ?? offeredPrice;
+  /// Paid waiting added to the agreed price when the trip started (D70), in DH.
+  final int waitingFee;
+
+  /// Seconds the driver waited at the pickup (set when the trip starts).
+  final int? waitingS;
+
+  /// While arrived, when the city charges for waiting (D70).
+  final WaitingRules? waitingRules;
+
+  /// Agreed price once accepted, else the current offer.
+  int get fare => finalPrice ?? offeredPrice;
+
+  /// Price the rider pays in cash: [fare] plus any waiting fee (D70).
+  int get price => fare + waitingFee;
 
   factory Ride.fromJson(Object? json) {
     final j = asJson(json);
@@ -293,7 +308,37 @@ class Ride {
       etaPromised: j['eta_promised'] == true,
       arrivedLateS: asInt(j['arrived_late_s']),
       driverLate: j['driver_late'] == true,
+      waitingFee: asIntOr(j['waiting_fee']),
+      waitingS: asInt(j['waiting_s']),
+      waitingRules: j['waiting_rules'] is Map ? WaitingRules.fromJson(j['waiting_rules']) : null,
     );
+  }
+}
+
+/// Paid waiting at the pickup (D70): [freeS] free, then [perMin] DH per started minute, at most [max] DH.
+class WaitingRules {
+  const WaitingRules({required this.freeS, required this.perMin, required this.max});
+  final int freeS;
+  final int perMin;
+  final int max;
+
+  /// Same rule as the server (`waitingFee` in `backend/src/modules/rides/waiting.ts`).
+  int feeFor(Duration waited) {
+    final s = waited.inSeconds;
+    if (s <= freeS) return 0;
+    final fee = ((s - freeS) / 60).ceil() * perMin;
+    return fee > max ? max : fee;
+  }
+
+  /// Free waiting left (zero once the fee starts).
+  Duration freeLeft(Duration waited) {
+    final left = Duration(seconds: freeS) - waited;
+    return left.isNegative ? Duration.zero : left;
+  }
+
+  factory WaitingRules.fromJson(Object? json) {
+    final j = asJson(json);
+    return WaitingRules(freeS: asIntOr(j['free_s']), perMin: asIntOr(j['per_min']), max: asIntOr(j['max']));
   }
 }
 

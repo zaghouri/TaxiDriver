@@ -159,6 +159,8 @@ class ReceiptView extends StatelessWidget {
       '${l.receiptTo}: ${r.to.address ?? '—'}',
       '${l.receiptDistance}: ${l.kmShort(formatKm(locale, r.distanceKm, isMetres: false))}',
       '${l.receiptDuration}: ${l.minutesShort(r.durationMin)}',
+      if (r.waitingFee > 0 && r.fare != null) '${l.receiptFare}: ${l.priceDh(r.fare!)}',
+      if (r.waitingFee > 0) '${l.receiptWaitingFee(r.waitingMin)}: ${l.priceDh(r.waitingFee)}',
       '${l.receiptPrice}: ${l.priceDh(r.price)} — ${l.receiptPaidCash}',
       if (r.driverFirstName != null) '${l.receiptDriver}: ${r.driverFirstName} ${r.vehicle?.plate ?? ''}',
       '${r.company.name ?? ''} · RC ${r.company.rc ?? ''} · ICE ${r.company.ice ?? ''}',
@@ -201,6 +203,9 @@ class ReceiptView extends StatelessWidget {
                     value: [v.label, v.colour, v.plate].whereType<String>().where((x) => x.isNotEmpty).join(' · '),
                   ),
                 const Divider(height: 24),
+                if (r.waitingFee > 0 && r.fare != null) InfoRow(label: l.receiptFare, value: l.priceDh(r.fare!)),
+                if (r.waitingFee > 0)
+                  InfoRow(key: const ValueKey('receipt_waiting_fee'), label: l.receiptWaitingFee(r.waitingMin), value: l.priceDh(r.waitingFee)),
                 InfoRow(label: l.receiptPrice, value: l.priceDh(r.price), bold: true),
                 gap8,
                 InfoBox(l.receiptPaidCash, icon: Icons.payments_outlined, color: BrandColors.success),

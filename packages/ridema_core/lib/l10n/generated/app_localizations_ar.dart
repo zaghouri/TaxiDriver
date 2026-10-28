@@ -2138,4 +2138,27 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get errDriverNotLate =>
       'سائقك ليس متأخرًا بعد. يمكنك الإلغاء بسبب آخر.';
+
+  @override
+  String waitFreeLeft(String time) {
+    return 'الانتظار المجاني: بقي $time';
+  }
+
+  @override
+  String waitFeeSoFar(int amount, int perMin, int max) {
+    return 'رسوم الانتظار: $amount درهم حتى الآن ($perMin درهم/د، بحد أقصى $max درهم)';
+  }
+
+  @override
+  String waitRulesInfo(int free, int perMin, int max) {
+    return '$free د انتظار مجاني، ثم $perMin درهم للدقيقة (بحد أقصى $max درهم)، تُضاف إلى السعر نقدًا.';
+  }
+
+  @override
+  String get receiptFare => 'السعر المتفق عليه';
+
+  @override
+  String receiptWaitingFee(int minutes) {
+    return 'رسوم الانتظار ($minutes د)';
+  }
 }

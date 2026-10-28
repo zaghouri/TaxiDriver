@@ -147,6 +147,7 @@ export function RideDetail() {
               [t('suggested'), money(r.suggested_price)],
               [t('offered'), money(r.offered_price)],
               [t('final_price'), money(r.final_price)],
+              [t('waiting_fee'), r.waiting_fee ? `${money(r.waiting_fee)} (${Math.round((r.waiting_s ?? 0) / 60)} min) · ${t('total')} ${money(r.total_price)}` : '—'],
               [t('payment'), t('cash')],
               [t('comment'), r.comment],
               [

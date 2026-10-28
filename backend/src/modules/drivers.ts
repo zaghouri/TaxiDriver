@@ -340,7 +340,7 @@ export async function driverRoutes(app: FastifyInstance, ctx: AppContext) {
     const q = parse(z.object({ days: z.coerce.number().int().min(1).max(90).default(7) }), req.query);
     const days = await many(
       db,
-      `SELECT (completed_at AT TIME ZONE 'Africa/Casablanca')::date::text AS day, count(*)::int AS trips, COALESCE(sum(final_price),0)::int AS cash
+      `SELECT (completed_at AT TIME ZONE 'Africa/Casablanca')::date::text AS day, count(*)::int AS trips, COALESCE(sum(final_price + waiting_fee),0)::int AS cash
        FROM rides WHERE driver_id = $1 AND status = 'completed' AND completed_at > now() - make_interval(days => $2)
        GROUP BY 1 ORDER BY 1 DESC`,
       [req.user!.id, q.days],
