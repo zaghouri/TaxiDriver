@@ -437,11 +437,22 @@ void main() {
     ));
     await tester.pump();
     expect(find.text('Fare: 30 DH. Pay cash to the driver.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('star_2')));
+    await tester.pump();
+    expect(find.text('What went wrong?'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('reason_chip_late')));
+    await tester.tap(find.byKey(const ValueKey('reason_chip_wrong_route')));
+    await tester.pump();
+    // Moving to 4 ★ swaps the list and drops chips that no longer fit.
     await tester.tap(find.byKey(const ValueKey('star_4')));
     await tester.pump();
+    expect(find.text('What went well?'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('reason_chip_clean_car')));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const ValueKey('rate_submit')));
     await tester.tap(find.byKey(const ValueKey('rate_submit')));
     await tester.pump();
-    expect(h.api.calls, contains('rate:4'));
+    expect(h.api.calls, contains('rate:4:clean_car'));
     expect(h.c.phase, RiderPhase.idle);
     h.c.dispose();
     await tester.pumpWidget(const SizedBox());

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../brand.dart';
 import '../../l10n/l10n.dart';
+import '../../models/rating_reasons.dart';
 import '../../models/ride.dart';
 
 /// Pickup PIN shown to the rider: 4 large digits (always left-to-right).
@@ -124,6 +125,61 @@ class CarCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Reason chips under the stars (D64): what went well (4–5 ★) or wrong (1–3 ★).
+/// Hidden until a star is chosen; at most [RatingReasons.max] can be picked.
+class RatingReasonChips extends StatelessWidget {
+  const RatingReasonChips({super.key, required this.ratingDriver, required this.stars, required this.selected, required this.onChanged});
+
+  final bool ratingDriver;
+  final int stars;
+  final Set<String> selected;
+  final ValueChanged<Set<String>> onChanged;
+
+  /// Keeps only the chips that still fit [stars] (after the rider changes the stars).
+  static Set<String> keepAllowed(Set<String> selected, {required bool ratingDriver, required int stars}) {
+    final allowed = RatingReasons.forRating(ratingDriver: ratingDriver, stars: stars);
+    return selected.where(allowed.contains).toSet();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reasons = RatingReasons.forRating(ratingDriver: ratingDriver, stars: stars);
+    if (reasons.isEmpty) return const SizedBox.shrink();
+    final l = context.l10n;
+    final full = selected.length >= RatingReasons.max;
+    return Column(
+      key: const ValueKey('rating_reasons'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          RatingReasons.isGood(stars) ? l.rateGoodTitle : l.rateBadTitle,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final r in reasons)
+              FilterChip(
+                key: ValueKey('reason_chip_$r'),
+                label: Text(RatingReasons.label(l, ratingDriver: ratingDriver, reason: r)),
+                selected: selected.contains(r),
+                onSelected: !selected.contains(r) && full
+                    ? null
+                    : (on) => onChanged(on ? {...selected, r} : ({...selected}..remove(r))),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(l.rateReasonsPrivate, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+      ],
     );
   }
 }

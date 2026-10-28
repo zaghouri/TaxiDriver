@@ -54,6 +54,7 @@ String? apiErrorTextForCode(AppLocalizations l, String code) => switch (code) {
       'RIDE_NOT_FOUND' => l.errRideNotFound,
       'RIDE_NOT_COMPLETED' => l.errRideNotCompleted,
       'ALREADY_RATED' => l.errAlreadyRated,
+      'RATING_REASON_INVALID' => l.errRatingReasonInvalid,
       'RATING_WINDOW_CLOSED' => l.errRatingWindowClosed,
       'BID_ALREADY_ACTIVE' => l.errBidAlreadyActive,
       'BID_DECLINED_BEFORE' => l.errBidDeclinedBefore,

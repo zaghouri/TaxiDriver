@@ -2066,4 +2066,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkCar => 'Car papers';
+
+  @override
+  String get rateGoodTitle => 'What went well?';
+
+  @override
+  String get rateBadTitle => 'What went wrong?';
+
+  @override
+  String get rateReasonsPrivate =>
+      'Optional. The other person never sees your choices; our team uses them to improve rides.';
+
+  @override
+  String get rrDriverSafeDriving => 'Safe driving';
+
+  @override
+  String get rrDriverPolite => 'Polite and friendly';
+
+  @override
+  String get rrDriverCleanCar => 'Clean car';
+
+  @override
+  String get rrDriverKnewTheWay => 'Knew the way';
+
+  @override
+  String get rrDriverOnTime => 'On time';
+
+  @override
+  String get rrDriverUnsafeDriving => 'Unsafe driving';
+
+  @override
+  String get rrDriverRude => 'Rude';
+
+  @override
+  String get rrDriverDirtyCar => 'Dirty car';
+
+  @override
+  String get rrDriverWrongRoute => 'Long or wrong route';
+
+  @override
+  String get rrDriverLate => 'Arrived late';
+
+  @override
+  String get rrDriverAskedMoreMoney => 'Asked for more money';
+
+  @override
+  String get rrDriverCarMismatch => 'Different car or plate';
+
+  @override
+  String get rrRiderPolite => 'Polite and friendly';
+
+  @override
+  String get rrRiderOnTime => 'Ready on time';
+
+  @override
+  String get rrRiderExactPickup => 'Easy to find';
+
+  @override
+  String get rrRiderRespectful => 'Respected the car';
+
+  @override
+  String get rrRiderLate => 'Kept me waiting';
+
+  @override
+  String get rrRiderRude => 'Rude';
+
+  @override
+  String get rrRiderWrongPickup => 'Wrong pickup point';
+
+  @override
+  String get rrRiderMessy => 'Left the car dirty';
+
+  @override
+  String get rrRiderPaymentProblem => 'Payment problem';
+
+  @override
+  String get errRatingReasonInvalid =>
+      'These reasons don’t match your stars. Please choose again.';
 }

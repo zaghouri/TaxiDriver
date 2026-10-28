@@ -225,8 +225,8 @@ class FakeRideApi implements RiderRideApi {
   }
 
   @override
-  Future<void> rate(String rideId, int stars, {String? comment}) {
-    calls.add('rate:$stars');
+  Future<void> rate(String rideId, int stars, {String? comment, List<String> reasons = const []}) {
+    calls.add('rate:$stars${reasons.isEmpty ? '' : ':${reasons.join(',')}'}');
     return onRate(rideId, stars, comment);
   }
 

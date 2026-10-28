@@ -62,7 +62,7 @@ abstract class DriverBackend {
   Future<Ride> startTrip(String rideId, {String? pin});
   Future<Ride> completeTrip(String rideId);
   Future<Json> cancelRide(String rideId, CancelReason reason);
-  Future<void> rate(String rideId, int stars, {String? comment});
+  Future<void> rate(String rideId, int stars, {String? comment, List<String> reasons = const []});
 
   /// `POST /v1/me/devices` with the device verdict (fire and forget).
   Future<void> reportDevice({required bool rooted, required bool mockLocation});

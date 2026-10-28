@@ -176,7 +176,8 @@ class FakeDriverBackend implements DriverBackend {
   }
 
   @override
-  Future<void> rate(String rideId, int stars, {String? comment}) async => calls.add('rate:$stars');
+  Future<void> rate(String rideId, int stars, {String? comment, List<String> reasons = const []}) async =>
+      calls.add('rate:$stars${reasons.isEmpty ? '' : ':${reasons.join(',')}'}');
 
   @override
   Future<void> reportDevice({required bool rooted, required bool mockLocation}) async {

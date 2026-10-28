@@ -4,7 +4,7 @@ import { api, qs } from '../api/client';
 import { COLORS } from '../brand';
 import { useBusEvent } from '../bus';
 import { useT } from '../i18n';
-import { Badge, Card, Empty, fmtDate, Json, KV, money, Page, short } from '../ui/common';
+import { Badge, Card, Empty, fmtDate, Json, KV, money, Page, reasonLabels, short } from '../ui/common';
 import { useDialog } from '../ui/dialog';
 import { useLoad, useRun } from '../ui/hooks';
 import MapView, { type MapMarker } from '../ui/MapView';
@@ -200,6 +200,7 @@ export function RideDetail() {
                 <tr key={i}>
                   <td>{x.rater_id === r.rider?.id ? t('rider') : t('driver')}</td>
                   <td>{'★'.repeat(x.stars)}</td>
+                  <td data-testid="rating-reasons">{reasonLabels(t, x.rater_id === r.rider?.id ? 'driver' : 'rider', x.reasons)}</td>
                   <td>{x.comment ?? ''}</td>
                 </tr>
               ))}

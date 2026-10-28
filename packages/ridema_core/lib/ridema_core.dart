@@ -24,6 +24,7 @@ export 'src/l10n/locale_controller.dart';
 export 'src/models/app_models.dart';
 export 'src/models/driver.dart';
 export 'src/models/json.dart' show Json;
+export 'src/models/rating_reasons.dart';
 export 'src/models/realtime_events.dart';
 export 'src/models/ride.dart';
 export 'src/models/user.dart';

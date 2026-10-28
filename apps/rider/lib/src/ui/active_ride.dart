@@ -350,6 +350,7 @@ class RateDriverPanel extends StatefulWidget {
 
 class _RateDriverPanelState extends State<RateDriverPanel> {
   int _stars = 0;
+  Set<String> _reasons = {};
   final _comment = TextEditingController();
 
   @override
@@ -357,6 +358,11 @@ class _RateDriverPanelState extends State<RateDriverPanel> {
     _comment.dispose();
     super.dispose();
   }
+
+  void _setStars(int stars) => setState(() {
+        _stars = stars;
+        _reasons = RatingReasonChips.keepAllowed(_reasons, ratingDriver: true, stars: stars);
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -390,12 +396,19 @@ class _RateDriverPanelState extends State<RateDriverPanel> {
                 IconButton(
                   key: ValueKey('star_$i'),
                   iconSize: 44,
-                  onPressed: () => setState(() => _stars = i),
+                  onPressed: () => _setStars(i),
                   icon: Icon(i <= _stars ? Icons.star_rounded : Icons.star_outline_rounded, color: BrandColors.accent),
                 ),
             ],
           ),
         ),
+        RatingReasonChips(
+          ratingDriver: true,
+          stars: _stars,
+          selected: _reasons,
+          onChanged: (s) => setState(() => _reasons = s),
+        ),
+        gap8,
         TextField(controller: _comment, maxLength: 500, decoration: InputDecoration(labelText: l.rateComment, counterText: '')),
         if (c.error != null) ...[gap8, ErrorBanner(riderErrorText(context, c.error!))],
         gap16,
@@ -403,7 +416,7 @@ class _RateDriverPanelState extends State<RateDriverPanel> {
           key: const ValueKey('rate_submit'),
           label: l.rateSubmit,
           busy: c.busy,
-          onPressed: _stars == 0 ? null : () => c.rateDriver(_stars, comment: _comment.text),
+          onPressed: _stars == 0 ? null : () => c.rateDriver(_stars, comment: _comment.text, reasons: _reasons.toList()),
         ),
         TextButton(key: const ValueKey('rate_skip'), onPressed: c.busy ? null : c.backToHome, child: Text(l.rateSkip)),
       ],

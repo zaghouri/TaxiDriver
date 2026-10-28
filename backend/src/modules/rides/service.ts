@@ -9,6 +9,7 @@ import { enqueue, enqueueMany, type OutboxMessage } from '../../core/outbox.js';
 import { abuseAlert } from '../../core/abuse.js';
 import type { City } from '../../core/settings.js';
 import { getUser } from '../users.js';
+import { allowedReasons } from './rating-reasons.js';
 import { bidView, bidViewWith, driverCard, getRide, rankedOffers, requestView, rideView, RIDE_COLUMNS, type BidRow, type RideRow } from './views.js';
 
 export const CANCEL_REASONS = ['changed_mind', 'driver_too_far', 'driver_asked', 'wrong_pickup', 'rider_no_show', 'car_mismatch', 'safety', 'other'] as const;
@@ -596,17 +597,26 @@ export async function cancelByDriver(ctx: AppContext, driverId: string, rideId: 
 
 // ---------- Both ----------
 
-export async function rate(ctx: AppContext, userId: string, rideId: string, stars: number, comment?: string) {
+export async function rate(ctx: AppContext, userId: string, rideId: string, stars: number, comment?: string, reasons: string[] = []) {
   return withTx(ctx.db, async (tx) => {
     const r = await getRide(tx, rideId, true);
     if (!r || (r.rider_id !== userId && r.driver_id !== userId)) throw notFound('RIDE_NOT_FOUND');
     if (r.status !== 'completed') throw conflict('RIDE_NOT_COMPLETED', 'You can rate after the trip.');
     if (Date.now() - new Date(r.completed_at!).getTime() > 7 * 86400_000) throw conflict('RATING_WINDOW_CLOSED', 'Ratings are open for 7 days after the trip.');
-    const ratee = userId === r.rider_id ? r.driver_id! : r.rider_id;
-    const ins = await one(tx, `INSERT INTO ratings (ride_id, rater_id, ratee_id, stars, comment) VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING RETURNING id`, [rideId, userId, ratee, stars, comment ?? null]);
+    const byRider = userId === r.rider_id;
+    const ratee = byRider ? r.driver_id! : r.rider_id;
+    const allowed = allowedReasons(byRider ? 'driver' : 'rider', stars);
+    const picked = [...new Set(reasons)];
+    const wrong = picked.filter((x) => !allowed.includes(x));
+    if (wrong.length) throw unprocessable('RATING_REASON_INVALID', 'These reasons do not fit this rating.', { invalid: wrong, allowed });
+    const ins = await one(
+      tx,
+      `INSERT INTO ratings (ride_id, rater_id, ratee_id, stars, comment, reasons) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING RETURNING id`,
+      [rideId, userId, ratee, stars, comment ?? null, picked],
+    );
     if (!ins) throw conflict('ALREADY_RATED', 'You already rated this trip.');
     await tx.query('UPDATE users SET rating_sum = rating_sum + $2, rating_count = rating_count + 1 WHERE id = $1', [ratee, stars]);
-    await addEvent(tx, rideId, 'rated', { id: userId, role: userId === r.rider_id ? 'rider' : 'driver' }, { stars });
+    await addEvent(tx, rideId, 'rated', { id: userId, role: byRider ? 'rider' : 'driver' }, { stars, reasons: picked });
     return { rated: true };
   });
 }

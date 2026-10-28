@@ -50,7 +50,8 @@ class ApiDriverBackend implements DriverBackend {
   @override
   Future<Json> cancelRide(String rideId, CancelReason reason) => api.cancelRide(rideId, reason);
   @override
-  Future<void> rate(String rideId, int stars, {String? comment}) => api.rate(rideId, stars, comment: comment);
+  Future<void> rate(String rideId, int stars, {String? comment, List<String> reasons = const []}) =>
+      api.rate(rideId, stars, comment: comment, reasons: reasons);
   @override
   Future<void> reportDevice({required bool rooted, required bool mockLocation}) =>
       api.registerDevice(rooted: rooted, mockLocation: mockLocation);

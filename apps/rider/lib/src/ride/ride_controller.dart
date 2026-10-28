@@ -703,11 +703,11 @@ class RideController extends ChangeNotifier {
 
   // ----------------------------------------------------------------- rating
 
-  Future<bool> rateDriver(int stars, {String? comment}) async {
+  Future<bool> rateDriver(int stars, {String? comment, List<String> reasons = const []}) async {
     final r = _ride;
     if (r == null) return false;
     return _act(() async {
-      await api.rate(r.id, stars, comment: comment);
+      await api.rate(r.id, stars, comment: comment, reasons: reasons);
       await backToHome();
       return true;
     }, onError: (e) async {

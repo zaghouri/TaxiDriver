@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { api } from '../api/client';
-import { useT } from '../i18n';
+import { useT, type TFn } from '../i18n';
 import { useToast } from './toast';
 
 export function Page({ title, actions, children }: { title: ReactNode; actions?: ReactNode; children: ReactNode }) {
@@ -153,4 +153,9 @@ export function Tabs<T extends string>({ value, options, onChange }: { value: T;
       ))}
     </div>
   );
+}
+
+/** Rating reason chips as text (D64); `ratee` is the role of the person who was rated. */
+export function reasonLabels(t: TFn, ratee: 'driver' | 'rider', reasons?: string[] | null): string {
+  return (reasons ?? []).map((r) => t(`rr_${ratee}_${r}`, undefined, r)).join(' · ');
 }

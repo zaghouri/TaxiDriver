@@ -63,8 +63,8 @@ export async function exportData(ctx: AppContext, userId: string) {
     rides: await q(`SELECT id, status, pickup_address, dropoff_address, ST_AsGeoJSON(pickup)::json AS pickup, ST_AsGeoJSON(dropoff)::json AS dropoff,
       distance_m, offered_price, final_price, requested_at, completed_at, cancelled_at, cancel_reason
       FROM rides WHERE rider_id = $1 OR driver_id = $1 ORDER BY requested_at DESC`),
-    ratings_given: await q('SELECT ride_id, stars, comment, created_at FROM ratings WHERE rater_id = $1'),
-    ratings_received: await q('SELECT ride_id, stars, created_at FROM ratings WHERE ratee_id = $1'),
+    ratings_given: await q('SELECT ride_id, stars, reasons, comment, created_at FROM ratings WHERE rater_id = $1'),
+    ratings_received: await q('SELECT ride_id, stars, reasons, created_at FROM ratings WHERE ratee_id = $1'),
     driver: await one(ctx.db, 'SELECT driver_type, status, cin_last4, licence_issued_on, created_at FROM drivers WHERE user_id = $1', [userId]),
     vehicles: await q('SELECT make, model, year, colour, plate, created_at FROM vehicles WHERE driver_id = $1'),
     documents: await q('SELECT type, status, expires_on, created_at FROM documents WHERE driver_id = $1'),

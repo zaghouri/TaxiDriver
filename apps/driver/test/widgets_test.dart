@@ -11,6 +11,7 @@ import 'package:ridema_driver/src/ui/home/request_card.dart';
 import 'package:ridema_driver/src/ui/request_detail_screen.dart';
 import 'package:ridema_driver/src/ui/ride/active_ride_view.dart';
 import 'package:ridema_driver/src/ui/ride/pin_keypad.dart';
+import 'package:ridema_driver/src/ui/ride/trip_complete_view.dart';
 
 import 'support/fakes.dart';
 import 'support/harness.dart';
@@ -129,6 +130,28 @@ void main() {
       await tester.pump();
       expect(h.api.calls, contains('arrived'));
       expect(find.byKey(const ValueKey('pin_keypad')), findsOneWidget);
+      await teardown(tester, h);
+    });
+  });
+
+  group('trip complete', () {
+    testWidgets('reason chips follow the stars (D64)', (tester) async {
+      final h = await Harness.create();
+      await tester.pumpWidget(h.wrap(TripCompleteView(ride: makeRide('r1', 'completed')), locale: 'en'));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('rating_reasons')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('star_2')));
+      await tester.pump();
+      expect(find.text('What went wrong?'), findsOneWidget);
+      expect(find.text('Kept me waiting'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('reason_chip_late')));
+      await tester.pump();
+      expect(tester.widget<FilterChip>(find.byKey(const ValueKey('reason_chip_late'))).selected, isTrue);
+      await tester.tap(find.byKey(const ValueKey('star_5')));
+      await tester.pump();
+      expect(find.text('What went well?'), findsOneWidget);
+      expect(find.byKey(const ValueKey('reason_chip_late')), findsNothing);
+      expect(find.text('Easy to find'), findsOneWidget);
       await teardown(tester, h);
     });
   });

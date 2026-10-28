@@ -165,9 +165,12 @@ class RideMaApi {
   Future<Json> cancelRide(String rideId, CancelReason reason) async =>
       asJson(await client.post('/v1/rides/$rideId/cancel', data: {'reason': reason.apiName}));
 
-  Future<void> rate(String rideId, int stars, {String? comment}) => client.post('/v1/rides/$rideId/rating', data: {
+  /// [reasons]: chips from [RatingReasons.forRating] (D64).
+  Future<void> rate(String rideId, int stars, {String? comment, List<String> reasons = const []}) =>
+      client.post('/v1/rides/$rideId/rating', data: {
         'stars': stars,
         if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
+        if (reasons.isNotEmpty) 'reasons': reasons,
       });
 
   /// [service]: police / gendarmerie / ambulance.

@@ -3693,6 +3693,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Car papers'**
   String get checkCar;
+
+  /// Heading of the reason chips after a 4–5 star rating (D64).
+  ///
+  /// In en, this message translates to:
+  /// **'What went well?'**
+  String get rateGoodTitle;
+
+  /// Heading of the reason chips after a 1–3 star rating (D64).
+  ///
+  /// In en, this message translates to:
+  /// **'What went wrong?'**
+  String get rateBadTitle;
+
+  /// No description provided for @rateReasonsPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. The other person never sees your choices; our team uses them to improve rides.'**
+  String get rateReasonsPrivate;
+
+  /// No description provided for @rrDriverSafeDriving.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe driving'**
+  String get rrDriverSafeDriving;
+
+  /// No description provided for @rrDriverPolite.
+  ///
+  /// In en, this message translates to:
+  /// **'Polite and friendly'**
+  String get rrDriverPolite;
+
+  /// No description provided for @rrDriverCleanCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean car'**
+  String get rrDriverCleanCar;
+
+  /// No description provided for @rrDriverKnewTheWay.
+  ///
+  /// In en, this message translates to:
+  /// **'Knew the way'**
+  String get rrDriverKnewTheWay;
+
+  /// No description provided for @rrDriverOnTime.
+  ///
+  /// In en, this message translates to:
+  /// **'On time'**
+  String get rrDriverOnTime;
+
+  /// No description provided for @rrDriverUnsafeDriving.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsafe driving'**
+  String get rrDriverUnsafeDriving;
+
+  /// No description provided for @rrDriverRude.
+  ///
+  /// In en, this message translates to:
+  /// **'Rude'**
+  String get rrDriverRude;
+
+  /// No description provided for @rrDriverDirtyCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Dirty car'**
+  String get rrDriverDirtyCar;
+
+  /// No description provided for @rrDriverWrongRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Long or wrong route'**
+  String get rrDriverWrongRoute;
+
+  /// No description provided for @rrDriverLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrived late'**
+  String get rrDriverLate;
+
+  /// No description provided for @rrDriverAskedMoreMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Asked for more money'**
+  String get rrDriverAskedMoreMoney;
+
+  /// No description provided for @rrDriverCarMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Different car or plate'**
+  String get rrDriverCarMismatch;
+
+  /// No description provided for @rrRiderPolite.
+  ///
+  /// In en, this message translates to:
+  /// **'Polite and friendly'**
+  String get rrRiderPolite;
+
+  /// No description provided for @rrRiderOnTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready on time'**
+  String get rrRiderOnTime;
+
+  /// No description provided for @rrRiderExactPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Easy to find'**
+  String get rrRiderExactPickup;
+
+  /// No description provided for @rrRiderRespectful.
+  ///
+  /// In en, this message translates to:
+  /// **'Respected the car'**
+  String get rrRiderRespectful;
+
+  /// No description provided for @rrRiderLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept me waiting'**
+  String get rrRiderLate;
+
+  /// No description provided for @rrRiderRude.
+  ///
+  /// In en, this message translates to:
+  /// **'Rude'**
+  String get rrRiderRude;
+
+  /// No description provided for @rrRiderWrongPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong pickup point'**
+  String get rrRiderWrongPickup;
+
+  /// No description provided for @rrRiderMessy.
+  ///
+  /// In en, this message translates to:
+  /// **'Left the car dirty'**
+  String get rrRiderMessy;
+
+  /// No description provided for @rrRiderPaymentProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment problem'**
+  String get rrRiderPaymentProblem;
+
+  /// Error text for API code RATING_REASON_INVALID
+  ///
+  /// In en, this message translates to:
+  /// **'These reasons don’t match your stars. Please choose again.'**
+  String get errRatingReasonInvalid;
 }
 
 class _AppLocalizationsDelegate

@@ -2041,4 +2041,81 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get checkCar => 'أوراق السيارة';
+
+  @override
+  String get rateGoodTitle => 'ما الذي كان جيدًا؟';
+
+  @override
+  String get rateBadTitle => 'ما الذي لم يكن جيدًا؟';
+
+  @override
+  String get rateReasonsPrivate =>
+      'اختياري. لا يرى الطرف الآخر اختياراتك أبدًا؛ يستعملها فريقنا لتحسين الرحلات.';
+
+  @override
+  String get rrDriverSafeDriving => 'قيادة آمنة';
+
+  @override
+  String get rrDriverPolite => 'مهذّب ولطيف';
+
+  @override
+  String get rrDriverCleanCar => 'سيارة نظيفة';
+
+  @override
+  String get rrDriverKnewTheWay => 'يعرف الطريق';
+
+  @override
+  String get rrDriverOnTime => 'في الموعد';
+
+  @override
+  String get rrDriverUnsafeDriving => 'قيادة خطيرة';
+
+  @override
+  String get rrDriverRude => 'غير مهذّب';
+
+  @override
+  String get rrDriverDirtyCar => 'سيارة غير نظيفة';
+
+  @override
+  String get rrDriverWrongRoute => 'طريق طويل أو خاطئ';
+
+  @override
+  String get rrDriverLate => 'وصل متأخرًا';
+
+  @override
+  String get rrDriverAskedMoreMoney => 'طلب مالًا إضافيًا';
+
+  @override
+  String get rrDriverCarMismatch => 'سيارة أو لوحة مختلفة';
+
+  @override
+  String get rrRiderPolite => 'مهذّب ولطيف';
+
+  @override
+  String get rrRiderOnTime => 'جاهز في الموعد';
+
+  @override
+  String get rrRiderExactPickup => 'سهل العثور عليه';
+
+  @override
+  String get rrRiderRespectful => 'احترم السيارة';
+
+  @override
+  String get rrRiderLate => 'جعلني أنتظر';
+
+  @override
+  String get rrRiderRude => 'غير مهذّب';
+
+  @override
+  String get rrRiderWrongPickup => 'نقطة انطلاق خاطئة';
+
+  @override
+  String get rrRiderMessy => 'ترك السيارة متّسخة';
+
+  @override
+  String get rrRiderPaymentProblem => 'مشكلة في الدفع';
+
+  @override
+  String get errRatingReasonInvalid =>
+      'هذه الأسباب لا تناسب تقييمك. اختر من جديد.';
 }
