@@ -209,6 +209,10 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
       ));
       return;
     }
+    if (n == RiderNotice.cancelledByDriver && _c.searchAgainFare != null) {
+      unawaited(_askSearchAgain(_c.searchAgainFare!));
+      return;
+    }
     final text = switch (n) {
       RiderNotice.offerNoLongerAvailable => l.offerNoLongerAvailable,
       RiderNotice.cancelledByDriver => l.rideCancelledByDriver,
@@ -218,6 +222,36 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
       RiderNotice.cancelWarning => rs.backToHome,
     };
     showInfoSnack(context, text);
+  }
+
+  /// The driver cancelled: one tap sends the same request again, or the rider edits it on Home (D59).
+  Future<void> _askSearchAgain(int fare) async {
+    final l = context.l10n;
+    final rs = RiderStrings.of(context);
+    final again = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        key: const ValueKey('driver_cancelled_dialog'),
+        title: Text(rs.driverCancelledTitle),
+        content: Text(rs.searchAgainBody, style: const TextStyle(fontSize: 17)),
+        actionsOverflowDirection: VerticalDirection.up,
+        actions: [
+          TextButton(key: const ValueKey('edit_request'), onPressed: () => Navigator.pop(d, false), child: Text(rs.editRequest)),
+          FilledButton(
+            key: const ValueKey('search_again'),
+            style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
+            onPressed: () => Navigator.pop(d, true),
+            child: Text(rs.searchAgain(l.priceDh(fare))),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (again == true) {
+      await _findDriverWith(_c.searchAgain);
+    } else {
+      _c.dismissSearchAgain();
+    }
   }
 
   /// Verify-phone gate before the first ride (PHONE_NOT_VERIFIED).
@@ -235,13 +269,15 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
     return ok == true;
   }
 
-  Future<void> _findDriver() async {
+  Future<void> _findDriver() => _findDriverWith(_c.requestRide);
+
+  Future<void> _findDriverWith(Future<bool> Function() send) async {
     final me = _s.auth.me;
     if (me != null && !me.phoneVerified) {
       await _openPhoneGate(retry: true);
       return;
     }
-    await _c.requestRide();
+    await send();
   }
 
   Future<void> _edit({required bool pickup}) async {

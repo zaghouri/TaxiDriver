@@ -283,6 +283,27 @@ void main() {
       h.rt.rideUpdate.add(mkRide(status: 'cancelled', cancelledBy: 'driver', withDriver: true));
       expect(h.c.phase, RiderPhase.idle);
       expect(h.c.takeNotice(), RiderNotice.cancelledByDriver);
+      expect(h.c.searchAgainFare, 25);
+      expect(h.c.pickup, isNotNull);
+      expect(h.c.dropoff, isNotNull);
+    });
+
+    test('"Search again" sends the same pickup, destination and fare; "Edit request" just stays Home', () async {
+      await h.searching();
+      h.rt.bidNew.add(mkBid('b1'));
+      await h.c.acceptOffer(h.c.offers.single);
+      h.rt.rideUpdate.add(mkRide(status: 'cancelled', cancelledBy: 'driver', withDriver: true, offered: 30));
+      h.c.takeNotice();
+      h.c.setFare(40); // the fare field moved meanwhile: the retry still uses the cancelled ride's fare
+      expect(await h.c.searchAgain(), isTrue);
+      expect(h.api.calls.last, 'create:30');
+      expect(h.c.phase, RiderPhase.searching);
+      expect(h.c.searchAgainFare, isNull);
+
+      h.rt.rideUpdate.add(mkRide(status: 'cancelled', cancelledBy: 'driver', withDriver: true, offered: 30));
+      h.c.dismissSearchAgain();
+      expect(h.c.searchAgainFare, isNull);
+      expect(h.c.phase, RiderPhase.idle);
     });
   });
 

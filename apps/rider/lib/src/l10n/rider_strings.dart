@@ -71,6 +71,30 @@ class RiderStrings {
         'ar': 'الاحتفاظ بالرحلة في التطبيق',
       });
 
+  String get driverCancelledTitle => _t({
+        'en': 'Your driver cancelled',
+        'fr': 'Votre chauffeur a annulé',
+        'ar': 'ألغى سائقك الرحلة',
+      });
+
+  String get searchAgainBody => _t({
+        'en': 'Search again with the same pickup, destination and fare? Drivers nearby will see your request right away.',
+        'fr': 'Relancer la recherche avec le même départ, la même destination et le même prix ? Les chauffeurs proches verront votre demande tout de suite.',
+        'ar': 'هل تريد البحث من جديد بنفس نقطة الانطلاق والوجهة والسعر؟ سيرى السائقون القريبون طلبك فورًا.',
+      });
+
+  String searchAgain(String price) => _t({
+        'en': 'Search again ($price)',
+        'fr': 'Relancer ($price)',
+        'ar': 'البحث من جديد ($price)',
+      });
+
+  String get editRequest => _t({
+        'en': 'Edit request',
+        'fr': 'Modifier la demande',
+        'ar': 'تعديل الطلب',
+      });
+
   String get cancelAnyway => _t({
         'en': 'Cancel anyway',
         'fr': 'Annuler quand même',
