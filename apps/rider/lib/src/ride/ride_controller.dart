@@ -157,7 +157,11 @@ class RideController extends ChangeNotifier {
 
   /// Last action error (ApiException), cleared by the next action.
   Object? get error => _error;
-  int get driversNotified => _driversNotified;
+  int get driversNotified => _ride?.search?.driversNotified ?? _driversNotified;
+
+  /// Search wave reached (0 = nearest drivers) and its radius, from `Ride.search` (D60).
+  int get searchWave => _ride?.search?.wave ?? 0;
+  int? get searchRadiusM => _ride?.search?.radiusM;
   LatLng? get driverPosition => _driverPosition;
   double? get driverHeading => _driverHeading;
 

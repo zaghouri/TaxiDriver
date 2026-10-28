@@ -108,26 +108,33 @@ export async function createRide(
   if (input.offered_price < est.min_offer) throw unprocessable('OFFER_TOO_LOW', `The minimum offer for this trip is ${est.min_offer} DH.`, { min_offer: est.min_offer });
   if (input.offered_price > est.max_counter) throw unprocessable('OFFER_TOO_HIGH', `The maximum for this trip is ${est.max_counter} DH.`);
 
-  const nearby = await ctx.geo.nearby(city.id, input.pickup.lat, input.pickup.lng, city.search_radius_km);
+  const waves = searchWaves(city);
+  const nearby = await ctx.geo.nearby(city.id, input.pickup.lat, input.pickup.lng, waves[0].radius_km);
   try {
     return await withTx(ctx.db, async (tx) => {
       const ride = await one<{ id: string }>(
         tx,
         `INSERT INTO rides (city_id, rider_id, status, pickup, pickup_address, dropoff, dropoff_address, distance_m, duration_s,
-           suggested_price, offered_price, rider_comment, expires_at)
+           suggested_price, offered_price, rider_comment, expires_at, search_radius_m)
          VALUES ($1, $2, 'searching', ST_SetSRID(ST_MakePoint($3,$4),4326)::geography, $5, ST_SetSRID(ST_MakePoint($6,$7),4326)::geography, $8,
-           $9, $10, $11, $12, $13, now() + make_interval(secs => $14)) RETURNING id`,
+           $9, $10, $11, $12, $13, now() + make_interval(secs => $14), $15) RETURNING id`,
         [city.id, riderId, input.pickup.lng, input.pickup.lat, input.pickup.address ?? null, input.dropoff.lng, input.dropoff.lat,
-          input.dropoff.address ?? null, est.route.distance_m, est.route.duration_s, est.suggested, input.offered_price, input.comment ?? null, city.request_timeout_s],
+          input.dropoff.address ?? null, est.route.distance_m, est.route.duration_s, est.suggested, input.offered_price, input.comment ?? null, city.request_timeout_s,
+          Math.round(waves[0].radius_km * 1000)],
       );
-      const r = (await getRide(tx, ride!.id))!;
-      await addEvent(tx, r.id, 'requested', { id: riderId, role: 'rider' }, { offered_price: r.offered_price, suggested: r.suggested_price, route_source: est.route.source });
-      const notified = await fanOut(ctx, tx, r, city, nearby);
-      await addEvent(tx, r.id, 'broadcast', { role: 'system' }, { drivers: notified });
+      const r0 = (await getRide(tx, ride!.id))!;
+      await addEvent(tx, r0.id, 'requested', { id: riderId, role: 'rider' }, { offered_price: r0.offered_price, suggested: r0.suggested_price, route_source: est.route.source });
+      const notified = await fanOut(ctx, tx, r0, city, nearby, 0);
+      await tx.query('UPDATE rides SET drivers_notified = $2 WHERE id = $1', [r0.id, notified]);
+      await addEvent(tx, r0.id, 'broadcast', { role: 'system' }, { drivers: notified, wave: 0, radius_m: r0.search_radius_m });
+      const r = (await getRide(tx, r0.id))!;
       await notifyRideUpdate(tx, r);
       return { ride: r, notified };
     }).then(async (res) => {
       await ctx.scheduler.schedule('ride-expire', { rideId: res.ride.id }, city.request_timeout_s * 1000, `ride-expire-${res.ride.id}`);
+      for (let i = 1; i < waves.length; i++) {
+        await ctx.scheduler.schedule('ride-wave', { rideId: res.ride.id, wave: String(i) }, waves[i].after_s * 1000, `ride-wave-${res.ride.id}-${i}`);
+      }
       return { ride: await rideView(ctx.db, res.ride, { id: riderId, role: 'rider' }), drivers_notified: res.notified };
     });
   } catch (e: any) {
@@ -136,8 +143,60 @@ export async function createRide(
   }
 }
 
-/** Sends the request to every eligible nearby driver (unlimited, nearest first). */
-async function fanOut(ctx: AppContext, tx: Tx, r: RideRow, city: City, nearby: { driverId: string; distanceM: number }[]): Promise<number> {
+export interface SearchWave {
+  after_s: number;
+  radius_km: number;
+}
+
+/**
+ * When and how far a request goes (D60). `cancel_rules.search_waves` ([{after_s, radius_km}]) overrides the default
+ * of 40 % / 70 % / 100 % of `search_radius_km` at 0 / 40 / 90 s. Waves after the request timeout are dropped, radii are
+ * capped at `search_radius_km` and only grow, and the first wave always starts at 0 s.
+ */
+export function searchWaves(city: City): SearchWave[] {
+  const max = city.search_radius_km;
+  const custom = city.cancel_rules.search_waves;
+  const raw: SearchWave[] = Array.isArray(custom) && custom.length
+    ? custom.map((w: any) => ({ after_s: Number(w?.after_s), radius_km: Number(w?.radius_km) }))
+    : [{ after_s: 0, radius_km: max * 0.4 }, { after_s: 40, radius_km: max * 0.7 }, { after_s: 90, radius_km: max }];
+  const out: SearchWave[] = [];
+  for (const w of raw.filter((x) => Number.isFinite(x.after_s) && Number.isFinite(x.radius_km) && x.radius_km > 0).sort((a, b) => a.after_s - b.after_s)) {
+    const radius = Math.round(Math.min(w.radius_km, max) * 10) / 10;
+    const at = out.length ? Math.max(0, Math.round(w.after_s)) : 0;
+    if (at >= city.request_timeout_s) break;
+    if (out.length && radius <= out[out.length - 1].radius_km) continue;
+    out.push({ after_s: at, radius_km: radius });
+  }
+  return out.length ? out : [{ after_s: 0, radius_km: max }];
+}
+
+/**
+ * Next wave of a searching request: notifies drivers inside the wider radius who were not notified yet. Re-checks
+ * state with a conditional update, so duplicate or late jobs (and the sweeper) are harmless. Returns the number of
+ * drivers notified, or null when nothing was due.
+ */
+export async function runSearchWave(ctx: AppContext, rideId: string, wave: number): Promise<number | null> {
+  const r0 = await getRide(ctx.db, rideId);
+  if (!r0 || r0.status !== 'searching' || new Date(r0.expires_at) <= new Date() || r0.search_wave >= wave) return null;
+  const city = await ctx.settings.city(r0.city_id);
+  const w = searchWaves(city)[wave];
+  if (!w) return null;
+  const radiusM = Math.round(w.radius_km * 1000);
+  const nearby = await ctx.geo.nearby(city.id, r0.pickup_lat, r0.pickup_lng, w.radius_km);
+  return withTx(ctx.db, async (tx) => {
+    const upd = await one(tx, `UPDATE rides SET search_wave = $2, search_radius_m = $3, updated_at = now() WHERE id = $1 AND status = 'searching' AND search_wave < $2 RETURNING id`, [rideId, wave, radiusM]);
+    if (!upd) return null;
+    const r = (await getRide(tx, rideId))!;
+    const n = await fanOut(ctx, tx, r, city, nearby, wave);
+    await tx.query('UPDATE rides SET drivers_notified = drivers_notified + $2 WHERE id = $1', [rideId, n]);
+    await addEvent(tx, rideId, 'broadcast', { role: 'system' }, { drivers: n, wave, radius_m: radiusM });
+    await notifyRideUpdate(tx, (await getRide(tx, rideId))!);
+    return n;
+  });
+}
+
+/** Sends the request to every eligible nearby driver not notified yet for this ride (unlimited, nearest first). */
+async function fanOut(ctx: AppContext, tx: Tx, r: RideRow, city: City, nearby: { driverId: string; distanceM: number }[], wave: number): Promise<number> {
   if (!nearby.length) return 0;
   const ids = nearby.map((n) => n.driverId);
   const eligible = await many<{ user_id: string }>(
@@ -146,12 +205,17 @@ async function fanOut(ctx: AppContext, tx: Tx, r: RideRow, city: City, nearby: {
      WHERE d.user_id = ANY($1) AND d.status = 'approved' AND d.online AND u.status = 'active'
        AND u.email_verified_at IS NOT NULL AND u.phone_verified_at IS NOT NULL
        AND (d.blocked_until IS NULL OR d.blocked_until < now()) AND d.city_id = $2 AND d.driver_type = ANY($3)
-       AND NOT EXISTS (SELECT 1 FROM rides x WHERE x.driver_id = d.user_id AND x.status IN ('accepted','arrived','in_progress'))`,
-    [ids, city.id, city.enabled_driver_types],
+       AND NOT EXISTS (SELECT 1 FROM rides x WHERE x.driver_id = d.user_id AND x.status IN ('accepted','arrived','in_progress'))
+       AND NOT EXISTS (SELECT 1 FROM ride_notified_drivers n WHERE n.ride_id = $4 AND n.driver_id = d.user_id)`,
+    [ids, city.id, city.enabled_driver_types, r.id],
   );
   const ok = new Set(eligible.map((e) => e.user_id));
   const targets = nearby.filter((n) => ok.has(n.driverId));
   if (!targets.length) return 0;
+  await tx.query(
+    `INSERT INTO ride_notified_drivers (ride_id, driver_id, wave) SELECT $1, unnest($2::uuid[]), $3 ON CONFLICT DO NOTHING`,
+    [r.id, targets.map((t) => t.driverId), wave],
+  );
   const base = await requestView(tx, r);
   const msgs: OutboxMessage[] = targets.map((t) => ({
     topic: 'realtime',
@@ -602,12 +666,26 @@ export async function expireBid(ctx: AppContext, bidId: string): Promise<boolean
 }
 
 /** Safety net if Redis lost delayed jobs: expires everything overdue. */
-export async function sweepTimeouts(ctx: AppContext): Promise<{ rides: number; bids: number }> {
+export async function sweepTimeouts(ctx: AppContext): Promise<{ rides: number; bids: number; waves: number }> {
   const rides = await many<{ id: string }>(ctx.db, `SELECT id FROM rides WHERE status = 'searching' AND expires_at <= now() LIMIT 500`);
   const bids = await many<{ id: string }>(ctx.db, `SELECT id FROM bids WHERE status = 'active' AND expires_at <= now() LIMIT 2000`);
   let nr = 0;
   let nb = 0;
   for (const r of rides) if (await expireRide(ctx, r.id)) nr++;
   for (const b of bids) if (await expireBid(ctx, b.id)) nb++;
-  return { rides: nr, bids: nb };
+  // Waves whose job was lost (Redis restart): jump straight to the wave the request should be at.
+  let nw = 0;
+  const open = await many<{ id: string; city_id: string; search_wave: number; age_s: number }>(
+    ctx.db,
+    `SELECT id, city_id, search_wave, extract(epoch FROM now() - requested_at)::int AS age_s FROM rides WHERE status = 'searching' AND expires_at > now() LIMIT 500`,
+  );
+  for (const r of open) {
+    const waves = searchWaves(await ctx.settings.city(r.city_id));
+    let due = 0;
+    waves.forEach((w, i) => {
+      if (w.after_s <= r.age_s) due = i;
+    });
+    if (due > r.search_wave && (await runSearchWave(ctx, r.id, due)) !== null) nw++;
+  }
+  return { rides: nr, bids: nb, waves: nw };
 }

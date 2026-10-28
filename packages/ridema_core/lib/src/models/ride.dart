@@ -170,6 +170,7 @@ class Ride {
     this.rider,
     this.myRating,
     this.canCancelFree,
+    this.search,
   });
 
   final String id;
@@ -204,6 +205,9 @@ class Ride {
   /// Rider only.
   final bool? canCancelFree;
 
+  /// Rider only, while searching: how far the request has reached (D60).
+  final RideSearch? search;
+
   /// Price the rider pays: final price once agreed, else the current offer.
   int get price => finalPrice ?? offeredPrice;
 
@@ -237,7 +241,21 @@ class Ride {
       rider: j['rider'] is Map ? PersonCard.fromJson(j['rider']) : null,
       myRating: asInt(j['my_rating']),
       canCancelFree: j['can_cancel_free'] is bool ? j['can_cancel_free'] as bool : null,
+      search: j['search'] is Map ? RideSearch.fromJson(j['search']) : null,
     );
+  }
+}
+
+/// `Ride.search`: the request goes out in waves of growing radius (D60).
+class RideSearch {
+  const RideSearch({required this.wave, this.radiusM, required this.driversNotified});
+  final int wave;
+  final int? radiusM;
+  final int driversNotified;
+
+  factory RideSearch.fromJson(Object? json) {
+    final j = asJson(json);
+    return RideSearch(wave: asIntOr(j['wave']), radiusM: asInt(j['radius_m']), driversNotified: asIntOr(j['drivers_notified']));
   }
 }
 

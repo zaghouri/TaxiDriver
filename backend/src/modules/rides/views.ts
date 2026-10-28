@@ -10,7 +10,8 @@ export const RIDE_COLUMNS = `r.id, r.city_id, r.rider_id, r.driver_id, r.status,
   ST_Y(r.dropoff::geometry) AS dropoff_lat, ST_X(r.dropoff::geometry) AS dropoff_lng, r.dropoff_address,
   r.distance_m, r.duration_s, r.suggested_price, r.offered_price, r.final_price, r.accepted_bid_id, r.vehicle_id,
   r.pickup_pin, r.pin_attempts, r.rider_comment, r.flagged, r.cancelled_by, r.cancel_reason,
-  r.requested_at, r.expires_at, r.accepted_at, r.arrived_at, r.started_at, r.completed_at, r.cancelled_at`;
+  r.requested_at, r.expires_at, r.accepted_at, r.arrived_at, r.started_at, r.completed_at, r.cancelled_at,
+  r.search_wave, r.search_radius_m, r.drivers_notified`;
 
 export interface RideRow {
   id: string;
@@ -44,6 +45,9 @@ export interface RideRow {
   started_at: Date | null;
   completed_at: Date | null;
   cancelled_at: Date | null;
+  search_wave: number;
+  search_radius_m: number | null;
+  drivers_notified: number;
 }
 
 export async function getRide(q: Queryable, id: string, lock = false): Promise<RideRow | null> {
@@ -117,6 +121,9 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
     view.my_rating = rated?.stars ?? null;
   }
   if (isRider) view.can_cancel_free = r.status === 'searching' || r.status === 'accepted';
+  if ((isRider || isAdmin) && r.status === 'searching') {
+    view.search = { wave: r.search_wave, radius_m: r.search_radius_m, drivers_notified: r.drivers_notified };
+  }
   if (isAdmin) {
     view.flagged = r.flagged;
     view.pin_attempts = r.pin_attempts;

@@ -165,6 +165,28 @@ class RiderStrings {
 
   String get gpsPoint => _t({'en': 'GPS point', 'fr': 'Point GPS', 'ar': 'نقطة GPS'});
 
+  /// Search stage line while no offer has come yet (D60).
+  String get searchNearby => _t({
+        'en': 'Drivers near you can see your request',
+        'fr': 'Les chauffeurs proches voient votre demande',
+        'ar': 'السائقون القريبون يرون طلبك',
+      });
+
+  String get searchNoneYet => _t({
+        'en': 'No driver right next to you yet. We are widening the search…',
+        'fr': 'Pas encore de chauffeur tout près. Nous élargissons la recherche…',
+        'ar': 'لا يوجد سائق قريب جدًا بعد. نحن نوسّع البحث…',
+      });
+
+  String searchWider(int metres) {
+    final km = (metres / 1000).toStringAsFixed(metres % 1000 == 0 ? 0 : 1);
+    return _t({
+      'en': 'Search widened to $km km around you',
+      'fr': 'Recherche élargie à ${km.replaceAll('.', ',')} km autour de vous',
+      'ar': 'تم توسيع البحث إلى $km كم حولك',
+    });
+  }
+
   String driversNotified(int count) => _t({
         'en': '$count drivers nearby see your request',
         'fr': '$count chauffeurs à proximité voient votre demande',

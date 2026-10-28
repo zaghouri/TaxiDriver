@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:ridema_core/ridema_core.dart';
+import 'package:ridema_rider/src/l10n/rider_strings.dart';
 import 'package:ridema_rider/src/ride/ride_controller.dart';
 import 'package:ridema_rider/src/ui/active_ride.dart';
 import 'package:ridema_rider/src/ui/offers.dart';
@@ -157,6 +158,43 @@ void main() {
       h.c.dispose();
       await tester.pumpWidget(const SizedBox());
     });
+  });
+
+  group('Search stage line (D60)', () {
+    Ride stage(int wave, int? radius, int notified) =>
+        Ride.fromJson({...rideJson(status: 'searching', expiresAt: DateTime.now().add(const Duration(minutes: 4))), 'search': {'wave': wave, 'radius_m': radius, 'drivers_notified': notified}});
+
+    for (final lang in ['en', 'fr']) {
+      testWidgets('nobody nearby → widening; wider wave → radius and count ($lang)', (tester) async {
+        final h = Harness();
+        addTearDown(h.c.dispose);
+        await h.searching();
+        h.rt.rideUpdate.add(stage(0, 2000, 0));
+        await tester.pumpWidget(wrapApp(
+          Scaffold(body: Align(alignment: Alignment.bottomCenter, child: SearchingPanel(onCancel: () {}, onRaise: () {}))),
+          controller: h.c,
+          locale: Locale(lang),
+        ));
+        await tester.pump();
+        final rs = RiderStrings(lang);
+        expect(find.text(rs.searchNoneYet), findsOneWidget);
+
+        h.rt.rideUpdate.add(stage(0, 2000, 3));
+        await tester.pump();
+        expect(find.text(rs.searchNearby), findsOneWidget);
+
+        h.rt.rideUpdate.add(stage(1, 3500, 5));
+        await tester.pump();
+        expect(find.text(lang == 'fr' ? 'Recherche élargie à 3,5 km autour de vous' : 'Search widened to 3.5 km around you'), findsOneWidget);
+        expect(find.text(rs.driversNotified(5)), findsOneWidget);
+
+        h.rt.bidNew.add(mkBid('b1'));
+        await tester.pump();
+        expect(find.byKey(const ValueKey('search_stage')), findsNothing, reason: 'offers replace the stage line');
+        h.c.dispose();
+        await tester.pumpWidget(const SizedBox());
+      });
+    }
   });
 
   group('Driver on the way card', () {
