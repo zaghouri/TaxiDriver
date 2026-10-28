@@ -667,5 +667,7 @@
   "chatQuickOnMyWay": "Je suis en route",
   "chatQuickTraffic": "Bloqué dans la circulation, encore quelques minutes",
   "chatQuickCantFindYou": "Je ne vous trouve pas. Où êtes-vous exactement ?",
-  "errChatClosed": "Les messages sont ouverts seulement pendant la course."
+  "errChatClosed": "Les messages sont ouverts seulement pendant la course.",
+  "callRingFromDriver": "Votre chauffeur vous appelle dans RideMA",
+  "callRingFromRider": "Votre passager vous appelle dans RideMA"
 }

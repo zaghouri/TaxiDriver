@@ -2334,4 +2334,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errChatClosed =>
       'Les messages sont ouverts seulement pendant la course.';
+
+  @override
+  String get callRingFromDriver => 'Votre chauffeur vous appelle dans RideMA';
+
+  @override
+  String get callRingFromRider => 'Votre passager vous appelle dans RideMA';
 }
