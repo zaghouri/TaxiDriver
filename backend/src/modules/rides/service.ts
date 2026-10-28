@@ -472,6 +472,46 @@ async function driverStep(ctx: AppContext, driverId: string, rideId: string, fro
 /** A fix older than this says nothing about where the driver is now. */
 const ARRIVE_FIX_MAX_AGE_MS = 120_000;
 
+/**
+ * Rider moves the pickup point (D61): once per ride, after acceptance and before arrival, within
+ * `cancel_rules.pickup_edit_max_m` (default 300 m) of the original point, and not when the driver is already within
+ * `pickup_edit_lock_m` (default 150 m) of it. The price does not change; the driver gets the new point live + a push.
+ */
+export async function editPickup(ctx: AppContext, riderId: string, rideId: string, p: LatLng & { address?: string }) {
+  const r0 = await loadOwnRide(ctx.db, rideId, riderId, 'rider', false);
+  if (r0.status !== 'accepted') throw conflict('PICKUP_LOCKED', 'The pickup point can only be changed before the driver arrives.', { reason: 'status' });
+  if (r0.pickup_edited_at) throw conflict('PICKUP_EDIT_USED', 'You already changed the pickup point for this ride.');
+  const city = await ctx.settings.city(r0.city_id);
+  const maxM = Number(city.cancel_rules.pickup_edit_max_m ?? 300);
+  const lockM = Number(city.cancel_rules.pickup_edit_lock_m ?? 150);
+  const from = { lat: r0.pickup_lat, lng: r0.pickup_lng };
+  const moved = Math.round(haversineM(from, p));
+  if (moved > maxM) throw unprocessable('PICKUP_TOO_FAR', `The new point must be within ${maxM} m of the first one.`, { max_m: maxM, distance_m: moved });
+  const loc = r0.driver_id ? await ctx.geo.get(r0.driver_id) : null;
+  if (loc && Date.now() - loc.at < ARRIVE_FIX_MAX_AGE_MS && haversineM(loc, from) <= lockM) {
+    throw conflict('PICKUP_LOCKED', 'Your driver is almost there. Call them if you need to meet elsewhere.', { reason: 'driver_near' });
+  }
+  const r2 = await withTx(ctx.db, async (tx) => {
+    const upd = await one(
+      tx,
+      `UPDATE rides SET pickup = ST_SetSRID(ST_MakePoint($3,$4),4326)::geography, pickup_address = $5, pickup_edited_at = now(), updated_at = now()
+       WHERE id = $1 AND rider_id = $2 AND status = 'accepted' AND pickup_edited_at IS NULL RETURNING id`,
+      [rideId, riderId, p.lng, p.lat, p.address ?? null],
+    );
+    if (!upd) {
+      const cur = (await getRide(tx, rideId))!;
+      throw cur.pickup_edited_at ? conflict('PICKUP_EDIT_USED', 'You already changed the pickup point for this ride.') : conflict('PICKUP_LOCKED', 'The pickup point can only be changed before the driver arrives.', { reason: 'status' });
+    }
+    await addEvent(tx, rideId, 'pickup_changed', { id: riderId, role: 'rider' }, { from, to: { lat: p.lat, lng: p.lng }, moved_m: moved });
+    const r = (await getRide(tx, rideId))!;
+    await notifyRideUpdate(tx, r, [
+      { topic: 'push', payload: { user_ids: [r.driver_id!], title: 'push_pickup_changed_title', body: 'push_pickup_changed_body', data: { type: 'pickup_changed', ride_id: r.id }, channel: 'ride_updates' } },
+    ]);
+    return r;
+  });
+  return rideView(ctx.db, r2, { id: riderId, role: 'rider' });
+}
+
 export async function arrived(ctx: AppContext, driverId: string, rideId: string) {
   // "I've arrived" starts the rider's wait clock and later allows a free no-show cancel, so it must happen at the
   // pickup. Checked against the driver's last fresh position; without one (GPS lost) the step is allowed and the

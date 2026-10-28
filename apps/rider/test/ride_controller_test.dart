@@ -288,6 +288,34 @@ void main() {
       expect(h.c.dropoff, isNotNull);
     });
 
+    test('pickup can be moved once after acceptance; refusals keep the ride and show the error (D61)', () async {
+      await h.searching();
+      h.rt.bidNew.add(mkBid('b1'));
+      await h.c.acceptOffer(h.c.offers.single);
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'accepted', withDriver: true, pin: '4821'), 'can_edit_pickup': true}));
+      expect(h.c.canEditPickup, isTrue);
+      const p = Place(lat: 33.8945, lng: -5.5473, address: 'Café en face');
+      h.api.onEditPickup = (id, place) async => Ride.fromJson({
+            ...rideJson(status: 'accepted', withDriver: true, pin: '4821'),
+            'pickup': {'lat': place.lat, 'lng': place.lng, 'address': place.address},
+            'can_edit_pickup': false,
+          });
+      expect(await h.c.editPickup(p), isTrue);
+      expect(h.api.calls, contains('pickup:Café en face'));
+      expect(h.c.ride?.pickup.address, 'Café en face');
+      expect(h.c.canEditPickup, isFalse);
+      expect(await h.c.editPickup(p), isFalse, reason: 'only once');
+
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'accepted', withDriver: true, pin: '4821'), 'can_edit_pickup': true}));
+      h.api.onEditPickup = (_, _) async => throw const ApiException('PICKUP_LOCKED', 'near', status: 409);
+      h.api.onActive = () async => ActiveRide(ride: Ride.fromJson({...rideJson(status: 'accepted', withDriver: true, pin: '4821'), 'can_edit_pickup': false}));
+      expect(await h.c.editPickup(p), isFalse);
+      expect((h.c.error as ApiException?)?.code, 'PICKUP_LOCKED');
+      expect(h.api.calls.last, 'active', reason: 'refusal re-reads the ride');
+      expect(h.c.phase, RiderPhase.accepted);
+      expect(h.c.canEditPickup, isFalse);
+    });
+
     test('"Search again" sends the same pickup, destination and fare; "Edit request" just stays Home', () async {
       await h.searching();
       h.rt.bidNew.add(mkBid('b1'));

@@ -38,6 +38,8 @@ const t = {
   push_accepted_title: { en: 'You got the ride!', fr: 'Course acceptée !', ar: 'تم قبولك للرحلة!' },
   push_accepted_body: { en: 'Go to the pickup point.', fr: 'Rendez-vous au point de départ.', ar: 'توجّه إلى نقطة الانطلاق.' },
   push_arrived_title: { en: 'Your driver is here', fr: 'Votre chauffeur est arrivé', ar: 'السائق وصل' },
+  push_pickup_changed_title: { en: 'Pickup point moved', fr: 'Point de prise en charge déplacé', ar: 'تم تغيير نقطة الانطلاق' },
+  push_pickup_changed_body: { en: 'The rider moved the pickup point. Check the new route.', fr: 'Le passager a déplacé le point de prise en charge. Vérifiez le nouvel itinéraire.', ar: 'غيّر الراكب نقطة الانطلاق. تحقق من المسار الجديد.' },
   push_arrived_body: { en: '{car} · {plate}', fr: '{car} · {plate}', ar: '{car} · {plate}' },
   push_cancelled_title: { en: 'Ride cancelled', fr: 'Course annulée', ar: 'أُلغيت الرحلة' },
   push_cancelled_body: { en: 'The ride was cancelled.', fr: 'La course a été annulée.', ar: 'تم إلغاء الرحلة.' },

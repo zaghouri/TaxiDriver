@@ -47,6 +47,11 @@ export async function rideRoutes(app: FastifyInstance, ctx: AppContext) {
     return svc.raiseOffer(ctx, req.user!.id, parse(uuid, (req.params as any).id), b.offered_price);
   });
 
+  app.post('/v1/rides/:id/pickup', { config: { auth: 'rider' } }, async (req) => {
+    const b = parse(latLng.extend({ address: z.string().trim().max(300).optional() }), req.body);
+    return svc.editPickup(ctx, req.user!.id, parse(uuid, (req.params as any).id), b);
+  });
+
   app.post('/v1/rides/:id/bids/:bidId/accept', { config: { auth: 'rider' } }, async (req) => {
     const p = req.params as any;
     return svc.acceptBid(ctx, req.user!.id, parse(uuid, p.id), parse(uuid, p.bidId));

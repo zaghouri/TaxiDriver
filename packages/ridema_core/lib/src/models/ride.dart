@@ -171,6 +171,8 @@ class Ride {
     this.myRating,
     this.canCancelFree,
     this.search,
+    this.canEditPickup,
+    this.pickupEditedAt,
   });
 
   final String id;
@@ -208,6 +210,12 @@ class Ride {
   /// Rider only, while searching: how far the request has reached (D60).
   final RideSearch? search;
 
+  /// Rider only: the pickup point can still be moved (once, before arrival — D61).
+  final bool? canEditPickup;
+
+  /// Set once the rider moved the pickup point.
+  final DateTime? pickupEditedAt;
+
   /// Price the rider pays: final price once agreed, else the current offer.
   int get price => finalPrice ?? offeredPrice;
 
@@ -242,6 +250,8 @@ class Ride {
       myRating: asInt(j['my_rating']),
       canCancelFree: j['can_cancel_free'] is bool ? j['can_cancel_free'] as bool : null,
       search: j['search'] is Map ? RideSearch.fromJson(j['search']) : null,
+      canEditPickup: j['can_edit_pickup'] is bool ? j['can_edit_pickup'] as bool : null,
+      pickupEditedAt: asDate(j['pickup_edited_at']),
     );
   }
 }

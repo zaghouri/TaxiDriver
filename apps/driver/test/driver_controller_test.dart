@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ridema_core/ridema_core.dart';
 import 'package:ridema_driver/src/controller/driver_controller.dart';
 import 'package:ridema_driver/src/controller/location_throttle.dart';
+import 'package:ridema_driver/src/l10n/driver_strings.dart';
 
 import 'support/fakes.dart';
 
@@ -318,6 +319,23 @@ void main() {
       api.arrivedError = null;
       await c.markArrived();
       expect(c.phase, DriverPhase.arrived);
+    });
+
+    test('the rider moving the pickup point emits one notice with the new address (D61)', () async {
+      await online();
+      rt.rideRequest.add(request('r1'));
+      await c.acceptRequest('r1');
+      api.active = ActiveRide(ride: makeRide('r1', 'accepted'));
+      rt.requestClosed.add(const RequestClosed(id: 'r1', reason: 'taken'));
+      await settle();
+      rt.rideUpdate.add(makeRide('r1', 'accepted')); // same point: nothing to say
+      await settle();
+      expect(events.whereType<PickupChangedEvent>(), isEmpty);
+      rt.rideUpdate.add(Ride.fromJson({...rideJson('r1', 'accepted'), 'pickup': {'lat': 33.8912, 'lng': -5.55, 'address': 'Café en face'}}));
+      await settle();
+      expect(events.whereType<PickupChangedEvent>().single.ride.pickup.address, 'Café en face');
+      expect(c.activeRide?.pickup.lat, 33.8912);
+      expect(const DriverStrings('en').pickupChanged('Café en face'), 'New pickup point: Café en face. Check the new route.');
     });
 
     test('socket reconnect re-fetches the active ride and restores the screen + pending bids', () async {

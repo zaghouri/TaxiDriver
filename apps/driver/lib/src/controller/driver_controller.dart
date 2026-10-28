@@ -128,6 +128,12 @@ class ForcedOfflineEvent extends DriverEvent {
   final String code;
 }
 
+/// The rider moved the pickup point of our active ride (D61): new route.
+class PickupChangedEvent extends DriverEvent {
+  const PickupChangedEvent(this.ride);
+  final Ride ride;
+}
+
 class AdminMessageEvent extends DriverEvent {
   const AdminMessageEvent(this.message);
   final String message;
@@ -524,8 +530,10 @@ class DriverController extends ChangeNotifier {
   }
 
   void _setActive(Ride r) {
-    final wasNew = _active == null;
+    final prev = _active;
+    final wasNew = prev == null;
     final hadBid = _bids.containsKey(r.id);
+    final pickupMoved = prev != null && prev.id == r.id && (prev.pickup.lat != r.pickup.lat || prev.pickup.lng != r.pickup.lng);
     _active = r;
     _requests.clear();
     _receivedAt.clear();
@@ -533,6 +541,7 @@ class DriverController extends ChangeNotifier {
     unawaited(_syncTracking());
     _notify();
     if (wasNew && hadBid) _emit(BidResultEvent(r.id, 'accepted'));
+    if (pickupMoved) _emit(PickupChangedEvent(r));
   }
 
   // ------------------------------------------------------------ active ride

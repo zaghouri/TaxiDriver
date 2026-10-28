@@ -538,6 +538,54 @@ describe("I've arrived only at the pickup", () => {
   });
 });
 
+describe('rider moves the pickup once (D61)', () => {
+  const moved = (m: number) => ({ lat: MEKNES.lat + m / 111_200, lng: MEKNES.lng });
+
+  it('once, within 300 m, price unchanged; the driver gets the new point', async () => {
+    const d = await onlineDriver(env);
+    const rider = await newUser(env, 'rider');
+    const acc = await acceptedRide(rider, d);
+    expect(acc.can_edit_pickup).toBe(true);
+    env.rt.clear();
+    let r = await call(env, 'POST', `/v1/rides/${acc.id}/pickup`, { ...moved(400), address: 'Too far' }, rider);
+    expect(r.statusCode).toBe(422);
+    expect(r.json().error).toMatchObject({ code: 'PICKUP_TOO_FAR', details: { max_m: 300 } });
+
+    r = await call(env, 'POST', `/v1/rides/${acc.id}/pickup`, { ...moved(120), address: 'Café en face, Hamria' }, rider);
+    expect(r.statusCode).toBe(200);
+    const v = r.json();
+    expect(v.pickup.address).toBe('Café en face, Hamria');
+    expect(v.pickup.lat).toBeCloseTo(moved(120).lat, 5);
+    expect(v.final_price).toBe(acc.final_price);
+    expect(v.can_edit_pickup).toBe(false);
+    expect(v.pickup_edited_at).toBeTruthy();
+    await env.ctx.outbox.drain();
+    const toDriver = env.rt.events.filter((e) => (e.target as any).user === d.userId && e.event === 'ride:update' && e.data.id === acc.id).at(-1);
+    expect(toDriver?.data.pickup.address).toBe('Café en face, Hamria');
+    const ev = await env.ctx.db.query(`SELECT data FROM ride_events WHERE ride_id = $1 AND type = 'pickup_changed'`, [acc.id]);
+    expect(ev.rows[0].data.moved_m).toBeGreaterThan(100);
+
+    r = await call(env, 'POST', `/v1/rides/${acc.id}/pickup`, moved(50), rider);
+    expect(r.json().error.code).toBe('PICKUP_EDIT_USED');
+    expect((await call(env, 'POST', `/v1/rides/${acc.id}/pickup`, moved(50), d)).statusCode).toBe(403);
+    const other = await newUser(env, 'rider');
+    expect((await call(env, 'POST', `/v1/rides/${acc.id}/pickup`, moved(50), other)).json().error.code).toBe('RIDE_NOT_FOUND');
+  });
+
+  it('locked when the driver is almost there or has arrived', async () => {
+    const d = await onlineDriver(env);
+    const rider = await newUser(env, 'rider');
+    const acc = await acceptedRide(rider, d);
+    await call(env, 'POST', '/v1/driver/location', moved(60), d);
+    let r = await call(env, 'POST', `/v1/rides/${acc.id}/pickup`, moved(100), rider);
+    expect(r.json().error).toMatchObject({ code: 'PICKUP_LOCKED', details: { reason: 'driver_near' } });
+    await arrive(d, acc.id);
+    r = await call(env, 'POST', `/v1/rides/${acc.id}/pickup`, moved(100), rider);
+    expect(r.json().error).toMatchObject({ code: 'PICKUP_LOCKED', details: { reason: 'status' } });
+    expect((await call(env, 'GET', `/v1/rides/${acc.id}`, undefined, rider)).json().can_edit_pickup).toBe(false);
+  });
+});
+
 describe('per-object authorization', () => {
   it('nobody reads or acts on another person\'s ride', async () => {
     const owner = await newUser(env, 'rider');

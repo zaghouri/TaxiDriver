@@ -30,6 +30,8 @@ class DriverStrings {
   String get mapPlaceholder => _t('mapPlaceholder');
   String get you => _t('you');
   String counterAbove(int amount) => _f('counterAbove', {'amount': amount});
+  String pickupChanged(String? address) =>
+      address == null || address.trim().isEmpty ? _t('pickupChanged') : _f('pickupChangedTo', {'address': address.trim()});
   String tooFarFromPickup(int metres) => _f('tooFarFromPickup', {'distance': distance(metres)});
 
   /// 350 m · 1.2 km (1,2 km in French).
@@ -135,6 +137,8 @@ class DriverStrings {
       'you': 'You',
       'counterAbove': 'Enter an amount above {amount} DH.',
       'tooFarFromPickup': 'You are {distance} from the pickup point. Tap “I’ve arrived” when you get there.',
+      'pickupChanged': 'The rider moved the pickup point. Check the new route.',
+      'pickupChangedTo': 'New pickup point: {address}. Check the new route.',
       'unitM': 'm',
       'unitKm': 'km',
       'yourPrice': 'Your price',
@@ -195,6 +199,8 @@ class DriverStrings {
       'you': 'Vous',
       'counterAbove': 'Entrez un montant supérieur à {amount} DH.',
       'tooFarFromPickup': 'Vous êtes à {distance} du point de prise en charge. Appuyez sur « Je suis arrivé » une fois sur place.',
+      'pickupChanged': 'Le passager a déplacé le point de prise en charge. Vérifiez le nouvel itinéraire.',
+      'pickupChangedTo': 'Nouveau point de prise en charge : {address}. Vérifiez le nouvel itinéraire.',
       'unitM': 'm',
       'unitKm': 'km',
       'yourPrice': 'Votre prix',
@@ -255,6 +261,8 @@ class DriverStrings {
       'you': 'أنت',
       'counterAbove': 'أدخل مبلغًا أكبر من {amount} درهم.',
       'tooFarFromPickup': 'أنت على بعد {distance} من نقطة الانطلاق. اضغط على «لقد وصلت» عندما تصل إليها.',
+      'pickupChanged': 'غيّر الراكب نقطة الانطلاق. تحقق من المسار الجديد.',
+      'pickupChangedTo': 'نقطة الانطلاق الجديدة: {address}. تحقق من المسار الجديد.',
       'unitM': 'م',
       'unitKm': 'كم',
       'yourPrice': 'ثمنك',
