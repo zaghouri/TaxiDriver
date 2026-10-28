@@ -209,6 +209,10 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
       ));
       return;
     }
+    if (n == RiderNotice.driverLate) {
+      unawaited(_askDriverLate());
+      return;
+    }
     if (n == RiderNotice.cancelledByDriver && _c.searchAgainFare != null) {
       unawaited(_askSearchAgain(_c.searchAgainFare!));
       return;
@@ -220,6 +224,7 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
       RiderNotice.reportSent => l.reportSent,
       RiderNotice.rideAlreadyActive => l.errRideAlreadyActive,
       RiderNotice.cancelWarning => rs.backToHome,
+      RiderNotice.driverLate => rs.driverLateBanner,
     };
     showInfoSnack(context, text);
   }
@@ -253,6 +258,39 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
       _c.dismissSearchAgain();
     }
   }
+
+  /// The driver is late (D67): keep waiting (default), call, or find a new driver for free.
+  Future<void> _askDriverLate() async {
+    final l = context.l10n;
+    final rs = RiderStrings.of(context);
+    final due = _c.ride?.pickupDueAt;
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (d) => AlertDialog(
+        key: const ValueKey('driver_late_dialog'),
+        icon: const Icon(Icons.schedule, size: 36),
+        title: Text(rs.driverLateTitle),
+        content: Text(rs.driverLateBody(formatTime(due)), style: const TextStyle(fontSize: 17)),
+        actionsOverflowDirection: VerticalDirection.up,
+        actionsOverflowButtonSpacing: 4,
+        actions: [
+          TextButton(key: const ValueKey('late_keep_waiting'), onPressed: () => Navigator.pop(d), child: Text(rs.keepWaiting)),
+          TextButton(key: const ValueKey('late_call'), onPressed: () => Navigator.pop(d, 'call'), child: Text(l.callButton)),
+          FilledButton(
+            key: const ValueKey('late_find_new'),
+            style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
+            onPressed: () => Navigator.pop(d, 'rebook'),
+            child: Text(rs.findNewDriver),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (choice == 'call' && context.read<BootController>().appConfigOrDefault.feature('voice_calls', fallback: true)) await _call();
+    if (choice == 'rebook') await _findNewDriver();
+  }
+
+  Future<void> _findNewDriver() => _findDriverWith(_c.findNewDriver);
 
   /// Verify-phone gate before the first ride (PHONE_NOT_VERIFIED).
   Future<bool> _openPhoneGate({required bool retry}) async {
@@ -397,6 +435,7 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
           onShare: features.feature('trip_share', fallback: true) ? _share : () {},
           onSos: () => showSosSheet(context, rideId: r!.id, position: _sosPosition),
           onEditPickup: _movePickup,
+          onFindNewDriver: _findNewDriver,
         ),
       RiderPhase.completed => const RateDriverPanel(),
     };

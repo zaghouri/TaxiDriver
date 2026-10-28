@@ -316,6 +316,23 @@ void main() {
       expect(h.c.canEditPickup, isFalse);
     });
 
+    test('driver late: one prompt per ride; "Find a new driver" cancels for free and sends the same request (D67)', () async {
+      await h.searching();
+      h.rt.bidNew.add(mkBid('b1', price: 30));
+      await h.c.acceptOffer(h.c.offers.single);
+      expect(h.c.driverLate, isFalse);
+      expect(await h.c.findNewDriver(), isFalse, reason: 'not late yet');
+      h.rt.rideUpdate.add(mkRide(status: 'accepted', withDriver: true, driverLate: true));
+      expect(h.c.takeNotice(), RiderNotice.driverLate);
+      expect(h.c.driverLate, isTrue);
+      h.rt.rideUpdate.add(mkRide(status: 'accepted', withDriver: true, driverLate: true));
+      expect(h.c.takeNotice(), isNull, reason: 'shown once per ride');
+      h.c.setFare(40);
+      expect(await h.c.findNewDriver(), isTrue);
+      expect(h.api.calls.where((c) => c.startsWith('cancel:') || c.startsWith('create:')).toList().sublist(1), ['cancel:driver_late', 'create:25']);
+      expect(h.c.phase, RiderPhase.searching);
+    });
+
     test('"Search again" sends the same pickup, destination and fare; "Edit request" just stays Home', () async {
       await h.searching();
       h.rt.bidNew.add(mkBid('b1'));

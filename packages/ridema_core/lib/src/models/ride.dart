@@ -40,6 +40,9 @@ enum CancelReason {
   riderNoShow('rider_no_show'),
   carMismatch('car_mismatch'),
   safety('safety'),
+
+  /// Rider only, once the driver is late (D67): free and not counted.
+  driverLate('driver_late'),
   other('other');
 
   const CancelReason(this.apiName);
@@ -195,6 +198,7 @@ class Ride {
     this.pickupDueAt,
     this.etaPromised = false,
     this.arrivedLateS,
+    this.driverLate = false,
   });
 
   final String id;
@@ -246,6 +250,9 @@ class Ride {
   /// Seconds after [pickupDueAt] the driver arrived (0 = on time).
   final int? arrivedLateS;
 
+  /// The driver is past [pickupDueAt] by the city margin and not there yet (D67).
+  final bool driverLate;
+
   /// Price the rider pays: final price once agreed, else the current offer.
   int get price => finalPrice ?? offeredPrice;
 
@@ -285,6 +292,7 @@ class Ride {
       pickupDueAt: asDate(j['pickup_due_at']),
       etaPromised: j['eta_promised'] == true,
       arrivedLateS: asInt(j['arrived_late_s']),
+      driverLate: j['driver_late'] == true,
     );
   }
 }

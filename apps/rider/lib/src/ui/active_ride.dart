@@ -21,6 +21,7 @@ class DriverRideCard extends StatelessWidget {
     this.onCancel,
     this.onCarMismatch,
     this.onEditPickup,
+    this.onFindNewDriver,
     this.cancelFree = true,
   });
 
@@ -36,6 +37,9 @@ class DriverRideCard extends StatelessWidget {
 
   /// Shown only while the pickup can still be moved (D61).
   final VoidCallback? onEditPickup;
+
+  /// Shown only while the driver is late (D67): free cancel + the same request again.
+  final VoidCallback? onFindNewDriver;
   final bool cancelFree;
 
   @override
@@ -66,6 +70,33 @@ class DriverRideCard extends StatelessWidget {
         ),
         if (phase == RiderPhase.accepted && ride.etaPromised && ride.pickupDueAt != null)
           Text(l.driverDueBy(formatTime(ride.pickupDueAt)), key: const ValueKey('ride_due_by'), style: TextStyle(color: Colors.grey.shade800)),
+        if (onFindNewDriver != null) ...[
+          gap8,
+          Container(
+            key: const ValueKey('driver_late_banner'),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            decoration: BoxDecoration(color: BrandColors.accent.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [
+                  const Icon(Icons.schedule, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(RiderStrings.of(context).driverLateBanner, style: const TextStyle(fontWeight: FontWeight.w600))),
+                ]),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TextButton(
+                    key: const ValueKey('find_new_driver'),
+                    style: TextButton.styleFrom(minimumSize: const Size(0, kTapTarget)),
+                    onPressed: onFindNewDriver,
+                    child: Text(RiderStrings.of(context).findNewDriver, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         gap8,
         CarCard(vehicle: vehicle, driver: ride.driver),
         if (pin != null) ...[
@@ -300,10 +331,13 @@ Future<void> showCarMismatch(BuildContext context, RideController c) async {
 
 /// Panel while a driver is assigned (reads [RideController]).
 class ActiveRidePanel extends StatelessWidget {
-  const ActiveRidePanel({super.key, required this.onCall, required this.onShare, required this.onSos, this.onEditPickup});
+  const ActiveRidePanel({super.key, required this.onCall, required this.onShare, required this.onSos, this.onEditPickup, this.onFindNewDriver});
 
   /// Opens the address search to move the pickup point (D61).
   final VoidCallback? onEditPickup;
+
+  /// Free rebook while the driver is late (D67).
+  final VoidCallback? onFindNewDriver;
   final VoidCallback onCall;
   final VoidCallback onShare;
   final VoidCallback onSos;
@@ -330,6 +364,7 @@ class ActiveRidePanel extends StatelessWidget {
           onSos: onSos,
           onCarMismatch: c.busy ? null : () => showCarMismatch(context, c),
           onEditPickup: c.canEditPickup && !c.busy ? onEditPickup : null,
+          onFindNewDriver: c.driverLate && !c.busy ? onFindNewDriver : null,
           onCancel: c.busy || !c.canCancel
               ? null
               : () async {

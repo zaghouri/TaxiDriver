@@ -330,6 +330,21 @@ void main() {
       }
     });
 
+    testWidgets('late driver: banner with "Find a new driver" (D67)', (tester) async {
+      await _setPhone(tester);
+      var rebooked = 0;
+      final r = mkRide(status: 'accepted', pin: '4821', withDriver: true, driverLate: true, pickupDueAt: t0);
+      await tester.pumpWidget(wrapApp(Scaffold(
+        body: SingleChildScrollView(
+          child: DriverRideCard(ride: r, phase: RiderPhase.accepted, pin: '4821', onFindNewDriver: () => rebooked++),
+        ),
+      )));
+      expect(find.text('Your driver is late. You can find a new driver for free.'), findsOneWidget);
+      expect(find.byKey(const ValueKey('ride_due_by')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('find_new_driver')));
+      expect(rebooked, 1);
+    });
+
     testWidgets('on trip: no PIN, no cancel, SOS still visible, cash fare shown', (tester) async {
       await _setPhone(tester);
       final r = mkRide(status: 'in_progress', withDriver: true, finalPrice: 30);

@@ -12,7 +12,7 @@ import { getUser } from '../users.js';
 import { allowedReasons } from './rating-reasons.js';
 import { bidView, bidViewWith, driverCard, getRide, rankedOffers, requestView, rideView, RIDE_COLUMNS, type BidRow, type RideRow } from './views.js';
 
-export const CANCEL_REASONS = ['changed_mind', 'driver_too_far', 'driver_asked', 'wrong_pickup', 'rider_no_show', 'car_mismatch', 'safety', 'other'] as const;
+export const CANCEL_REASONS = ['changed_mind', 'driver_too_far', 'driver_asked', 'wrong_pickup', 'rider_no_show', 'car_mismatch', 'safety', 'driver_late', 'other'] as const;
 export type CancelReason = (typeof CANCEL_REASONS)[number];
 
 export function suggestedPrice(city: City, distanceM: number, durationS: number): number {
@@ -317,6 +317,10 @@ export async function acceptBid(ctx: AppContext, riderId: string, rideId: string
     });
     if ('busy' in res) throw conflict('DRIVER_BUSY', 'This driver just took another ride. Choose another offer.');
     await ctx.geo.setAvailable(res.driver_id!, res.city_id, false);
+    const lateAfter = driverLateAfterS(await ctx.settings.city(res.city_id));
+    if (lateAfter > 0 && res.pickup_due_at) {
+      await ctx.scheduler.schedule('ride-late', { rideId }, new Date(res.pickup_due_at).getTime() - Date.now() + lateAfter * 1000, `ride-late-${rideId}`);
+    }
     return rideView(ctx.db, res, { id: riderId, role: 'rider' });
   } catch (e: any) {
     if (e.code === '40P01') throw conflict('RETRY', 'Please try again.');
@@ -353,7 +357,10 @@ export async function cancelByRider(ctx: AppContext, riderId: string, rideId: st
   const res = await withTx(ctx.db, async (tx) => {
     const r = await loadOwnRide(tx, rideId, riderId, 'rider');
     if (!['searching', 'accepted', 'arrived'].includes(r.status)) throw conflict('CANNOT_CANCEL', r.status === 'in_progress' ? 'The trip has started. Use SOS if you are in danger.' : 'This ride is already finished.');
-    const counted = r.status !== 'searching' && reason !== 'car_mismatch';
+    // "Find a new driver" after the late prompt (D67): only while the driver is late, never counted for the rider.
+    const late = reason === 'driver_late';
+    if (late && !(r.status === 'accepted' && r.driver_late_at)) throw conflict('DRIVER_NOT_LATE', 'Your driver is not late. You can still cancel with another reason.');
+    const counted = r.status !== 'searching' && reason !== 'car_mismatch' && !late;
     const free = r.status !== 'arrived';
     await tx.query(
       `UPDATE rides SET status = 'cancelled', cancelled_by = 'rider', cancel_reason = $2, cancelled_at = now(), rider_cancel_counted = $3, updated_at = now() WHERE id = $1`,
@@ -361,6 +368,10 @@ export async function cancelByRider(ctx: AppContext, riderId: string, rideId: st
     );
     if (r.status === 'searching') await tx.query(`UPDATE bids SET status = 'expired', updated_at = now() WHERE ride_id = $1 AND status = 'active'`, [rideId]);
     await addEvent(tx, rideId, 'cancelled', { id: riderId, role: 'rider' }, { from: r.status, reason, free, counted });
+    if (late && r.driver_id) {
+      const rules = (await ctx.settings.city(r.city_id)).cancel_rules;
+      await tx.query(`INSERT INTO driver_penalties (driver_id, ride_id, kind, points) VALUES ($1, $2, 'late', $3)`, [r.driver_id, rideId, rules.driver_points_per_late ?? 1]);
+    }
     if (reason === 'driver_asked' && r.driver_id) {
       // A driver asking the rider to cancel is the usual start of an off-app (unprotected, untracked) ride: flag it
       // for the operators instead of letting it disappear as an ordinary cancel.
@@ -735,8 +746,44 @@ export async function expireBid(ctx: AppContext, bidId: string): Promise<boolean
   });
 }
 
+/** Minutes past the due time before the rider is offered a free re-book (`cancel_rules.driver_late_after_s`, 0 = off). */
+export function driverLateAfterS(city: City): number {
+  const v = Number(city.cancel_rules.driver_late_after_s ?? 300);
+  return Number.isFinite(v) && v > 0 ? v : 0;
+}
+
+/**
+ * The driver is past the time they were due at the pickup (D66) by the city margin and has not arrived (D67): mark
+ * the ride once, tell the rider (live + push) and the driver. Conditional update, so duplicate jobs and the sweeper
+ * are harmless. Returns true when this call marked the ride.
+ */
+export async function markDriverLate(ctx: AppContext, rideId: string): Promise<boolean> {
+  const r0 = await getRide(ctx.db, rideId);
+  if (!r0 || r0.status !== 'accepted' || r0.driver_late_at || !r0.pickup_due_at) return false;
+  const lateAfter = driverLateAfterS(await ctx.settings.city(r0.city_id));
+  if (!lateAfter) return false;
+  return withTx(ctx.db, async (tx) => {
+    const upd = await one<{ late_s: number }>(
+      tx,
+      `UPDATE rides SET driver_late_at = now(), updated_at = now()
+       WHERE id = $1 AND status = 'accepted' AND driver_late_at IS NULL AND pickup_due_at + make_interval(secs => $2) <= now() + interval '1 second'
+       RETURNING extract(epoch FROM now() - pickup_due_at)::int AS late_s`,
+      [rideId, lateAfter],
+    );
+    if (!upd) return false;
+    await addEvent(tx, rideId, 'driver_late', { role: 'system' }, { late_s: upd.late_s, due_at: r0.pickup_due_at, eta_promised: r0.eta_promised });
+    const r = (await getRide(tx, rideId))!;
+    const min = Math.max(1, Math.round(upd.late_s / 60));
+    await notifyRideUpdate(tx, r, [
+      { topic: 'push', payload: { user_ids: [r.rider_id], title: 'push_driver_late_title', body: 'push_driver_late_body', vars: { min }, data: { type: 'driver_late', ride_id: r.id }, channel: 'ride_updates' } },
+      { topic: 'push', payload: { user_ids: [r.driver_id!], title: 'push_you_are_late_title', body: 'push_you_are_late_body', vars: { min }, data: { type: 'driver_late', ride_id: r.id }, channel: 'ride_updates' } },
+    ]);
+    return true;
+  });
+}
+
 /** Safety net if Redis lost delayed jobs: expires everything overdue. */
-export async function sweepTimeouts(ctx: AppContext): Promise<{ rides: number; bids: number; waves: number }> {
+export async function sweepTimeouts(ctx: AppContext): Promise<{ rides: number; bids: number; waves: number; late: number }> {
   const rides = await many<{ id: string }>(ctx.db, `SELECT id FROM rides WHERE status = 'searching' AND expires_at <= now() LIMIT 500`);
   const bids = await many<{ id: string }>(ctx.db, `SELECT id FROM bids WHERE status = 'active' AND expires_at <= now() LIMIT 2000`);
   let nr = 0;
@@ -757,5 +804,9 @@ export async function sweepTimeouts(ctx: AppContext): Promise<{ rides: number; b
     });
     if (due > r.search_wave && (await runSearchWave(ctx, r.id, due)) !== null) nw++;
   }
-  return { rides: nr, bids: nb, waves: nw };
+  // Late drivers whose job was lost: markDriverLate re-checks the city margin.
+  let nl = 0;
+  const due = await many<{ id: string }>(ctx.db, `SELECT id FROM rides WHERE status = 'accepted' AND driver_late_at IS NULL AND pickup_due_at < now() LIMIT 500`);
+  for (const r of due) if (await markDriverLate(ctx, r.id)) nl++;
+  return { rides: nr, bids: nb, waves: nw, late: nl };
 }

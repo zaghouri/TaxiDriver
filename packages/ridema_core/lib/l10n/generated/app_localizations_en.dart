@@ -2157,4 +2157,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String driverDueBy(String time) {
     return 'Promised arrival: $time';
   }
+
+  @override
+  String get reasonDriverLate => 'The driver is late';
+
+  @override
+  String get errDriverNotLate =>
+      'Your driver is not late yet. You can still cancel with another reason.';
 }

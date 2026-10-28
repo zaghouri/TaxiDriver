@@ -1512,5 +1512,10 @@
         "type": "String"
       }
     }
+  },
+  "reasonDriverLate": "The driver is late",
+  "errDriverNotLate": "Your driver is not late yet. You can still cancel with another reason.",
+  "@errDriverNotLate": {
+    "description": "Error text for API code DRIVER_NOT_LATE"
   }
 }

@@ -42,7 +42,7 @@ void main() {
       final s = RiderStrings(lang);
       expect(s.pickFromContacts, isNotEmpty);
       expect(s.cancelAnyway, isNotEmpty);
-      for (final t in [s.offAppWarning, s.offAppTitle, s.offAppBody, s.keepInApp, s.changePickup, s.changePickupTitle, s.pickupMoved, s.errorForCode('PICKUP_TOO_FAR')!, s.fareBelowSuggested, s.offerBelowSuggestedSearching, s.useSuggested(25)]) {
+      for (final t in [s.offAppWarning, s.offAppTitle, s.offAppBody, s.keepInApp, s.changePickup, s.changePickupTitle, s.pickupMoved, s.errorForCode('PICKUP_TOO_FAR')!, s.fareBelowSuggested, s.offerBelowSuggestedSearching, s.useSuggested(25), s.driverLateTitle, s.driverLateBody('14:05'), s.driverLateBanner, s.keepWaiting, s.findNewDriver]) {
         expect(t, isNotEmpty);
       }
       expect(s.maxOffer(75), contains('75'));

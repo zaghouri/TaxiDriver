@@ -35,8 +35,10 @@ Map<String, dynamic> rideJson({
   DateTime? completedAt,
   DateTime? cancelledAt,
   DateTime? pickupDueAt,
+  bool driverLate = false,
 }) =>
     {
+      'driver_late': driverLate,
       'id': id,
       'status': status,
       'city_id': 'city-1',
@@ -84,8 +86,12 @@ Ride mkRide({
   bool? canCancelFree,
   DateTime? completedAt,
   DateTime? cancelledAt,
+  bool driverLate = false,
+  DateTime? pickupDueAt,
 }) =>
     Ride.fromJson(rideJson(
+      driverLate: driverLate,
+      pickupDueAt: pickupDueAt,
       id: id,
       status: status,
       offered: offered,

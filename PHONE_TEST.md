@@ -47,6 +47,7 @@ APK download: `https://<SERVER_IP>.sslip.io/download` (or the APKs from the GitH
 - [ ] Rider cancels before the driver arrives: free. Do it 3 times in a week → a warning appears.
 - [ ] Driver cancels after accepting: warned first; after 3 in a day the driver is blocked 2 h (try to go online).
 - [ ] After "arrived", wait 5 min → driver can cancel as "Rider didn't come" without penalty.
+- [ ] Driver late (D67): accept an offer, then keep the driver phone away from the pickup for 5 min past the promised arrival → the rider gets a push and a dialog (Keep waiting / Call / Find a new driver); the driver sees "You are late". **Find a new driver** sends the same request again; Admin › Rides shows `driver_late` and the cancel was not counted for the rider.
 - [ ] "Car doesn't match?" on the rider screen → report appears in Admin › Reports; the rider can cancel for free.
 - [ ] SOS (test with a colleague, **cancel the call before it connects**): the 3 buttons show 19 / 177 / 15; tapping one opens the dialer with that number and the admin panel shows a red SOS banner with sound and the position on the map.
 

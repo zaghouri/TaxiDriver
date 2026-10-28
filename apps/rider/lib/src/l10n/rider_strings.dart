@@ -114,6 +114,33 @@ class RiderStrings {
         'ar': 'تم تغيير نقطة الانطلاق. لدى سائقك العنوان الجديد.',
       });
 
+  /// Driver late (REA P2 #10, D67).
+  String get driverLateTitle => _t({
+        'en': 'Your driver is running late',
+        'fr': 'Votre chauffeur est en retard',
+        'ar': 'سائقك متأخر',
+      });
+
+  String driverLateBody(String time) => _t({
+        'en': 'They were expected at $time. You can keep waiting, call them, or find a new driver. Cancelling now is free and does not count against you.',
+        'fr': 'Il était attendu à $time. Vous pouvez patienter, l’appeler ou trouver un autre chauffeur. Annuler maintenant est gratuit et ne vous est pas compté.',
+        'ar': 'كان متوقعًا على $time. يمكنك الانتظار أو الاتصال به أو البحث عن سائق آخر. الإلغاء الآن مجاني ولا يُحتسب عليك.',
+      });
+
+  String get driverLateBanner => _t({
+        'en': 'Your driver is late. You can find a new driver for free.',
+        'fr': 'Votre chauffeur est en retard. Vous pouvez trouver un autre chauffeur gratuitement.',
+        'ar': 'سائقك متأخر. يمكنك البحث عن سائق آخر مجانًا.',
+      });
+
+  String get keepWaiting => _t({'en': 'Keep waiting', 'fr': 'Patienter', 'ar': 'مواصلة الانتظار'});
+
+  String get findNewDriver => _t({
+        'en': 'Find a new driver',
+        'fr': 'Trouver un autre chauffeur',
+        'ar': 'البحث عن سائق آخر',
+      });
+
   String get cancelAnyway => _t({
         'en': 'Cancel anyway',
         'fr': 'Annuler quand même',
