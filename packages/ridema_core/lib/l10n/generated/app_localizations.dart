@@ -3903,6 +3903,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting fee ({minutes} min)'**
   String receiptWaitingFee(int minutes);
+
+  /// No description provided for @emergencyContactsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency contacts'**
+  String get emergencyContactsTitle;
+
+  /// Saved emergency contacts screen (D71).
+  ///
+  /// In en, this message translates to:
+  /// **'If you press SOS during a ride, we send these people a link to follow your trip live. Up to {max} contacts.'**
+  String emergencyContactsInfo(int max);
+
+  /// No description provided for @emergencyContactsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No emergency contact yet.'**
+  String get emergencyContactsEmpty;
+
+  /// No description provided for @emergencyContactAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a contact'**
+  String get emergencyContactAdd;
+
+  /// No description provided for @emergencyContactName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get emergencyContactName;
+
+  /// No description provided for @emergencyContactPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get emergencyContactPhone;
+
+  /// No description provided for @emergencyContactRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get emergencyContactRemove;
+
+  /// No description provided for @sosContactsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your emergency contacts'**
+  String get sosContactsTitle;
+
+  /// No description provided for @sosContactSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending your live trip…'**
+  String get sosContactSending;
+
+  /// No description provided for @sosContactSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Live trip link sent'**
+  String get sosContactSent;
+
+  /// No description provided for @sosContactNotSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not reached yet. Our team has your alert.'**
+  String get sosContactNotSent;
+
+  /// Error text for API code EMERGENCY_CONTACTS_LIMIT
+  ///
+  /// In en, this message translates to:
+  /// **'You can save up to 5 emergency contacts.'**
+  String get errEmergencyContactsLimit;
+
+  /// Error text for API code EMERGENCY_CONTACT_EXISTS
+  ///
+  /// In en, this message translates to:
+  /// **'This number is already in your emergency contacts.'**
+  String get errEmergencyContactExists;
+
+  /// Error text for API code EMERGENCY_CONTACT_SELF
+  ///
+  /// In en, this message translates to:
+  /// **'Add someone else, not your own number.'**
+  String get errEmergencyContactSelf;
+
+  /// Error text for API code CONTACT_NOT_FOUND
+  ///
+  /// In en, this message translates to:
+  /// **'This contact no longer exists.'**
+  String get errContactNotFound;
 }
 
 class _AppLocalizationsDelegate

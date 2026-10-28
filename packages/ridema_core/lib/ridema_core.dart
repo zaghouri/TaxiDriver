@@ -44,6 +44,7 @@ export 'src/theme.dart';
 export 'src/ui/screens/auth_screens.dart';
 export 'src/ui/screens/battery_guide_screen.dart';
 export 'src/ui/screens/boot_screens.dart';
+export 'src/ui/screens/emergency_contacts_screen.dart';
 export 'src/ui/screens/legal_screens.dart';
 export 'src/ui/screens/permission_screens.dart';
 export 'src/ui/screens/phone_screen.dart';

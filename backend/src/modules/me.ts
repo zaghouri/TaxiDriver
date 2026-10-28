@@ -3,8 +3,8 @@ import { z } from 'zod';
 import type { AppContext } from '../context.js';
 import { many, one, withTx } from '../db/pool.js';
 import { envelopeEncrypt, verifyPassword } from '../lib/crypto.js';
-import { badRequest, conflict, unauthorized, unprocessable } from '../lib/errors.js';
-import { locale, parse } from '../lib/validation.js';
+import { badRequest, conflict, notFound, unauthorized, unprocessable } from '../lib/errors.js';
+import { locale, moroccanPhone, normalizeMoroccanPhone, parse, uuid } from '../lib/validation.js';
 import { getUser, meView } from './users.js';
 import { sniffMime } from './drivers.js';
 
@@ -32,6 +32,7 @@ export async function deleteAccount(ctx: AppContext, userId: string, by: 'self' 
     await tx.query('DELETE FROM devices WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM verification_codes WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM trip_shares WHERE created_by = $1', [userId]);
+    await tx.query('DELETE FROM emergency_contacts WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM id_checks WHERE user_id = $1', [userId]);
     await tx.query('UPDATE ratings SET comment = NULL WHERE rater_id = $1', [userId]);
     await tx.query('UPDATE data_requests SET details = NULL WHERE user_id = $1', [userId]);
@@ -69,6 +70,7 @@ export async function exportData(ctx: AppContext, userId: string) {
     vehicles: await q('SELECT make, model, year, colour, plate, created_at FROM vehicles WHERE driver_id = $1'),
     documents: await q('SELECT type, status, expires_on, created_at FROM documents WHERE driver_id = $1'),
     sos_alerts: await q('SELECT ride_id, service, status, created_at FROM sos_alerts WHERE user_id = $1'),
+    emergency_contacts: await q('SELECT name, phone, created_at FROM emergency_contacts WHERE user_id = $1'),
     reports: await q('SELECT ride_id, kind, details, status, created_at FROM reports WHERE reporter_id = $1'),
     subscriptions: await q('SELECT status, amount, provider, period_start, period_end, created_at FROM subscriptions WHERE driver_id = $1'),
     data_requests: await q('SELECT kind, details, status, response, created_at, resolved_at FROM data_requests WHERE user_id = $1'),
@@ -109,6 +111,41 @@ export async function meRoutes(app: FastifyInstance, ctx: AppContext) {
       [req.user!.id, b.device_id, b.platform, b.app_version ?? null, b.fcm_token ?? null, b.rooted ?? null, b.mock_location ?? null],
     );
     return { ok: true };
+  });
+
+  // ---- Saved emergency contacts (D71): told with the live trip link when this user presses SOS ----
+  const MAX_EMERGENCY_CONTACTS = 5;
+  const contactsOf = (userId: string) =>
+    many(db, 'SELECT id, name, phone, created_at FROM emergency_contacts WHERE user_id = $1 ORDER BY created_at', [userId]);
+
+  app.get('/v1/me/emergency-contacts', { config: { auth: 'user' } }, async (req) => ({ items: await contactsOf(req.user!.id), max: MAX_EMERGENCY_CONTACTS }));
+
+  app.post('/v1/me/emergency-contacts', { config: { auth: 'user' } }, async (req, reply) => {
+    const b = parse(z.object({ name: z.string().trim().min(1).max(60), phone: z.string().max(30) }), req.body);
+    const phone = parse(moroccanPhone.or(z.string().regex(/^\+\d{8,15}$/, 'Phone must be +<country><number>')), normalizeMoroccanPhone(b.phone));
+    const userId = req.user!.id;
+    const row = await withTx(db, async (tx) => {
+      // Serialise this user's additions so two parallel requests cannot pass the limit.
+      await tx.query('SELECT 1 FROM users WHERE id = $1 FOR UPDATE', [userId]);
+      const n = await one<{ n: number }>(tx, 'SELECT count(*)::int AS n FROM emergency_contacts WHERE user_id = $1', [userId]);
+      if ((n?.n ?? 0) >= MAX_EMERGENCY_CONTACTS) throw unprocessable('EMERGENCY_CONTACTS_LIMIT', `You can save up to ${MAX_EMERGENCY_CONTACTS} emergency contacts.`, { max: MAX_EMERGENCY_CONTACTS });
+      const me = await one<{ phone: string | null }>(tx, 'SELECT phone FROM users WHERE id = $1', [userId]);
+      if (me?.phone && me.phone === phone) throw unprocessable('EMERGENCY_CONTACT_SELF', 'Add someone else, not your own number.');
+      const ins = await one(
+        tx,
+        `INSERT INTO emergency_contacts (user_id, name, phone) VALUES ($1, $2, $3) ON CONFLICT (user_id, phone) DO NOTHING RETURNING id, name, phone, created_at`,
+        [userId, b.name, phone],
+      );
+      if (!ins) throw conflict('EMERGENCY_CONTACT_EXISTS', 'This number is already in your emergency contacts.');
+      return ins;
+    });
+    return reply.status(201).send(row);
+  });
+
+  app.delete('/v1/me/emergency-contacts/:id', { config: { auth: 'user' } }, async (req) => {
+    const r = await one(db, 'DELETE FROM emergency_contacts WHERE id = $1 AND user_id = $2 RETURNING id', [parse(uuid, (req.params as any).id), req.user!.id]);
+    if (!r) throw notFound('CONTACT_NOT_FOUND');
+    return { deleted: true };
   });
 
   app.get('/v1/me/consents', { config: { auth: 'user' } }, async (req) =>

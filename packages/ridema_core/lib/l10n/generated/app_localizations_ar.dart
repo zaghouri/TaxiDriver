@@ -2161,4 +2161,53 @@ class AppLocalizationsAr extends AppLocalizations {
   String receiptWaitingFee(int minutes) {
     return 'رسوم الانتظار ($minutes د)';
   }
+
+  @override
+  String get emergencyContactsTitle => 'جهات الاتصال للطوارئ';
+
+  @override
+  String emergencyContactsInfo(int max) {
+    return 'إذا ضغطت على زر الطوارئ أثناء رحلة، نرسل لهؤلاء الأشخاص رابطًا لمتابعة رحلتك مباشرة. حتى $max جهات اتصال.';
+  }
+
+  @override
+  String get emergencyContactsEmpty => 'لا توجد جهة اتصال للطوارئ بعد.';
+
+  @override
+  String get emergencyContactAdd => 'إضافة جهة اتصال';
+
+  @override
+  String get emergencyContactName => 'الاسم';
+
+  @override
+  String get emergencyContactPhone => 'رقم الهاتف';
+
+  @override
+  String get emergencyContactRemove => 'حذف';
+
+  @override
+  String get sosContactsTitle => 'جهات اتصالك للطوارئ';
+
+  @override
+  String get sosContactSending => 'جارٍ إرسال رحلتك المباشرة…';
+
+  @override
+  String get sosContactSent => 'تم إرسال رابط الرحلة';
+
+  @override
+  String get sosContactNotSent => 'لم يتم الوصول إليه بعد. فريقنا لديه تنبيهك.';
+
+  @override
+  String get errEmergencyContactsLimit =>
+      'يمكنك حفظ 5 جهات اتصال للطوارئ كحد أقصى.';
+
+  @override
+  String get errEmergencyContactExists =>
+      'هذا الرقم موجود بالفعل في جهات اتصال الطوارئ.';
+
+  @override
+  String get errEmergencyContactSelf => 'أضف شخصًا آخر، وليس رقمك.';
+
+  @override
+  String get errContactNotFound => 'جهة الاتصال هذه لم تعد موجودة.';
 }

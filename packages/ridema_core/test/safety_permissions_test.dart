@@ -64,6 +64,80 @@ void main() {
       expect(backend.calls('POST', '/v1/sos/:id/location'), hasLength(2));
     });
 
+    testWidgets('saved emergency contacts: statuses shown and refreshed with the pings (D71)', (tester) async {
+      phone(tester);
+      var status = 'queued';
+      final backend = FakeBackend()
+        ..on('POST', '/v1/rides/:id/sos', (r) => Res(201, {
+              'sos_id': 'sos-1',
+              'call': '19',
+              'contacts': [
+                {'name': 'Maman', 'phone': '+212611223344', 'status': 'queued'},
+              ],
+            }))
+        ..on('POST', '/v1/sos/:id/location', (r) => const Res(200, {'ok': true}))
+        ..on('GET', '/v1/sos/:id', (r) => Res(200, {
+              'id': 'sos-1',
+              'status': 'open',
+              'contacts': [
+                {'name': 'Maman', 'phone': '+212611223344', 'status': status},
+              ],
+            }));
+      final s = await buildTestServices(backend: backend, launcher: FakeLauncher(), access: 'a', refresh: 'refresh-xxxxxxxxxxxxxxxxxxxxxx');
+      await tester.pumpWidget(testApp(s, Scaffold(body: SosSheet(rideId: 'ride-1', position: () async => const LatLng(33.89, -5.55))), locale: 'en'));
+      await tester.tap(find.byKey(const ValueKey('sos_police')));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Your emergency contacts'), findsOneWidget);
+      expect(find.text('Sending your live trip…'), findsOneWidget);
+      status = 'sent';
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.text('Live trip link sent'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(backend.calls('GET', '/v1/sos/:id'), hasLength(1), reason: 'stops asking once nothing is pending');
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('emergency contacts screen: list, add, remove, limit message (D71)', (tester) async {
+      phone(tester);
+      final saved = <Map<String, dynamic>>[
+        {'id': 'c1', 'name': 'Maman', 'phone': '+212611223344'},
+      ];
+      final backend = FakeBackend()
+        ..on('GET', '/v1/me/emergency-contacts', (r) => Res(200, {'items': saved, 'max': 5}))
+        ..on('POST', '/v1/me/emergency-contacts', (r) {
+          if (r.body['phone'] == '0600000000') return Res.error(422, 'EMERGENCY_CONTACTS_LIMIT');
+          final c = {'id': 'c2', 'name': r.body['name'], 'phone': '+212622334455'};
+          saved.add(c);
+          return Res(201, c);
+        })
+        ..on('DELETE', '/v1/me/emergency-contacts/:id', (r) => const Res(200, {'deleted': true}));
+      final s = await buildTestServices(backend: backend, access: 'a', refresh: 'refresh-xxxxxxxxxxxxxxxxxxxxxx');
+      await tester.pumpWidget(testApp(s, const EmergencyContactsScreen(), locale: 'en'));
+      await tester.pumpAndSettle();
+      expect(find.text('Maman'), findsOneWidget);
+      await tester.enterText(find.byKey(const ValueKey('ec_name')), 'Karim');
+      await tester.enterText(find.byKey(const ValueKey('ec_phone')), '0622334455');
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('ec_add')));
+      await tester.pumpAndSettle();
+      expect(find.text('Karim'), findsOneWidget);
+      expect(backend.calls('POST', '/v1/me/emergency-contacts').single.body, {'name': 'Karim', 'phone': '0622334455'});
+      await tester.enterText(find.byKey(const ValueKey('ec_name')), 'Six');
+      await tester.enterText(find.byKey(const ValueKey('ec_phone')), '0600000000');
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('ec_add')));
+      await tester.pumpAndSettle();
+      expect(find.text('You can save up to 5 emergency contacts.'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('ec_remove_c1')));
+      await tester.pumpAndSettle();
+      expect(find.text('Maman'), findsNothing);
+      expect(backend.calls('DELETE', '/v1/me/emergency-contacts/:id').single.path, '/v1/me/emergency-contacts/c1');
+    });
+
     testWidgets('alert failure still dials and says so', (tester) async {
       phone(tester);
       final backend = FakeBackend()..on('POST', '/v1/rides/:id/sos', (_) => Res.error(409, 'RIDE_NOT_ACTIVE'));

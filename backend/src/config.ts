@@ -35,6 +35,8 @@ const schema = z.object({
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional().default(''),
   WHATSAPP_ACCESS_TOKEN: z.string().optional().default(''),
   WHATSAPP_OTP_TEMPLATE: z.string().default('ridema_otp'),
+  /** Utility template for SOS alerts to saved emergency contacts (D71); empty = log only. */
+  WHATSAPP_SOS_TEMPLATE: z.string().optional().default(''),
   WHATSAPP_API_VERSION: z.string().default('v21.0'),
   SMS_PROVIDER: z.string().default('disabled'),
 

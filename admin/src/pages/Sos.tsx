@@ -111,6 +111,20 @@ export default function SosPage() {
                   [t('position'), <span key="p" data-testid="sos-pos">{`${Number(sel.lat).toFixed(5)}, ${Number(sel.lng).toFixed(5)}`}</span>],
                   [t('ride'), <Link key="r" to={`/rides/${sel.ride_id}`}>{sel.ride_id}</Link>],
                   [t('note'), (sel as any).note],
+                  [
+                    t('sos_contacts'),
+                    (sel as any).contacts?.length ? (
+                      <ul key="c" className="plain" data-testid="sos-contacts">
+                        {(sel as any).contacts.map((c: any) => (
+                          <li key={c.phone}>
+                            {c.name} · <a href={`tel:${c.phone}`}>{c.phone}</a> · {t(`sosc_${c.status}`, undefined, c.status)}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      '—'
+                    ),
+                  ],
                 ]}
               />
             </Card>
