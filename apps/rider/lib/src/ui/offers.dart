@@ -202,6 +202,16 @@ class SearchingPanel extends StatelessWidget {
           ],
         ),
         Text(l.searchingTitle, style: Theme.of(context).textTheme.titleLarge),
+        if (offers.isEmpty)
+          Text(
+            c.searchWave > 0 && c.searchRadiusM != null
+                ? rs.searchWider(c.searchRadiusM!)
+                : c.driversNotified == 0
+                    ? rs.searchNoneYet
+                    : rs.searchNearby,
+            key: const ValueKey('search_stage'),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
         if (c.driversNotified > 0)
           Text(
             rs.driversNotified(c.driversNotified),

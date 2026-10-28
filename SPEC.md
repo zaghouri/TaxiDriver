@@ -100,7 +100,7 @@ Every transition is a single SQL statement `UPDATE rides SET status=$new … WHE
   2. `UPDATE rides SET status='accepted', driver_id=…, final_price=…, accepted_bid_id=…, pickup_pin=… WHERE id=$ride AND rider_id=$me AND status='searching'` → 0 rows ⇒ 409 `RIDE_NOT_SEARCHING`.
   3. Partial unique index `rides_one_active_per_driver` violation ⇒ 409 `DRIVER_BUSY`.
   4. Other active bids → `lost`. Event + outbox. Commit.
-- Who gets the request: online, approved drivers, of a driver type enabled in the city, within `search_radius_km` (default 5 km) from Redis GEO, not blocked, not on an active ride, documents valid, verified email + phone, passing the subscription rule (D13). Unlimited drivers.
+- Who gets the request: online, approved drivers, of a driver type enabled in the city, within the current search wave's radius (D60: by default 40 % / 70 % / 100 % of `search_radius_km`, 5 km, at 0 / 40 / 90 s; each driver notified once) from Redis GEO, not blocked, not on an active ride, documents valid, verified email + phone, passing the subscription rule (D13). Unlimited drivers.
 - Timeouts are BullMQ delayed jobs (`ride-expire` at +300 s, `bid-expire` at +60 s). Jobs **re-check state** with a conditional update, so duplicates and late jobs are harmless. A 30 s sweeper catches anything missed (e.g. Redis loss).
 
 ### 4.3 Cancellations

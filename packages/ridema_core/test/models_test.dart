@@ -255,4 +255,15 @@ void main() {
     expect(compareVersions('2.0', '2.0.0'), 0);
     expect(compareVersions('1.2.3+45', '1.2.3'), 0);
   });
+
+  test('Ride.search: wave, radius and drivers notified while searching (D60)', () {
+    final r = Ride.fromJson({
+      'id': 'r1', 'status': 'searching', 'pickup': {'lat': 1, 'lng': 2}, 'dropoff': {'lat': 1, 'lng': 3},
+      'search': {'wave': 1, 'radius_m': 3500, 'drivers_notified': 4},
+    });
+    expect(r.search?.wave, 1);
+    expect(r.search?.radiusM, 3500);
+    expect(r.search?.driversNotified, 4);
+    expect(Ride.fromJson({'id': 'r2', 'status': 'accepted', 'pickup': {'lat': 1, 'lng': 2}, 'dropoff': {'lat': 1, 'lng': 3}}).search, isNull);
+  });
 }

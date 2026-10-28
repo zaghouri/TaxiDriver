@@ -261,7 +261,7 @@ export async function driverRoutes(app: FastifyInstance, ctx: AppContext) {
       db,
       `SELECT r.id, ST_Distance(r.pickup, ST_SetSRID(ST_MakePoint($3,$4),4326)::geography) AS dist FROM rides r
        WHERE r.city_id = $1 AND r.status = 'searching' AND r.expires_at > now()
-         AND ST_DWithin(r.pickup, ST_SetSRID(ST_MakePoint($3,$4),4326)::geography, $5)
+         AND ST_DWithin(r.pickup, ST_SetSRID(ST_MakePoint($3,$4),4326)::geography, COALESCE(r.search_radius_m, $5))
          AND NOT EXISTS (SELECT 1 FROM bids b WHERE b.ride_id = r.id AND b.driver_id = $2 AND b.status = 'declined')
        ORDER BY dist LIMIT 50`,
       [city.id, id, loc.lng, loc.lat, city.search_radius_km * 1000],
