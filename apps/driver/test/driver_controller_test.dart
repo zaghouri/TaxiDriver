@@ -293,6 +293,33 @@ void main() {
       expect(c.finishedRide, isNull);
     });
 
+    test("I've arrived sends the latest fix first; too far from the pickup keeps the ride as is", () async {
+      await online();
+      rt.rideRequest.add(request('r1'));
+      await c.acceptRequest('r1');
+      api.active = ActiveRide(ride: makeRide('r1', 'accepted'));
+      rt.requestClosed.add(const RequestClosed(id: 'r1', reason: 'taken'));
+      await settle();
+      loc.stream.add(fix(at: clock.now));
+      await settle();
+      // 2 s later, a few metres on: held back by the throttle…
+      clock.advance(const Duration(seconds: 2));
+      loc.stream.add(fix(lat: 33.89352, at: clock.now));
+      await settle();
+      final before = rt.sent.length;
+
+      api.arrivedError = const ApiException('TOO_FAR_FROM_PICKUP', 'far', status: 422, details: {'distance_m': 640, 'max_m': 250});
+      await expectLater(c.markArrived(), throwsA(isA<DriverFailure>().having((f) => f.code, 'code', 'TOO_FAR_FROM_PICKUP')));
+      // …but sent right before "arrived", so the server judges the real position.
+      expect(rt.sent.length, before + 1);
+      expect(rt.sent.last.lat, 33.89352);
+      expect(c.phase, DriverPhase.toPickup);
+
+      api.arrivedError = null;
+      await c.markArrived();
+      expect(c.phase, DriverPhase.arrived);
+    });
+
     test('socket reconnect re-fetches the active ride and restores the screen + pending bids', () async {
       api.active = ActiveRide(pendingBids: [bid('r9', expiresAt: clock.now.add(const Duration(seconds: 40)))]);
       rt.reconnected.add(null);

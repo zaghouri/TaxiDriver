@@ -30,6 +30,14 @@ class DriverStrings {
   String get mapPlaceholder => _t('mapPlaceholder');
   String get you => _t('you');
   String counterAbove(int amount) => _f('counterAbove', {'amount': amount});
+  String tooFarFromPickup(int metres) => _f('tooFarFromPickup', {'distance': distance(metres)});
+
+  /// 350 m · 1.2 km (1,2 km in French).
+  String distance(int metres) {
+    if (metres < 1000) return '$metres ${_t('unitM')}';
+    final km = (metres / 1000).toStringAsFixed(1);
+    return '${lang == 'fr' ? km.replaceAll('.', ',') : km} ${_t('unitKm')}';
+  }
   String get yourPrice => _t('yourPrice');
   String get amountDh => _t('amountDh');
   String get requestExpired => _t('requestExpired');
@@ -103,6 +111,10 @@ class DriverStrings {
         final d = f.details;
         final min = d is Map ? d['min'] : null;
         return min is int ? counterAbove(min - 1) : l.errCounterTooLow;
+      case 'TOO_FAR_FROM_PICKUP':
+        final d = f.details;
+        final m = d is Map ? d['distance_m'] : null;
+        return tooFarFromPickup(m is num ? m.round() : 0);
       case 'COUNTER_TOO_HIGH':
         final d = f.details;
         final max = d is Map ? d['max'] : null;
@@ -122,6 +134,9 @@ class DriverStrings {
       'mapPlaceholder': 'Map preview (Google Maps is not configured in this build)',
       'you': 'You',
       'counterAbove': 'Enter an amount above {amount} DH.',
+      'tooFarFromPickup': 'You are {distance} from the pickup point. Tap “I’ve arrived” when you get there.',
+      'unitM': 'm',
+      'unitKm': 'km',
       'yourPrice': 'Your price',
       'amountDh': 'Amount (DH)',
       'requestExpired': 'This request has expired.',
@@ -179,6 +194,9 @@ class DriverStrings {
       'mapPlaceholder': 'Aperçu de la carte (Google Maps n’est pas configuré dans cette version)',
       'you': 'Vous',
       'counterAbove': 'Entrez un montant supérieur à {amount} DH.',
+      'tooFarFromPickup': 'Vous êtes à {distance} du point de prise en charge. Appuyez sur « Je suis arrivé » une fois sur place.',
+      'unitM': 'm',
+      'unitKm': 'km',
       'yourPrice': 'Votre prix',
       'amountDh': 'Montant (DH)',
       'requestExpired': 'Cette demande a expiré.',
@@ -236,6 +254,9 @@ class DriverStrings {
       'mapPlaceholder': 'معاينة الخريطة (خرائط Google غير مفعّلة في هذه النسخة)',
       'you': 'أنت',
       'counterAbove': 'أدخل مبلغًا أكبر من {amount} درهم.',
+      'tooFarFromPickup': 'أنت على بعد {distance} من نقطة الانطلاق. اضغط على «لقد وصلت» عندما تصل إليها.',
+      'unitM': 'م',
+      'unitKm': 'كم',
       'yourPrice': 'ثمنك',
       'amountDh': 'المبلغ (درهم)',
       'requestExpired': 'انتهت صلاحية هذا الطلب.',

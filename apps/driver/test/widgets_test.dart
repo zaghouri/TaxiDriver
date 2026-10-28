@@ -281,6 +281,8 @@ void main() {
     expect(ds.error(l, const ApiException('MOCK_LOCATION', 'x', status: 403)), l.errMockLocation);
     expect(ds.error(l, const ApiException('DOCUMENTS_INVALID', 'x', status: 403)), l.errDocumentsInvalid);
     expect(ds.error(l, const ApiException('COUNTER_TOO_HIGH', 'x', status: 422, details: {'max': 90})), contains('90 DH'));
+    expect(ds.error(l, const ApiException('TOO_FAR_FROM_PICKUP', 'x', status: 422, details: {'distance_m': 1240, 'max_m': 250})), contains('1,2 km'));
+    expect(DriverStrings('en').tooFarFromPickup(350), startsWith('You are 350 m from'));
     h.controller.dispose();
   });
 
@@ -293,7 +295,7 @@ void main() {
       'BID_ALREADY_ACTIVE', 'BID_DECLINED_BEFORE', 'TOO_MANY_BIDS', 'COUNTER_TOO_LOW', 'COUNTER_TOO_HIGH', 'TOO_FAR',
       'SUBSCRIPTION_REQUIRED', 'PIN_INVALID', 'PIN_LOCKED', 'CANNOT_CANCEL', 'NO_SHOW_TOO_EARLY', 'RIDE_NOT_ACTIVE',
       'RIDE_NOT_FOUND', 'ALREADY_RATED', 'ACTIVE_RIDE', 'UPGRADE_REQUIRED', 'RATE_LIMITED', 'NETWORK_ERROR', 'TIMEOUT',
-      'LOCATION_UNAVAILABLE',
+      'LOCATION_UNAVAILABLE', 'TOO_FAR_FROM_PICKUP',
     ];
     for (final lang in ['ar', 'fr', 'en']) {
       final l = lookupAppLocalizations(Locale(lang));
