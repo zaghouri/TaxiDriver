@@ -246,6 +246,25 @@ class RiderStrings {
         'ar': 'أدخل سعرك بالدرهم',
       });
 
+  /// Fare guidance (REA P2 #14, D65): the offer is below the suggested price.
+  String get fareBelowSuggested => _t({
+        'en': 'Below the suggested price: fewer drivers may answer, and it can take longer.',
+        'fr': 'En dessous du prix conseillé : moins de chauffeurs risquent de répondre, et cela peut prendre plus de temps.',
+        'ar': 'أقل من السعر المقترح: قد يردّ عدد أقل من السائقين، وقد يستغرق الأمر وقتًا أطول.',
+      });
+
+  String useSuggested(int amount) => _t({
+        'en': 'Use the suggested price ($amount DH)',
+        'fr': 'Prendre le prix conseillé ($amount DH)',
+        'ar': 'استعمال السعر المقترح ($amount درهم)',
+      });
+
+  String get offerBelowSuggestedSearching => _t({
+        'en': 'Your offer is below the suggested price, so fewer drivers may answer.',
+        'fr': 'Votre offre est sous le prix conseillé : moins de chauffeurs risquent de répondre.',
+        'ar': 'عرضك أقل من السعر المقترح، لذا قد يردّ عدد أقل من السائقين.',
+      });
+
   String get decreaseFare => _t({'en': 'Lower by 5 DH', 'fr': 'Baisser de 5 DH', 'ar': 'تخفيض 5 دراهم'});
   String get increaseFare => _t({'en': 'Raise by 5 DH', 'fr': 'Augmenter de 5 DH', 'ar': 'زيادة 5 دراهم'});
 

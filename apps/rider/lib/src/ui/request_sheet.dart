@@ -292,6 +292,37 @@ class _FareSelectorState extends State<FareSelector> {
               style: const TextStyle(color: BrandColors.danger, fontWeight: FontWeight.w600),
             ),
           ),
+        // Fare guidance (D65): a valid offer under the suggested price still goes out, with a heads-up and a shortcut.
+        if (err == null && c.fare != null && c.suggestedFare != null && c.fare! < c.suggestedFare!) ...[
+          gap8,
+          Container(
+            key: const ValueKey('fare_below_hint'),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            decoration: BoxDecoration(color: BrandColors.accent.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_outline, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(rs.fareBelowSuggested, style: const TextStyle(fontSize: 14))),
+                  ],
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TextButton(
+                    key: const ValueKey('use_suggested'),
+                    style: TextButton.styleFrom(minimumSize: const Size(0, kTapTarget)),
+                    onPressed: () => c.setFare(c.suggestedFare),
+                    child: Text(rs.useSuggested(c.suggestedFare!), style: const TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

@@ -359,11 +359,13 @@ class ExpiredPanel extends StatelessWidget {
   }
 }
 
-/// Raise-fare sheet: quick +5 / +10 / +20 and free entry; never lower.
+/// Raise-fare sheet: quick +5 / +10 / +20 and free entry; never lower. When the
+/// current offer is under [suggested], a shortcut raises straight to it (D65).
 Future<int?> showRaiseFareSheet(
   BuildContext context, {
   required int current,
   int? max,
+  int? suggested,
 }) {
   return showModalBottomSheet<int>(
     context: context,
@@ -371,15 +373,16 @@ Future<int?> showRaiseFareSheet(
     useSafeArea: true,
     builder: (_) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: _RaiseFareSheet(current: current, max: max),
+      child: _RaiseFareSheet(current: current, max: max, suggested: suggested),
     ),
   );
 }
 
 class _RaiseFareSheet extends StatefulWidget {
-  const _RaiseFareSheet({required this.current, this.max});
+  const _RaiseFareSheet({required this.current, this.max, this.suggested});
   final int current;
   final int? max;
+  final int? suggested;
 
   @override
   State<_RaiseFareSheet> createState() => _RaiseFareSheetState();
@@ -390,6 +393,12 @@ class _RaiseFareSheetState extends State<_RaiseFareSheet> {
   late final _text = TextEditingController(text: '$_value');
 
   int _clamp(int v) => widget.max != null && v > widget.max! ? widget.max! : v;
+
+  /// The suggested price, when raising to it is possible.
+  int? get _toSuggested {
+    final s = widget.suggested;
+    return s != null && s > widget.current && (widget.max == null || s <= widget.max!) ? s : null;
+  }
 
   @override
   void dispose() {
@@ -418,10 +427,22 @@ class _RaiseFareSheetState extends State<_RaiseFareSheet> {
           Text(l.raiseFareTitle, style: Theme.of(context).textTheme.titleLarge),
           gap8,
           Text(l.raiseFareHint),
+          if (_toSuggested != null) ...[
+            gap8,
+            Text(rs.offerBelowSuggestedSearching, key: const ValueKey('raise_below_hint'), style: TextStyle(color: Colors.grey.shade800)),
+          ],
           gap16,
           Wrap(
             spacing: 8,
+            runSpacing: 4,
             children: [
+              if (_toSuggested != null)
+                ChoiceChip(
+                  key: const ValueKey('raise_to_suggested'),
+                  label: Text(rs.useSuggested(_toSuggested!)),
+                  selected: _value == _toSuggested,
+                  onSelected: (_) => _set(_toSuggested!),
+                ),
               for (final step in const [5, 10, 20])
                 ChoiceChip(
                   label: Text(l.counterPlus(step)),

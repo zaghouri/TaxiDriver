@@ -72,6 +72,69 @@ void main() {
       expect(h.c.fare, 27);
     });
 
+    for (final lang in ['en', 'fr', 'ar']) {
+      testWidgets('below the suggested price: hint + one tap back to it (D65, $lang)', (tester) async {
+        await _setPhone(tester);
+        final h = Harness();
+        addTearDown(h.c.dispose);
+        await h.compose();
+        await tester.pumpWidget(wrapApp(
+          Scaffold(
+            body: Align(
+              alignment: Alignment.bottomCenter,
+              child: SingleChildScrollView(child: RequestSheet(onEditFrom: () {}, onEditTo: () {}, onFindDriver: () {})),
+            ),
+          ),
+          controller: h.c,
+          locale: Locale(lang),
+        ));
+        await tester.pump();
+        expect(find.byKey(const ValueKey('fare_below_hint')), findsNothing, reason: 'at the suggested price');
+        await tester.tap(find.byKey(const ValueKey('fare_minus')));
+        await tester.pump();
+        expect(find.byKey(const ValueKey('fare_below_hint')), findsOneWidget);
+        expect(find.text(RiderStrings(lang).fareBelowSuggested), findsOneWidget);
+        // Still allowed: a lower offer is the rider's choice.
+        final btn = find.descendant(of: find.byKey(const ValueKey('find_driver')), matching: find.byType(FilledButton));
+        expect(tester.widget<FilledButton>(btn).onPressed, isNotNull);
+        await tester.tap(find.byKey(const ValueKey('use_suggested')));
+        await tester.pump();
+        expect(h.c.fare, 25);
+        expect(find.byKey(const ValueKey('fare_below_hint')), findsNothing);
+        // Above the suggested price: no hint either.
+        await tester.tap(find.byKey(const ValueKey('fare_plus')));
+        await tester.pump();
+        expect(find.byKey(const ValueKey('fare_below_hint')), findsNothing);
+      });
+    }
+
+    testWidgets('raise sheet offers the suggested price when the offer is under it (D65)', (tester) async {
+      await _setPhone(tester);
+      int? picked;
+      await tester.pumpWidget(wrapApp(Scaffold(
+        body: Builder(
+          builder: (ctx) => TextButton(
+            onPressed: () async => picked = await showRaiseFareSheet(ctx, current: 18, max: 75, suggested: 25),
+            child: const Text('open'),
+          ),
+        ),
+      )));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('raise_below_hint')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('raise_to_suggested')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('raise_confirm')));
+      await tester.pumpAndSettle();
+      expect(picked, 25);
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('raise_confirm')));
+      await tester.pumpAndSettle();
+      expect(picked, 23, reason: 'default +5 unchanged');
+    });
+
     testWidgets('Find a driver is disabled until a destination is chosen', (tester) async {
       await _setPhone(tester);
       final h = Harness();
