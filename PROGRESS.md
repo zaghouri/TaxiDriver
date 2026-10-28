@@ -5,12 +5,12 @@
 ## Done
 | Phase | Result | Proof |
 |---|---|---|
-| 1 Spec and plan | SPEC.md, PLAN.md, DECISIONS.md (D1–D54), BLOCKERS.md, PRODUCTION_CHECKLIST.md, .env.example | — |
+| 1 Spec and plan | SPEC.md, PLAN.md, DECISIONS.md (D1–D56), BLOCKERS.md, PRODUCTION_CHECKLIST.md, .env.example | — |
 | 2 Server foundation | `infra/` Compose (caddy, api, worker, migrate, postgres+PostGIS+WAL-G, backup, redis, osrm, coturn), Caddy on `<ip>.sslip.io`, `scripts/` deploy/bootstrap/backup/restore/check | `restore-test.sh` **PASS** (MinIO); full stack boots locally; `check-https.sh` PASS on http://localhost:8080 (health + WebSocket 101). Real HTTPS needs the server (B1) |
-| 3 Backend core | `backend/` auth (email+password, email code/link, WhatsApp OTP once, 2FA, rotating refresh + reuse detection), consents, drivers + encrypted documents, rides/bids, cancellations, ratings, receipts, outbox, BullMQ timeouts, retention, expiry, subscriptions, admin API + audit, account deletion | 79 API tests green (`cd backend && npx vitest run`) |
+| 3 Backend core | `backend/` auth (email+password, email code/link, WhatsApp OTP once, 2FA, rotating refresh + reuse detection), consents, drivers + encrypted documents, rides/bids, cancellations, ratings, receipts, outbox, BullMQ timeouts, retention, expiry, subscriptions, admin API + audit, account deletion | 88 API tests green (`cd backend && npx vitest run`) |
 | 4 Realtime and safety | Socket.IO, push via outbox, reconnect contract, SOS, trip share page, WebRTC signalling + TURN, PIN, fraud checks | `sim/` **SIM PASS** 1 rider × 50 drivers (in-process and through Caddy) |
 | 5 Driver app | `apps/driver` (Flutter) | analyze clean, 61 tests; contract test passes against the live backend; emulator tests written (B8/B16) |
-| 6 Rider app | `apps/rider` (Flutter) + `packages/ridema_core` (shared) | analyze clean, 55 + 93 tests; full ride against the live backend passes |
+| 6 Rider app | `apps/rider` (Flutter) + `packages/ridema_core` (shared) | analyze clean, 59 + 94 tests; full ride against the live backend passes |
 | 7 Admin panel | `admin/` (React) | 83 UI tests (every admin action), smoke test PASS against the stack |
 | CI | GitHub Actions: backend + simulator, admin, Flutter analyze/test, Android release builds of both apps | run 40434368359 all green; artifacts `ridema-android-rider`, `ridema-android-driver` |
 | 8 Hardening | `docs/SECURITY_REVIEW.md` (OWASP API Top 10), load test (20 riders × 200 drivers, 60/60, p95 < 1 s), RTL check (screenshots), RUNBOOK.md, PHONE_TEST.md, docs/IOS_BUILD.md, CI (`.github/workflows/ci.yml`) building APKs/AABs on GitHub | see PRODUCTION_CHECKLIST.md |

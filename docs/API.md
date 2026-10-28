@@ -60,7 +60,8 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | POST | `/v1/me/id-check` | multipart `file` (JPEG/PNG) | `201 {id, kind:"rider_id"\|"driver_selfie", status}` |
 | GET | `/v1/me/sessions` | | active sessions |
 | GET | `/v1/calls/turn-credentials` | | `{ice_servers:[{urls:[...], username, credential}], ttl}` |
-| GET | `/v1/geo/search?q=` | | `{source:"builtin", items:[{name, lat, lng}]}` fallback when Google Places isn't configured |
+| GET | `/v1/geo/search?q=` | | `{source:"builtin", items:[{name, name_ar, lat, lng}]}` fallback when Google Places isn't configured |
+| GET | `/v1/geo/reverse?lat=&lng=&locale=` | `locale` ar\|fr\|en, default from Accept-Language, else fr | `{lat, lng, locale, label, street, landmark:{name, distance_m}\|null, city:{id, name}\|null, sources:["osrm"?, "landmarks"?]}` — pickup address for a GPS point (D56). `label` is null when nothing is known (show the coordinates). 60/min per user |
 
 ## Rides — rider
 | Method | Path | Body | Response |

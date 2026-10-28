@@ -299,3 +299,25 @@ class GeoPlace {
     return GeoPlace(name: asStringOr(j['name']), lat: asDouble(j['lat']) ?? 0, lng: asDouble(j['lng']) ?? 0);
   }
 }
+
+/// `GET /v1/geo/reverse`: address of a GPS point (street from the road graph, nearest landmark, city).
+class ReverseGeocode {
+  const ReverseGeocode({this.label, this.street, this.landmark, this.city});
+
+  /// One line for the pickup field, in the requested language; null when nothing is known.
+  final String? label;
+  final String? street;
+  final String? landmark;
+  final String? city;
+
+  factory ReverseGeocode.fromJson(Object? json) {
+    final j = asJson(json);
+    String? name(Object? o) => o is Map ? asString(o['name']) : null;
+    return ReverseGeocode(
+      label: asString(j['label']),
+      street: asString(j['street']),
+      landmark: name(j['landmark']),
+      city: name(j['city']),
+    );
+  }
+}

@@ -73,7 +73,8 @@ class _Location implements LocationPlatform {
   @override
   Future<bool> openLocationSettings() async => true;
   @override
-  Future<Position?> currentPosition() async => null;
+  Future<Position?> currentPosition() async => position;
+  Position? position;
 }
 
 class _Notifications implements NotificationPlatform {
@@ -230,6 +231,40 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('location_disclosure_text')), findsNothing);
     expect(find.byKey(const ValueKey('location_off_banner')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    s.dispose();
+  }, timeout: const Timeout(Duration(seconds: 60)));
+
+  testWidgets('location allowed: the pickup gets the street + landmark from GET /v1/geo/reverse', (tester) async {
+    _phone(tester);
+    final (s, backend, location) = await _services(tester);
+    location
+      ..permission = LocationPermission.whileInUse
+      ..position = Position(
+        latitude: 33.8935,
+        longitude: -5.564,
+        timestamp: DateTime.utc(2026, 10, 27),
+        accuracy: 8,
+        altitude: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        headingAccuracy: 0,
+        speed: 0,
+        speedAccuracy: 0,
+      );
+    backend.routes['GET /v1/geo/reverse'] = (o) => {
+          'label': 'Avenue Moulay Ismail, near Place El Hedim',
+          'locale': o.queryParameters['locale'],
+        };
+    await tester.pumpWidget(_app(s));
+    await tester.pumpAndSettle();
+    if (find.text('Not now').evaluate().isNotEmpty) {
+      await tester.tap(find.text('Not now'));
+      await tester.pumpAndSettle();
+    }
+    expect(location.requests, 0, reason: 'already allowed: no disclosure, no OS prompt');
+    expect(backend.log, contains('GET /v1/geo/reverse'));
+    expect(find.text('Avenue Moulay Ismail, near Place El Hedim'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     s.dispose();
   }, timeout: const Timeout(Duration(seconds: 60)));

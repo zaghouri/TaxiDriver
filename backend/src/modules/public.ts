@@ -8,25 +8,6 @@ import { currentLegal, type LegalKind } from './legal.js';
 
 const KINDS: LegalKind[] = ['terms', 'privacy', 'data_transfer', 'background_location'];
 
-/** Fallback address list used by the apps when no Google Places key is configured (BLOCKERS B5). */
-const MEKNES_PLACES = [
-  { name: 'Place El Hedim', lat: 33.8933, lng: -5.5662 },
-  { name: 'Bab Mansour', lat: 33.8926, lng: -5.5665 },
-  { name: 'Gare ONCF Meknès Amir Abdelkader', lat: 33.8957, lng: -5.5399 },
-  { name: 'Gare ONCF Meknès Ville (El Amir)', lat: 33.8992, lng: -5.5524 },
-  { name: 'Hamria – Avenue Mohammed V', lat: 33.8963, lng: -5.5470 },
-  { name: 'Marjane Meknès', lat: 33.8758, lng: -5.5223 },
-  { name: 'Université Moulay Ismaïl', lat: 33.8586, lng: -5.5747 },
-  { name: 'CHU Mohammed VI', lat: 33.8659, lng: -5.5300 },
-  { name: 'Hôpital Mohammed V', lat: 33.8890, lng: -5.5420 },
-  { name: 'Borj Moulay Omar', lat: 33.8842, lng: -5.5512 },
-  { name: 'Sidi Bouzekri', lat: 33.8743, lng: -5.5794 },
-  { name: 'Marjane / Ikea Route Agouraï', lat: 33.8506, lng: -5.5585 },
-  { name: 'Wislane', lat: 33.8869, lng: -5.4990 },
-  { name: 'Zitoune', lat: 33.8701, lng: -5.5598 },
-  { name: 'Gare routière (CTM)', lat: 33.8962, lng: -5.5622 },
-  { name: 'Agdal Basin (Sahrij Swani)', lat: 33.8817, lng: -5.5716 },
-];
 
 export async function appConfig(ctx: AppContext, app: string, platform: string, version?: string) {
   const versions = await ctx.settings.setting<any>('app_versions');
@@ -76,15 +57,6 @@ export async function publicRoutes(app: FastifyInstance, ctx: AppContext) {
         base_fare: c.base_fare, per_km: c.per_km, per_min: c.per_min, min_fare: c.min_fare, enabled_driver_types: c.enabled_driver_types, currency: 'DH',
       })),
   );
-
-  app.get('/v1/geo/search', { config: { auth: 'user' } }, async (req) => {
-    const q = parse(z.object({ q: z.string().max(100).default('') }), req.query);
-    const needle = q.q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    return {
-      source: 'builtin',
-      items: MEKNES_PLACES.filter((p) => p.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(needle)).slice(0, 10),
-    };
-  });
 
   /** Short-lived TURN credentials (coturn "use-auth-secret"), only for users with an active ride. */
   app.get('/v1/calls/turn-credentials', { config: { auth: 'user' } }, async (req) => {

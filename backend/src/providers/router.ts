@@ -6,9 +6,18 @@ export interface Route {
   source: 'osrm' | 'haversine';
 }
 
+export interface NearestRoad {
+  /** Street name from OpenStreetMap ('' when the road has no name). */
+  name: string;
+  /** Distance from the point to the road, in metres. */
+  distance_m: number;
+}
+
 export interface RouterProvider {
   readonly name: string;
   route(from: LatLng, to: LatLng): Promise<Route>;
+  /** Road the point snaps to (used for pickup addresses); null when unknown. */
+  nearestRoad(p: LatLng): Promise<NearestRoad | null>;
 }
 
 /** Fallback estimate (D19): straight line × 1.3, 25 km/h average city speed. */
@@ -17,6 +26,9 @@ export class HaversineRouter implements RouterProvider {
   async route(from: LatLng, to: LatLng): Promise<Route> {
     const d = haversineM(from, to) * 1.3;
     return { distance_m: Math.round(d), duration_s: Math.max(60, Math.round(d / (25 / 3.6))), source: 'haversine' };
+  }
+  async nearestRoad(): Promise<NearestRoad | null> {
+    return null;
   }
 }
 
@@ -37,6 +49,19 @@ export class OsrmRouter implements RouterProvider {
       return this.fallback.route(from, to);
     }
   }
+  async nearestRoad(p: LatLng): Promise<NearestRoad | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/nearest/v1/driving/${p.lng},${p.lat}?number=1`, { signal: AbortSignal.timeout(this.timeoutMs) });
+      if (!res.ok) return null;
+      const body = (await res.json()) as any;
+      const w = body.waypoints?.[0];
+      if (body.code !== 'Ok' || !w) return null;
+      return { name: String(w.name ?? ''), distance_m: Math.round(Number(w.distance ?? 0)) };
+    } catch {
+      return null;
+    }
+  }
+
   async healthy(): Promise<boolean> {
     try {
       const res = await fetch(`${this.baseUrl}/nearest/v1/driving/-5.5473,33.8935`, { signal: AbortSignal.timeout(this.timeoutMs) });
