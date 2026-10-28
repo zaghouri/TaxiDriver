@@ -609,6 +609,23 @@ class RideController extends ChangeNotifier {
     return requestRide();
   }
 
+  /// Fare of the ride the driver cancelled: "Search again" sends the same request (REA P1 #2, D59).
+  int? get searchAgainFare => _searchAgainFare;
+  int? _searchAgainFare;
+
+  /// "Search again" after the driver cancelled: same pickup, destination and fare.
+  Future<bool> searchAgain() async {
+    final fare = _searchAgainFare;
+    _searchAgainFare = null;
+    if (_phase != RiderPhase.idle || _pickup == null || _dropoff == null) return false;
+    if (_estimate == null) await refreshEstimate();
+    if (fare != null) _fare = fare;
+    return requestRide();
+  }
+
+  /// "Edit request" after the driver cancelled: stay on Home with the same details.
+  void dismissSearchAgain() => _searchAgainFare = null;
+
   /// Leaves a finished screen (expired / completed) for the Home screen.
   Future<void> backToHome() async {
     await store.write(null);
@@ -766,6 +783,7 @@ class RideController extends ChangeNotifier {
       case RideStatus.cancelled:
         if (r.cancelledBy == 'driver') {
           _notice = RiderNotice.cancelledByDriver;
+          _searchAgainFare = r.offeredPrice;
         } else if (r.cancelledBy != null && r.cancelledBy != 'rider') {
           _notice = RiderNotice.cancelledByOperator;
         }

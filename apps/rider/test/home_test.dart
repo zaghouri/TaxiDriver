@@ -291,6 +291,35 @@ void main() {
     s.dispose();
   }, timeout: const Timeout(Duration(seconds: 60)));
 
+  testWidgets('the driver cancelled while the app was closed: one tap searches again with the same fare (D59)', (tester) async {
+    _phone(tester);
+    final (s, backend, _) = await _services(
+      tester,
+      prefs: {'rider.location_asked': true, 'rider.notifications_asked': true, 'rider.last_ride_id': 'ride-9'},
+    );
+    backend.routes['GET /v1/rides/ride-9'] = (_) => rideJson(id: 'ride-9', status: 'cancelled', cancelledBy: 'driver', offered: 30, withDriver: true, cancelledAt: DateTime.now());
+    Object? sent;
+    backend.routes['POST /v1/rides'] = (o) {
+      sent = o.data;
+      return {'ride': rideJson(id: 'ride-10', offered: 30, expiresAt: DateTime.now().add(const Duration(minutes: 5))), 'drivers_notified': 4};
+    };
+    await tester.pumpWidget(_app(s));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('driver_cancelled_dialog')), findsOneWidget);
+    expect(find.text('Your driver cancelled'), findsOneWidget);
+    expect(find.text('Search again (30 DH)'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('search_again')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(backend.log, contains('POST /v1/rides'));
+    expect((sent as Map)['offered_price'], 30);
+    expect((sent as Map)['pickup'], isNotNull);
+    await tester.pumpWidget(const SizedBox());
+    s.dispose();
+  }, timeout: const Timeout(Duration(seconds: 60)));
+
   testWidgets('start restores an accepted ride: driver card with plate and PIN', (tester) async {
     _phone(tester);
     final (s, _, _) = await _services(
