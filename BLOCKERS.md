@@ -17,7 +17,7 @@ Things that need the owner (keys, accounts, hardware). Everything listed here is
 | B11 | Play Integrity (Google Cloud project number + Play Console link) | Integrity verdict is `unevaluated`; flag `play_integrity_enforced` stays off | Link app in Play Console, set `PLAY_INTEGRITY_*` |
 | B12 | Mac for iOS build | iOS not built | Follow `docs/IOS_BUILD.md` |
 | B13 | Payment provider merchant accounts (CashPlus, Wafacash, card, wallet) | Subscription payments use mock adapters; admin marks cash codes as paid | Sign merchant contracts, implement the adapter's HTTP calls (interface ready) |
-| B14 | `spec/indrive.apk` not supplied and github.com blocked → REA not run | Flows designed from the brief (D1) | Optional: none needed |
+| B14 | ~~`spec/indrive.apk` not supplied → REA not run~~ **Resolved 2026-10-28**: APK supplied, study in `spec/REA.md` (D1) | — | Decide which gaps in `spec/REA.md` §6 to build |
 | B15 | Docker Hub rate limit in the build container | Only PostGIS image pulled here; others pulled on the server | none |
 
 | B16 | Not verified on a real device: foreground location service, background behaviour per phone brand, WebRTC audio, FCM push, camera/document capture, Play Integrity | Logic is unit/widget tested and the contract tests pass against the live backend, but device behaviour is unknown | Follow `PHONE_TEST.md` on 2 phones |

@@ -55,3 +55,9 @@ build/
 infra/data/
 backend/storage/
 dump.rdb
+
+# Third-party APKs used for the REA study are never committed
+spec/*.apk
+spec/*.apkm
+spec/*.apkm.part-*
+spec/*.xapk

@@ -4,7 +4,7 @@ Every choice made without asking the owner, with the reason. Newest at the botto
 
 | # | Topic | Decision | Why |
 |---|---|---|---|
-| D1 | REA / inDrive APK | `spec/indrive.apk` is not in the repo and github.com is blocked from the build container, so REA was **not** run. Flows are designed from the product description and general ride-hailing UX patterns only. | Section 6: "If neither exists, design the flows yourself". Also keeps us clear of copying anything. |
+| D1 | REA / inDrive APK | First build: no APK was available, so flows were designed from the brief and general ride-hailing patterns. 2026-10-28: the owner supplied inDrive 5.190.0 (APKMirror bundle, signature checked) and a static flow study was done: manifest, class names and string resources only, never installed or run, nothing copied. Findings and a gap list with priorities are in `spec/REA.md`. The APK itself is not kept in the repo. | Section 6 of the brief; learning flows without copying code, text, assets or APIs. |
 | D2 | Repo layout | Monorepo: `backend/` (Node+TS), `admin/` (React+Vite), `apps/rider`, `apps/driver` (Flutter), `packages/ridema_core` (shared Flutter code), `infra/` (Compose, Caddy, OSRM, backups). | One place, shared contracts, one CI. |
 | D3 | Backend framework | Fastify 5 + TypeScript, raw SQL with `pg` and plain SQL migration files, `zod` for validation, `vitest` for tests. | Fast, small, no ORM magic around the race-sensitive SQL (conditional updates, partial unique indexes). |
 | D4 | Password hashing | Argon2id via `@node-rs/argon2` (prebuilt binaries). | OWASP recommendation, no native toolchain needed. |
