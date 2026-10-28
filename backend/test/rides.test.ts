@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
-  call, createTestEnv, MEKNES, MARJANE, near, newUser, onlineDriver, pickupDropoff, login, type Client, type TestEnv,
+  call, cityId, createTestEnv, MEKNES, MARJANE, near, newUser, onlineDriver, pickupDropoff, login, type Client, type TestEnv,
 } from './helpers.js';
 import { expireBid, expireRide, sweepTimeouts } from '../src/modules/rides/service.js';
 
@@ -26,6 +26,14 @@ async function acceptedRide(rider: Client, driver: Client) {
   const { ride } = await request(rider);
   const b = await bid(driver, ride.id);
   const r = await call(env, 'POST', `/v1/rides/${ride.id}/bids/${b.id}/accept`, {}, rider);
+  expect(r.statusCode).toBe(200);
+  return r.json();
+}
+
+/** Drive to the pickup (pickupDropoff() picks up at MEKNES), then "I've arrived". */
+async function arrive(driver: Client, rideId: string) {
+  await call(env, 'POST', '/v1/driver/location', MEKNES, driver);
+  const r = await call(env, 'POST', `/v1/rides/${rideId}/arrived`, {}, driver);
   expect(r.statusCode).toBe(200);
   return r.json();
 }
@@ -437,7 +445,7 @@ describe('cancellations', () => {
     const d = await onlineDriver(env);
     const rider = await newUser(env, 'rider');
     const acc = await acceptedRide(rider, d);
-    await call(env, 'POST', `/v1/rides/${acc.id}/arrived`, {}, d);
+    await arrive(d, acc.id);
     let r = await call(env, 'POST', `/v1/rides/${acc.id}/cancel`, { reason: 'rider_no_show' }, d);
     expect(r.json().error.code).toBe('NO_SHOW_TOO_EARLY');
     await env.ctx.db.query(`UPDATE rides SET arrived_at = now() - interval '6 minutes' WHERE id = $1`, [acc.id]);
@@ -452,11 +460,62 @@ describe('cancellations', () => {
     const acc = await acceptedRide(rider, d);
     let r = await call(env, 'GET', `/v1/rides/${acc.id}`, undefined, rider);
     expect(r.json().can_cancel_free).toBe(true);
-    await call(env, 'POST', `/v1/rides/${acc.id}/arrived`, {}, d);
+    await arrive(d, acc.id);
     r = await call(env, 'GET', `/v1/rides/${acc.id}`, undefined, rider);
     expect(r.json().can_cancel_free).toBe(false);
     r = await call(env, 'POST', `/v1/rides/${acc.id}/cancel`, { reason: 'changed_mind' }, rider);
     expect(r.json().ride.status).toBe('cancelled');
+  });
+});
+
+describe("I've arrived only at the pickup", () => {
+  it('refuses far from the pickup, accepts there, and logs the distance', async () => {
+    const d = await onlineDriver(env);
+    const rider = await newUser(env, 'rider');
+    const acc = await acceptedRide(rider, d);
+    await call(env, 'POST', '/v1/driver/location', { lat: MEKNES.lat + 0.01, lng: MEKNES.lng }, d); // ~1.1 km north
+    let r = await call(env, 'POST', `/v1/rides/${acc.id}/arrived`, {}, d);
+    expect(r.statusCode).toBe(422);
+    expect(r.json().error.code).toBe('TOO_FAR_FROM_PICKUP');
+    expect(r.json().error.details.max_m).toBe(250);
+    expect(r.json().error.details.distance_m).toBeGreaterThan(1000);
+    expect((await call(env, 'GET', `/v1/rides/${acc.id}`, undefined, rider)).json().status).toBe('accepted');
+
+    await call(env, 'POST', '/v1/driver/location', { lat: MEKNES.lat + 0.001, lng: MEKNES.lng }, d); // ~110 m: GPS drift is fine
+    r = await call(env, 'POST', `/v1/rides/${acc.id}/arrived`, {}, d);
+    expect(r.json().status).toBe('arrived');
+    const ev = await env.ctx.db.query(`SELECT data FROM ride_events WHERE ride_id = $1 AND type = 'arrived'`, [acc.id]);
+    expect(ev.rows[0].data.distance_m).toBeGreaterThan(90);
+    expect(ev.rows[0].data.distance_m).toBeLessThan(130);
+  });
+
+  it('allows the step when the last fix is stale (GPS lost) and logs no distance', async () => {
+    const d = await onlineDriver(env);
+    const rider = await newUser(env, 'rider');
+    const acc = await acceptedRide(rider, d);
+    await call(env, 'POST', '/v1/driver/location', { lat: MEKNES.lat + 0.02, lng: MEKNES.lng }, d);
+    await env.ctx.redis.hset(`${env.ctx.cfg.REDIS_PREFIX}:loc:${d.userId}`, 'at', Date.now() - 5 * 60_000);
+    const r = await call(env, 'POST', `/v1/rides/${acc.id}/arrived`, {}, d);
+    expect(r.json().status).toBe('arrived');
+    const ev = await env.ctx.db.query(`SELECT data FROM ride_events WHERE ride_id = $1 AND type = 'arrived'`, [acc.id]);
+    expect(ev.rows[0].data.distance_m).toBeNull();
+  });
+
+  it('a city can widen or switch off the check (arrive_max_distance_m)', async () => {
+    const city = await cityId(env);
+    const d = await onlineDriver(env);
+    const rider = await newUser(env, 'rider');
+    const acc = await acceptedRide(rider, d);
+    await call(env, 'POST', '/v1/driver/location', { lat: MEKNES.lat + 0.01, lng: MEKNES.lng }, d);
+    await env.ctx.db.query(`UPDATE cities SET cancel_rules = cancel_rules || '{"arrive_max_distance_m": 0}' WHERE id = $1`, [city]);
+    env.ctx.settings.invalidate();
+    try {
+      const r = await call(env, 'POST', `/v1/rides/${acc.id}/arrived`, {}, d);
+      expect(r.json().status).toBe('arrived');
+    } finally {
+      await env.ctx.db.query(`UPDATE cities SET cancel_rules = cancel_rules - 'arrive_max_distance_m' WHERE id = $1`, [city]);
+      env.ctx.settings.invalidate();
+    }
   });
 });
 
@@ -508,7 +567,7 @@ describe('account deletion', () => {
     const acc = await acceptedRide(rider, d);
     let r = await call(env, 'DELETE', '/v1/me', { password: rider.password }, rider);
     expect(r.json().error.code).toBe('ACTIVE_RIDE');
-    await call(env, 'POST', `/v1/rides/${acc.id}/arrived`, {}, d);
+    await arrive(d, acc.id);
     await call(env, 'POST', `/v1/rides/${acc.id}/start`, { pin: acc.pickup_pin }, d);
     await call(env, 'POST', '/v1/driver/location', MEKNES, d);
     await call(env, 'POST', `/v1/rides/${acc.id}/complete`, {}, d);

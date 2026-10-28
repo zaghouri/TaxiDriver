@@ -656,9 +656,12 @@ class DriverController extends ChangeNotifier {
     }
   }
 
-  /// "I've arrived".
+  /// "I've arrived". The server checks the distance to the pickup against our last fix
+  /// (`TOO_FAR_FROM_PICKUP`), so a fresh fix the throttle held back is sent first.
   Future<void> markArrived() async {
     final id = _activeId();
+    final p = _position;
+    if (p != null && now.difference(p.timestamp) < const Duration(seconds: 30)) await sendPosition(p);
     final r = await _rideCall(() => api.arrived(id));
     _setActive(r);
   }

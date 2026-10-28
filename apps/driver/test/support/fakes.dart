@@ -82,6 +82,7 @@ class FakeDriverBackend implements DriverBackend {
   Object? onlineError;
   Object? bidError;
   Object? startError;
+  Object? arrivedError;
   Object? locationError;
   List<RideRequest> requestList = [];
   ActiveRide active = const ActiveRide();
@@ -151,6 +152,7 @@ class FakeDriverBackend implements DriverBackend {
   @override
   Future<Ride> arrived(String rideId) async {
     calls.add('arrived');
+    if (arrivedError != null) _throw(arrivedError!);
     return makeRide(rideId, 'arrived', arrivedAt: DateTime.utc(2026, 10, 26, 10));
   }
 

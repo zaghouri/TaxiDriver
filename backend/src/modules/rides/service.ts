@@ -384,22 +384,37 @@ export async function withdrawBid(ctx: AppContext, driverId: string, rideId: str
 }
 
 /** Generic driver step: one conditional UPDATE, event, notification. Zero rows = 409 with the real state. */
-async function driverStep(ctx: AppContext, driverId: string, rideId: string, from: string, to: string, setSql: string, event: string, extra: (r: RideRow) => OutboxMessage[] = () => []) {
+async function driverStep(ctx: AppContext, driverId: string, rideId: string, from: string, to: string, setSql: string, event: string, extra: (r: RideRow) => OutboxMessage[] = () => [], eventData: Record<string, unknown> = {}) {
   return withTx(ctx.db, async (tx) => {
     const r = await loadOwnRide(tx, rideId, driverId, 'driver');
     const upd = await one(tx, `UPDATE rides SET status = $3, ${setSql}, updated_at = now() WHERE id = $1 AND driver_id = $2 AND status = '${from}' RETURNING id`, [rideId, driverId, to]);
     if (!upd) throw conflict('INVALID_STATE', `This ride is ${r.status}.`, { status: r.status });
-    await addEvent(tx, rideId, event, { id: driverId, role: 'driver' });
+    await addEvent(tx, rideId, event, { id: driverId, role: 'driver' }, eventData);
     const r2 = (await getRide(tx, rideId))!;
     await notifyRideUpdate(tx, r2, extra(r2));
     return r2;
   });
 }
 
+/** A fix older than this says nothing about where the driver is now. */
+const ARRIVE_FIX_MAX_AGE_MS = 120_000;
+
 export async function arrived(ctx: AppContext, driverId: string, rideId: string) {
+  // "I've arrived" starts the rider's wait clock and later allows a free no-show cancel, so it must happen at the
+  // pickup. Checked against the driver's last fresh position; without one (GPS lost) the step is allowed and the
+  // missing distance is logged in the event for review.
+  const r0 = await loadOwnRide(ctx.db, rideId, driverId, 'driver', false);
+  const city = await ctx.settings.city(r0.city_id);
+  const maxM = Number(city.cancel_rules.arrive_max_distance_m ?? 250);
+  const loc = await ctx.geo.get(driverId);
+  const fresh = loc && Date.now() - loc.at < ARRIVE_FIX_MAX_AGE_MS ? loc : null;
+  const distanceM = fresh ? Math.round(haversineM(fresh, { lat: r0.pickup_lat, lng: r0.pickup_lng })) : null;
+  if (r0.status === 'accepted' && maxM > 0 && distanceM !== null && distanceM > maxM) {
+    throw unprocessable('TOO_FAR_FROM_PICKUP', `You are ${distanceM} m from the pickup point. Tap again when you are there.`, { distance_m: distanceM, max_m: maxM });
+  }
   const r = await driverStep(ctx, driverId, rideId, 'accepted', 'arrived', 'arrived_at = now()', 'arrived', (r2) => [
     { topic: 'push', payload: { user_ids: [r2.rider_id], title: 'push_arrived_title', body: 'push_arrived_body', vars: { car: '', plate: '' }, data: { type: 'driver_arrived', ride_id: r2.id }, channel: 'ride_updates' } },
-  ]);
+  ], { distance_m: distanceM });
   return rideView(ctx.db, r, { id: driverId, role: 'driver' });
 }
 

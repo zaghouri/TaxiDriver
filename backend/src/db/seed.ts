@@ -12,6 +12,7 @@ export const DEFAULT_CANCEL_RULES = {
   driver_short_block: { count: 3, window_hours: 24, block_hours: 2 },
   driver_long_block: { count: 5, window_days: 7, block_hours: 24 },
   no_show_wait_s: 300,
+  arrive_max_distance_m: 250,
   max_bids_per_driver: 3,
   max_pin_attempts: 5,
 };

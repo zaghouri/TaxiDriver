@@ -102,7 +102,7 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | GET | `/v1/driver/requests` | | `{items: Request[]}` open requests near the driver |
 | POST | `/v1/rides/:id/bids` | `{kind:"accept"}` or `{kind:"counter", price}` | `201 Bid`. Errors `RIDE_NOT_SEARCHING`, `BID_ALREADY_ACTIVE`, `BID_DECLINED_BEFORE`, `TOO_MANY_BIDS`, `COUNTER_TOO_LOW`, `COUNTER_TOO_HIGH` (details.max), `TOO_FAR`, `402 SUBSCRIPTION_REQUIRED`, `DRIVER_*` |
 | DELETE | `/v1/rides/:id/bids/mine` | | `{withdrawn:true}` |
-| POST | `/v1/rides/:id/arrived` | `{}` | `Ride` |
+| POST | `/v1/rides/:id/arrived` | `{}` | `Ride`. `422 TOO_FAR_FROM_PICKUP` (details `distance_m`, `max_m`) when the driver's last fresh fix (< 2 min) is farther than the city's `cancel_rules.arrive_max_distance_m` (default 250 m, 0 = off) from the pickup; without a fresh fix the step is allowed and the event logs `distance_m: null` |
 | POST | `/v1/rides/:id/start` | `{pin:"1234"}` | `Ride` (`PIN_INVALID`, `423 PIN_LOCKED`) |
 | POST | `/v1/rides/:id/complete` | `{}` | `Ride` |
 | GET | `/v1/driver/earnings?days=7` | | `{currency, commission:0, days:[{day, trips, cash}], total:{trips, cash}}` |
