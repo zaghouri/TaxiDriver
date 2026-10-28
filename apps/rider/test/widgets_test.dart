@@ -160,6 +160,35 @@ void main() {
     });
   });
 
+  group('Change pickup point (D61)', () {
+    testWidgets('the button shows only while the pickup can still move', (tester) async {
+      await _setPhone(tester);
+      final h = Harness();
+      addTearDown(h.c.dispose);
+      await h.c.start();
+      var taps = 0;
+      Widget panel() => wrapApp(
+            Scaffold(body: SingleChildScrollView(child: ActiveRidePanel(onCall: () {}, onShare: () {}, onSos: () {}, onEditPickup: () => taps++))),
+            controller: h.c,
+          );
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'accepted', pin: '4821', withDriver: true), 'can_edit_pickup': true}));
+      await tester.pumpWidget(panel());
+      await tester.pump();
+      expect(find.text('Change pickup point'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('ride_edit_pickup')));
+      expect(taps, 1);
+
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'accepted', pin: '4821', withDriver: true), 'can_edit_pickup': false}));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('ride_edit_pickup')), findsNothing);
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'arrived', pin: '4821', withDriver: true), 'can_edit_pickup': true}));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('ride_edit_pickup')), findsNothing, reason: 'never after arrival');
+      h.c.dispose();
+      await tester.pumpWidget(const SizedBox());
+    });
+  });
+
   group('Search stage line (D60)', () {
     Ride stage(int wave, int? radius, int notified) =>
         Ride.fromJson({...rideJson(status: 'searching', expiresAt: DateTime.now().add(const Duration(minutes: 4))), 'search': {'wave': wave, 'radius_m': radius, 'drivers_notified': notified}});

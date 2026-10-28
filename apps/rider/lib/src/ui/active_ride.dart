@@ -20,6 +20,7 @@ class DriverRideCard extends StatelessWidget {
     this.onSos,
     this.onCancel,
     this.onCarMismatch,
+    this.onEditPickup,
     this.cancelFree = true,
   });
 
@@ -32,6 +33,9 @@ class DriverRideCard extends StatelessWidget {
   final VoidCallback? onSos;
   final VoidCallback? onCancel;
   final VoidCallback? onCarMismatch;
+
+  /// Shown only while the pickup can still be moved (D61).
+  final VoidCallback? onEditPickup;
   final bool cancelFree;
 
   @override
@@ -82,6 +86,16 @@ class DriverRideCard extends StatelessWidget {
             ),
           ],
         ),
+        if (onEditPickup != null) ...[
+          gap8,
+          OutlinedButton.icon(
+            key: const ValueKey('ride_edit_pickup'),
+            onPressed: onEditPickup,
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, kTapTarget)),
+            icon: const Icon(Icons.edit_location_alt_outlined),
+            label: Text(RiderStrings.of(context).changePickup),
+          ),
+        ],
         if (!onTrip) ...[
           gap8,
           Row(
@@ -284,8 +298,10 @@ Future<void> showCarMismatch(BuildContext context, RideController c) async {
 
 /// Panel while a driver is assigned (reads [RideController]).
 class ActiveRidePanel extends StatelessWidget {
-  const ActiveRidePanel({super.key, required this.onCall, required this.onShare, required this.onSos});
+  const ActiveRidePanel({super.key, required this.onCall, required this.onShare, required this.onSos, this.onEditPickup});
 
+  /// Opens the address search to move the pickup point (D61).
+  final VoidCallback? onEditPickup;
   final VoidCallback onCall;
   final VoidCallback onShare;
   final VoidCallback onSos;
@@ -311,6 +327,7 @@ class ActiveRidePanel extends StatelessWidget {
           onShare: onShare,
           onSos: onSos,
           onCarMismatch: c.busy ? null : () => showCarMismatch(context, c),
+          onEditPickup: c.canEditPickup && !c.busy ? onEditPickup : null,
           onCancel: c.busy || !c.canCancel
               ? null
               : () async {

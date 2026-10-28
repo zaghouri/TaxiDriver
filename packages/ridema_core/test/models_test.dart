@@ -265,5 +265,8 @@ void main() {
     expect(r.search?.radiusM, 3500);
     expect(r.search?.driversNotified, 4);
     expect(Ride.fromJson({'id': 'r2', 'status': 'accepted', 'pickup': {'lat': 1, 'lng': 2}, 'dropoff': {'lat': 1, 'lng': 3}}).search, isNull);
+    final e = Ride.fromJson({'id': 'r3', 'status': 'accepted', 'pickup': {'lat': 1, 'lng': 2}, 'dropoff': {'lat': 1, 'lng': 3}, 'can_edit_pickup': false, 'pickup_edited_at': '2026-10-28T14:00:00Z'});
+    expect(e.canEditPickup, isFalse);
+    expect(e.pickupEditedAt, DateTime.utc(2026, 10, 28, 14));
   });
 }

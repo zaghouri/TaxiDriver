@@ -280,6 +280,28 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
     await send();
   }
 
+  /// After acceptance: move the pickup point once (D61). The server checks distance and timing.
+  Future<void> _movePickup() async {
+    final rs = RiderStrings.of(context);
+    final current = _c.ride?.pickup;
+    final p = await Navigator.of(context).push<Place>(MaterialPageRoute(
+      builder: (_) => AddressSearchScreen(
+        places: context.read<PlacesService>(),
+        title: rs.changePickupTitle,
+        near: current?.latLng ?? _me,
+        onUseMyLocation: _locAccess == LocationAccess.granted
+            ? () async {
+                final pos = await CoreRiderLocation(_s.location).current();
+                if (pos == null || !mounted) return null;
+                return _placeFor(pos);
+              }
+            : null,
+      ),
+    ));
+    if (p == null || !mounted) return;
+    if (await _c.editPickup(p) && mounted) showInfoSnack(context, rs.pickupMoved);
+  }
+
   Future<void> _edit({required bool pickup}) async {
     final rs = RiderStrings.of(context);
     final p = await Navigator.of(context).push<Place>(MaterialPageRoute(
@@ -374,6 +396,7 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
           onCall: features.feature('voice_calls', fallback: true) ? _call : () {},
           onShare: features.feature('trip_share', fallback: true) ? _share : () {},
           onSos: () => showSosSheet(context, rideId: r!.id, position: _sosPosition),
+          onEditPickup: _movePickup,
         ),
       RiderPhase.completed => const RateDriverPanel(),
     };

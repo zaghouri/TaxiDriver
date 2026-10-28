@@ -125,6 +125,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         } else {
           showErrorSnack(context, ApiException(code, ''));
         }
+      case PickupChangedEvent(:final ride):
+        unawaited(HapticFeedback.heavyImpact());
+        showInfoSnack(context, context.ds.pickupChanged(ride.pickup.address));
       case AdminMessageEvent(:final message):
         unawaited(showDialog<void>(
           context: context,

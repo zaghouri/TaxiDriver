@@ -562,6 +562,22 @@ class RideController extends ChangeNotifier {
   }
 
   /// Raise (never lower) the fare while searching.
+  /// The pickup point can still be moved (once, after acceptance, before arrival — D61).
+  bool get canEditPickup => _phase == RiderPhase.accepted && _ride?.canEditPickup == true;
+
+  /// Moves the pickup point; the price does not change. Errors stay in [error].
+  Future<bool> editPickup(Place p) async {
+    final r = _ride;
+    if (r == null || !canEditPickup) return false;
+    return _act(() async {
+      _applyRide(await api.editPickup(r.id, p));
+      return true;
+    }, onError: (e) async {
+      if (e.code == 'PICKUP_LOCKED' || e.code == 'PICKUP_EDIT_USED' || e.status == 409) await sync();
+      return false;
+    });
+  }
+
   Future<bool> raiseFare(int newPrice) async {
     final r = _ride;
     if (r == null || _phase != RiderPhase.searching) return false;

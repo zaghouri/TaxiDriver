@@ -211,6 +211,13 @@ class RideMaApi {
   Future<Ride> raiseOffer(String rideId, int offeredPrice) async =>
       Ride.fromJson(await client.post('/v1/rides/$rideId/raise', data: {'offered_price': offeredPrice}));
 
+  /// Move the pickup point once after acceptance (D61). Errors `PICKUP_TOO_FAR`, `PICKUP_EDIT_USED`, `PICKUP_LOCKED`.
+  Future<Ride> editPickup(String rideId, Place pickup) async => Ride.fromJson(await client.post('/v1/rides/$rideId/pickup', data: {
+        'lat': pickup.lat,
+        'lng': pickup.lng,
+        if (pickup.address != null && pickup.address!.trim().isNotEmpty) 'address': pickup.address!.trim(),
+      }));
+
   Future<Ride> acceptBid(String rideId, String bidId) async =>
       Ride.fromJson(await client.post('/v1/rides/$rideId/bids/$bidId/accept'));
 

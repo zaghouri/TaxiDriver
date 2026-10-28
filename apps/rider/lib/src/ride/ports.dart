@@ -19,6 +19,7 @@ abstract class RiderRideApi {
   Future<Ride> ride(String id);
   Future<({List<Bid> offers, int total})> offers(String rideId);
   Future<Ride> raiseOffer(String rideId, int offeredPrice);
+  Future<Ride> editPickup(String rideId, Place pickup);
   Future<Ride> acceptBid(String rideId, String bidId);
   Future<void> declineBid(String rideId, String bidId);
 
@@ -54,6 +55,8 @@ class CoreRiderRideApi implements RiderRideApi {
   Future<({List<Bid> offers, int total})> offers(String rideId) => api.offers(rideId);
   @override
   Future<Ride> raiseOffer(String rideId, int offeredPrice) => api.raiseOffer(rideId, offeredPrice);
+  @override
+  Future<Ride> editPickup(String rideId, Place pickup) => api.editPickup(rideId, pickup);
   @override
   Future<Ride> acceptBid(String rideId, String bidId) => api.acceptBid(rideId, bidId);
   @override

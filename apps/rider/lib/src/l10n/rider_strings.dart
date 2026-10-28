@@ -95,6 +95,25 @@ class RiderStrings {
         'ar': 'تعديل الطلب',
       });
 
+  /// Move the pickup point once after acceptance (D61).
+  String get changePickup => _t({
+        'en': 'Change pickup point',
+        'fr': 'Modifier le point de départ',
+        'ar': 'تغيير نقطة الانطلاق',
+      });
+
+  String get changePickupTitle => _t({
+        'en': 'New pickup point (once, close by, same price)',
+        'fr': 'Nouveau point de départ (une fois, tout près, même prix)',
+        'ar': 'نقطة انطلاق جديدة (مرة واحدة، قريبة، بنفس السعر)',
+      });
+
+  String get pickupMoved => _t({
+        'en': 'Pickup point changed. Your driver has the new address.',
+        'fr': 'Point de départ modifié. Votre chauffeur a la nouvelle adresse.',
+        'ar': 'تم تغيير نقطة الانطلاق. لدى سائقك العنوان الجديد.',
+      });
+
   String get cancelAnyway => _t({
         'en': 'Cancel anyway',
         'fr': 'Annuler quand même',
@@ -261,6 +280,26 @@ class RiderStrings {
             'en': 'Not found.',
             'fr': 'Introuvable.',
             'ar': 'غير موجود.',
+          }),
+        'PICKUP_TOO_FAR' => _t({
+            'en': 'This place is too far from your first pickup point. Choose one closer by, or call your driver.',
+            'fr': 'Ce lieu est trop loin du premier point de départ. Choisissez-en un plus proche ou appelez votre chauffeur.',
+            'ar': 'هذا المكان بعيد جدًا عن نقطة الانطلاق الأولى. اختر مكانًا أقرب أو اتصل بسائقك.',
+          }),
+        'PICKUP_EDIT_USED' => _t({
+            'en': 'You already changed the pickup point for this ride. Call your driver if needed.',
+            'fr': 'Vous avez déjà modifié le point de départ pour cette course. Appelez votre chauffeur si besoin.',
+            'ar': 'لقد غيّرت نقطة الانطلاق لهذه الرحلة من قبل. اتصل بسائقك عند الحاجة.',
+          }),
+        'PICKUP_LOCKED' => _t({
+            'en': 'Your driver is almost there, so the pickup point can no longer change. Call them if needed.',
+            'fr': 'Votre chauffeur est presque là : le point de départ ne peut plus changer. Appelez-le si besoin.',
+            'ar': 'سائقك على وشك الوصول، لذا لا يمكن تغيير نقطة الانطلاق. اتصل به عند الحاجة.',
+          }),
+        'TOO_FAR_FROM_PICKUP' => _t({
+            'en': 'Your driver is not at the pickup point yet.',
+            'fr': 'Votre chauffeur n’est pas encore au point de départ.',
+            'ar': 'سائقك لم يصل بعد إلى نقطة الانطلاق.',
           }),
         'NOT_CONNECTED' => _t({
             'en': 'Not connected. We keep trying…',

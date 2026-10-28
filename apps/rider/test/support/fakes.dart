@@ -191,6 +191,14 @@ class FakeRideApi implements RiderRideApi {
     return onOffers(rideId);
   }
 
+  Future<Ride> Function(String id, Place p)? onEditPickup;
+
+  @override
+  Future<Ride> editPickup(String rideId, Place pickup) {
+    calls.add('pickup:${pickup.address}');
+    return onEditPickup!(rideId, pickup);
+  }
+
   @override
   Future<Ride> raiseOffer(String rideId, int offeredPrice) {
     calls.add('raise:$offeredPrice');
