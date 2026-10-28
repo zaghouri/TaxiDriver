@@ -326,6 +326,7 @@ export const DICT: Record<string, [string, string]> = {
   rk_dispute: ['Litige', 'Dispute'],
   rk_safety: ['Sécurité', 'Safety'],
   rk_lost_item: ['Objet perdu', 'Lost item'],
+  rk_request: ['Demande signalée par un chauffeur', 'Request reported by a driver'],
   rk_other: ['Autre', 'Other'],
   done_resolved: ['Résolu', 'Resolved'],
   sos_banner: ['ALERTE SOS — {n} ouverte(s)', 'SOS ALERT — {n} open'],

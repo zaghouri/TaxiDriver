@@ -200,9 +200,9 @@ export async function runSearchWave(ctx: AppContext, rideId: string, wave: numbe
 async function fanOut(ctx: AppContext, tx: Tx, r: RideRow, city: City, nearby: { driverId: string; distanceM: number }[], wave: number): Promise<number> {
   if (!nearby.length) return 0;
   const ids = nearby.map((n) => n.driverId);
-  const eligible = await many<{ user_id: string }>(
+  const eligible = await many<{ user_id: string; max_pickup_m: number | null }>(
     tx,
-    `SELECT d.user_id FROM drivers d JOIN users u ON u.id = d.user_id
+    `SELECT d.user_id, d.max_pickup_m FROM drivers d JOIN users u ON u.id = d.user_id
      WHERE d.user_id = ANY($1) AND d.status = 'approved' AND d.online AND u.status = 'active'
        AND u.email_verified_at IS NOT NULL AND u.phone_verified_at IS NOT NULL
        AND (d.blocked_until IS NULL OR d.blocked_until < now()) AND d.city_id = $2 AND d.driver_type = ANY($3)
@@ -210,8 +210,9 @@ async function fanOut(ctx: AppContext, tx: Tx, r: RideRow, city: City, nearby: {
        AND NOT EXISTS (SELECT 1 FROM ride_notified_drivers n WHERE n.ride_id = $4 AND n.driver_id = d.user_id)`,
     [ids, city.id, city.enabled_driver_types, r.id],
   );
-  const ok = new Set(eligible.map((e) => e.user_id));
-  const targets = nearby.filter((n) => ok.has(n.driverId));
+  // A driver's own max pickup distance (D68) limits notifications only; the list still shows the request.
+  const ok = new Map(eligible.map((e) => [e.user_id, e.max_pickup_m]));
+  const targets = nearby.filter((n) => ok.has(n.driverId) && (ok.get(n.driverId) == null || n.distanceM <= ok.get(n.driverId)!));
   if (!targets.length) return 0;
   await tx.query(
     `INSERT INTO ride_notified_drivers (ride_id, driver_id, wave) SELECT $1, unnest($2::uuid[]), $3 ON CONFLICT DO NOTHING`,

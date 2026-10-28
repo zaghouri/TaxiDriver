@@ -66,6 +66,59 @@ void main() {
   });
 
   group('home', () {
+    testWidgets('hide or report a request from its menu; it does not come back (D68)', (tester) async {
+      final h = await Harness.create();
+      final exp = h.clock.now.add(const Duration(minutes: 4));
+      h.api.requestList = [request('r1', price: 42, expiresAt: exp), request('r2', price: 55, expiresAt: exp)];
+      await h.controller.goOnline();
+      await tester.pumpWidget(h.wrap(const HomeScreen(), locale: 'en'));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('request_menu_r1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hide this request'));
+      await tester.pumpAndSettle();
+      expect(h.api.calls, contains('hide:r1'));
+      expect(find.byKey(const ValueKey('request_r1')), findsNothing);
+      expect(find.text('Request hidden. You won’t see it again.'), findsOneWidget);
+      // The socket sends it again (a later wave): still hidden.
+      h.rt.rideRequest.add(request('r1', price: 42, expiresAt: exp));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('request_r1')), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('request_menu_r2')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Report this request'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('report_offensive')));
+      await tester.pumpAndSettle();
+      expect(h.api.calls, contains('report:r2:offensive'));
+      expect(find.byKey(const ValueKey('request_r2')), findsNothing);
+      await teardown(tester, h);
+    });
+
+    testWidgets('request alerts: pick a distance, saved through the controller (D68)', (tester) async {
+      final h = await Harness.create();
+      double? saved = -1;
+      await tester.pumpWidget(h.wrap(
+        Builder(
+          builder: (ctx) => TextButton(
+            onPressed: () => showRequestAlertsDialog(ctx, current: null, onSave: (km) async => saved = km),
+            child: const Text('open'),
+          ),
+        ),
+        locale: 'en',
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Any distance'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('alerts_2')));
+      await tester.pumpAndSettle();
+      expect(saved, 2);
+      await h.controller.setMaxPickupKm(2);
+      expect(h.api.calls, contains('maxPickup:2.0'));
+      await teardown(tester, h);
+    });
+
     testWidgets('offline → tap the switch → online with the requests list', (tester) async {
       final h = await Harness.create();
       h.api.requestList = [request('r1', price: 42, expiresAt: h.clock.now.add(const Duration(minutes: 4)))];

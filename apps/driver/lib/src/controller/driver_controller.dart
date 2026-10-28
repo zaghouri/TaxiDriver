@@ -434,7 +434,7 @@ class DriverController extends ChangeNotifier {
       // Drop what the server no longer lists, but keep socket requests that arrived during this call.
       _requests.removeWhere((id, _) => !ids.contains(id) && (_receivedAt[id]?.isBefore(startedAt) ?? true));
       _receivedAt.removeWhere((id, _) => !_requests.containsKey(id));
-      for (final r in list) {
+      for (final r in list.where((r) => !_hidden.contains(r.id))) {
         _requests[r.id] = r;
         _receivedAt[r.id] ??= n;
         final mb = r.myBid;
@@ -458,7 +458,7 @@ class DriverController extends ChangeNotifier {
   }
 
   void _onRideRequest(RideRequest r) {
-    if (!_online || _active != null || _isExpired(r, now)) return;
+    if (!_online || _active != null || _isExpired(r, now) || _hidden.contains(r.id)) return;
     final isNew = !_requests.containsKey(r.id);
     _requests[r.id] = r;
     _receivedAt[r.id] ??= now;
@@ -583,6 +583,45 @@ class DriverController extends ChangeNotifier {
         _emit(RideCancelledEvent(r));
       }
     } catch (_) {}
+  }
+
+  /// Requests this driver hid or reported (D68); the server also leaves them out of the list.
+  final Set<String> _hidden = {};
+
+  /// Hides a request for this driver only.
+  Future<void> hideRequest(String rideId) async {
+    try {
+      await api.hideRequest(rideId);
+    } on ApiException catch (e) {
+      throw DriverFailure.from(e);
+    }
+    _forget(rideId);
+  }
+
+  /// Reports a request to the operators (and hides it).
+  Future<void> reportRequest(String rideId, String reason) async {
+    try {
+      await api.reportRequest(rideId, reason);
+    } on ApiException catch (e) {
+      throw DriverFailure.from(e);
+    }
+    _forget(rideId);
+  }
+
+  void _forget(String rideId) {
+    _hidden.add(rideId);
+    _requests.remove(rideId);
+    _receivedAt.remove(rideId);
+    _notify();
+  }
+
+  /// Request alerts only for pickups within [km] (null = any distance).
+  Future<void> setMaxPickupKm(double? km) async {
+    try {
+      await api.setMaxPickupKm(km);
+    } on ApiException catch (e) {
+      throw DriverFailure.from(e);
+    }
   }
 
   /// Accept the rider's price. [etaMin]: optional arrival-time promise (D66).

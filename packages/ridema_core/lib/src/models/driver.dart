@@ -195,6 +195,7 @@ class DriverProfile {
     this.canGoOnline = false,
     this.problemCode,
     this.problemMessage,
+    this.maxPickupKm,
   });
 
   final DriverStatus status;
@@ -214,6 +215,9 @@ class DriverProfile {
   final bool canGoOnline;
   final String? problemCode;
   final String? problemMessage;
+
+  /// Request notifications only for pickups this close (D68); null = any distance.
+  final double? maxPickupKm;
 
   /// Latest document of each type.
   Map<String, DriverDocument> get latestDocuments {
@@ -246,6 +250,7 @@ class DriverProfile {
       canGoOnline: asBool(j['can_go_online']),
       problemCode: p == null ? null : asString(p['code']),
       problemMessage: p == null ? null : asString(p['message']),
+      maxPickupKm: asDouble(j['max_pickup_km']),
     );
   }
 }

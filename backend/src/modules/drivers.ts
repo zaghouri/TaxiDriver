@@ -1,14 +1,14 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AppContext } from '../context.js';
-import { many, one, withTx } from '../db/pool.js';
+import { many, one, withTx, type Queryable } from '../db/pool.js';
 import { envelopeEncrypt } from '../lib/crypto.js';
 import { AppError, badRequest, conflict, forbidden, notFound, unprocessable } from '../lib/errors.js';
-import { latLng, parse } from '../lib/validation.js';
+import { latLng, parse, uuid as uuidSchema } from '../lib/validation.js';
 import { haversineM } from '../lib/geo.js';
 import { enqueue } from '../core/outbox.js';
 import { abuseAlert } from '../core/abuse.js';
-import { driverProblem } from './rides/service.js';
+import { addEvent, driverProblem } from './rides/service.js';
 import { requestView, getRide } from './rides/views.js';
 import { recordDriverLocation } from './location.js';
 
@@ -72,6 +72,7 @@ export async function driverView(ctx: AppContext, driverId: string) {
     document_problems: docProblems,
     can_go_online: !problem && docProblems.length === 0 && !!vehicle,
     problem,
+    max_pickup_km: d.max_pickup_m == null ? null : d.max_pickup_m / 1000,
   };
 }
 
@@ -263,6 +264,7 @@ export async function driverRoutes(app: FastifyInstance, ctx: AppContext) {
        WHERE r.city_id = $1 AND r.status = 'searching' AND r.expires_at > now()
          AND ST_DWithin(r.pickup, ST_SetSRID(ST_MakePoint($3,$4),4326)::geography, COALESCE(r.search_radius_m, $5))
          AND NOT EXISTS (SELECT 1 FROM bids b WHERE b.ride_id = r.id AND b.driver_id = $2 AND b.status = 'declined')
+         AND NOT EXISTS (SELECT 1 FROM ride_hidden_by_drivers h WHERE h.ride_id = r.id AND h.driver_id = $2)
        ORDER BY dist LIMIT 50`,
       [city.id, id, loc.lng, loc.lat, city.search_radius_km * 1000],
     );
@@ -274,6 +276,64 @@ export async function driverRoutes(app: FastifyInstance, ctx: AppContext) {
       }),
     );
     return { items };
+  });
+
+  // ---- Request feed (D68) ----
+
+  /** A request this driver may act on from the feed: same city, still open or already sent to them. */
+  async function feedRide(driverId: string, rideId: string) {
+    const r = await getRide(db, rideId);
+    const dc = await one<{ city_id: string }>(db, 'SELECT city_id FROM drivers WHERE user_id = $1', [driverId]);
+    if (!r || !dc || r.city_id !== dc.city_id) throw notFound('RIDE_NOT_FOUND');
+    if (r.status !== 'searching') {
+      const seen = await one(db, 'SELECT 1 FROM ride_notified_drivers WHERE ride_id = $1 AND driver_id = $2', [rideId, driverId]);
+      if (!seen) throw notFound('RIDE_NOT_FOUND');
+    }
+    return r;
+  }
+
+  async function hide(driverId: string, rideId: string, reported: boolean, q: Queryable = db) {
+    const active = await one(db, `SELECT 1 FROM bids WHERE ride_id = $1 AND driver_id = $2 AND status = 'active'`, [rideId, driverId]);
+    if (active) throw conflict('BID_ALREADY_ACTIVE', 'Withdraw your offer before hiding this request.');
+    await q.query(
+      `INSERT INTO ride_hidden_by_drivers (ride_id, driver_id, reported) VALUES ($1, $2, $3)
+       ON CONFLICT (ride_id, driver_id) DO UPDATE SET reported = ride_hidden_by_drivers.reported OR EXCLUDED.reported`,
+      [rideId, driverId, reported],
+    );
+  }
+
+  app.post('/v1/driver/requests/:id/hide', { config: { auth: 'driver' } }, async (req) => {
+    const r = await feedRide(req.user!.id, parse(uuidSchema, (req.params as any).id));
+    await hide(req.user!.id, r.id, false);
+    return { hidden: true };
+  });
+
+  app.post('/v1/driver/requests/:id/report', { config: { auth: 'driver' } }, async (req, reply) => {
+    const b = parse(
+      z.object({ reason: z.enum(['fake_request', 'offensive', 'wrong_place', 'other']), details: z.string().trim().max(1000).optional() }),
+      req.body,
+    );
+    const driverId = req.user!.id;
+    const r = await feedRide(driverId, parse(uuidSchema, (req.params as any).id));
+    const rep = await withTx(db, async (tx) => {
+      await hide(driverId, r.id, true, tx);
+      const row = await one(
+        tx,
+        `INSERT INTO reports (ride_id, reporter_id, kind, details) VALUES ($1, $2, 'request', $3) RETURNING id, kind, status, created_at`,
+        [r.id, driverId, `${b.reason}${b.details ? `: ${b.details}` : ''}`],
+      );
+      await addEvent(tx, r.id, 'request_reported', { id: driverId, role: 'driver' }, { reason: b.reason, report_id: row.id });
+      await enqueue(tx, { topic: 'realtime', payload: { target: { admins: true }, event: 'report:new', data: { id: row.id, ride_id: r.id, kind: 'request' } } });
+      return row;
+    });
+    return reply.status(201).send(rep);
+  });
+
+  app.put('/v1/driver/preferences', { config: { auth: 'driver' } }, async (req) => {
+    const b = parse(z.object({ max_pickup_km: z.number().min(0.5).max(20).nullable() }), req.body);
+    const m = b.max_pickup_km == null ? null : Math.round(b.max_pickup_km * 1000);
+    await db.query('UPDATE drivers SET max_pickup_m = $2, updated_at = now() WHERE user_id = $1', [req.user!.id, m]);
+    return { max_pickup_km: b.max_pickup_km };
   });
 
   app.get('/v1/driver/earnings', { config: { auth: 'driver' } }, async (req) => {

@@ -121,6 +121,13 @@ class FakeDriverBackend implements DriverBackend {
   }
 
   @override
+  Future<void> hideRequest(String rideId) async => calls.add('hide:$rideId');
+  @override
+  Future<void> reportRequest(String rideId, String reason) async => calls.add('report:$rideId:$reason');
+  @override
+  Future<void> setMaxPickupKm(double? km) async => calls.add('maxPickup:$km');
+
+  @override
   Future<List<RideRequest>> requests() async {
     calls.add('requests');
     return requestList;
