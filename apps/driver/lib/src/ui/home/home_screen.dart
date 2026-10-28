@@ -11,9 +11,11 @@ import '../../controller/adapters.dart';
 import '../../controller/driver_controller.dart';
 import '../../controller/profile_controller.dart';
 import '../../l10n/driver_strings.dart';
+import '../../platform/readiness.dart';
 import '../device_check_screen.dart';
 import '../documents_screen.dart';
 import '../earnings_screen.dart';
+import '../readiness_screen.dart';
 import '../request_detail_screen.dart';
 import '../ride/active_ride_view.dart';
 import '../ride/trip_complete_view.dart';
@@ -41,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _locationBlocked = false;
   bool _locationServiceOff = false;
   bool _notificationsOff = false;
+  Set<ReadinessItem> _readiness = const {};
 
   CoreServices get _s => CoreServices.of(context);
   DriverController get _c => context.read<DriverController>();
@@ -52,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _sub = _c.events.listen(_onEvent);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _checkNotifications();
+      await _checkReadiness();
       if (widget.restoreOnline && mounted && !_c.online) await _restoreOnline();
     });
   }
@@ -70,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       unawaited(_c.onResumed());
       unawaited(context.read<DriverProfileController>().load());
       unawaited(_checkNotifications());
+      unawaited(_checkReadiness());
       if (_locationBlocked || _locationServiceOff) unawaited(_recheckLocation());
     }
   }
@@ -77,6 +82,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _checkNotifications() async {
     final st = await _s.notifications.status();
     if (mounted) setState(() => _notificationsOff = st != NotificationAccess.granted);
+  }
+
+  /// Phone settings that can hide requests (D62). Absent in some tests / non-Android builds.
+  Future<void> _checkReadiness() async {
+    final checks = Provider.of<ReadinessChecks?>(context, listen: false);
+    if (checks == null) return;
+    final p = await checks.problems();
+    if (mounted) setState(() => _readiness = p);
+  }
+
+  Future<void> _openReadiness() async {
+    final checks = Provider.of<ReadinessChecks?>(context, listen: false);
+    if (checks == null) return;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (c) => ReadinessScreen(checks: checks, onBatteryGuide: () => _openBatteryGuide(c)),
+    ));
+    await _checkReadiness();
   }
 
   Future<void> _recheckLocation() async {
@@ -194,6 +216,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
     if (!await _s.location.hasBackground() && mounted && !quiet) showInfoSnack(context, context.ds.backgroundHint);
+    await _checkReadiness();
     await _maybeBatteryGuide();
   }
 
@@ -288,6 +311,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const DocumentsScreen())),
       ),
       if (_notificationsOff) NotificationsOffBanner(onOpenSettings: _s.notifications.openSettings),
+      // Notifications and the location service already have their own banner / card.
+      if (_readiness.difference({ReadinessItem.notifications, ReadinessItem.locationService}).isNotEmpty)
+        ReadinessBanner(count: _readiness.length, onTap: _openReadiness),
     ];
 
     return CallHost(
@@ -491,6 +517,13 @@ class DriverDrawer extends StatelessWidget {
           leading: const Icon(Icons.card_membership),
           title: Text(ds.subscriptionMenu),
           onTap: () => push(const SubscriptionScreen()),
+        ),
+      if (Provider.of<ReadinessChecks?>(context, listen: false) case final checks?)
+        ListTile(
+          key: const ValueKey('menu_readiness'),
+          leading: const Icon(Icons.phonelink_setup),
+          title: Text(ds.readyMenu),
+          onTap: () => push(ReadinessScreen(checks: checks, onBatteryGuide: () => _openBatteryGuide(context))),
         ),
       ListTile(
         key: const ValueKey('menu_battery'),

@@ -27,6 +27,7 @@ APK download: `https://<SERVER_IP>.sslip.io/download` (or the APKs from the GitH
 - [ ] A persistent notification "RideMA — you are online" appears. Lock the phone 10 minutes, walk/drive a bit: the admin Live map keeps showing the driver moving.
 - [ ] Refuse location once (or revoke it in settings): the app explains it's needed to go online, with a Settings button; the rest of the app still works.
 - [ ] Battery guide (Profile › Battery): steps match your phone brand; "Open settings" opens the right page. After following it, the driver stays online 30 min with screen off.
+- [ ] Ready to drive check (menu): turn on Battery saver and Do Not Disturb → the home shows the red "Your phone may hide ride requests" banner; the checklist marks both, each **Fix** opens the right settings page, and the lines turn green when you come back. Also check "Location all the time", battery optimisation and the "New ride requests" notification channel.
 - [ ] Install a fake-GPS app and enable it as mock location provider → going online is blocked ("Fake GPS"), an abuse alert appears in the admin panel. Disable it again.
 
 ## 4. A full ride (both phones, outside, ~1 km apart in Meknes)

@@ -7,6 +7,7 @@ import 'controller/driver_controller.dart';
 import 'controller/ports.dart';
 import 'controller/profile_controller.dart';
 import 'env.dart';
+import 'platform/readiness.dart';
 import 'platform/store_apk_installer.dart';
 import 'ui/driver_root.dart';
 
@@ -46,6 +47,7 @@ class DriverApp extends StatelessWidget {
         servicesFactory: servicesFactory ?? defaultServices,
         providers: (s) => [
           Provider<DriverForegroundService>(create: (_) => buildForegroundService(s)),
+          Provider<ReadinessChecks>(create: (_) => ReadinessChecks(const MethodChannelReadiness(), s.location)),
           ChangeNotifierProvider<DriverController>(
             create: (c) => buildDriverController(s, c.read<DriverForegroundService>(), device: deviceChecks?.call(s)),
           ),

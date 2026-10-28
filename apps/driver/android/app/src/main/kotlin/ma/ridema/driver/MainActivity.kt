@@ -13,6 +13,8 @@ class MainActivity : FlutterActivity() {
         val messenger = flutterEngine.dartExecutor.binaryMessenger
         MethodChannel(messenger, DeviceIntegrityHandler.CHANNEL)
             .setMethodCallHandler(DeviceIntegrityHandler(applicationContext))
+        MethodChannel(messenger, ReadinessHandler.CHANNEL)
+            .setMethodCallHandler(ReadinessHandler(applicationContext))
         // Flavor-specific: real installer in `sideload`, no-op in `store`.
         MethodChannel(messenger, ApkInstallerHandler.CHANNEL)
             .setMethodCallHandler(ApkInstallerHandler(this))
