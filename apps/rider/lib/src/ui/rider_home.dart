@@ -345,7 +345,7 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
   Future<void> _raise() async {
     final r = _c.ride;
     if (r == null) return;
-    final v = await showRaiseFareSheet(context, current: r.offeredPrice, max: _c.maxFare);
+    final v = await showRaiseFareSheet(context, current: r.offeredPrice, max: _c.maxFare, suggested: r.suggestedPrice);
     if (v != null) await _c.raiseFare(v);
   }
 
