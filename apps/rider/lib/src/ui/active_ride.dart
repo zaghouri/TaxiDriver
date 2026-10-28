@@ -152,9 +152,36 @@ const riderCancelReasons = [
 ];
 
 /// Cancel flow. Searching: simple confirm. After the driver arrived: a
-/// confirmation explaining the cancel is counted first. Then the reason.
-/// Returns null when the rider keeps the ride.
+/// confirmation explaining the cancel is counted first. Then the reason, with
+/// the off-app warning; "the driver asked me" gets one more chance to keep the
+/// ride in the app (D58). Returns null when the rider keeps the ride.
 Future<CancelReason?> askCancel(BuildContext context, {required bool searching, required bool free}) async {
+  final reason = await _askCancelReason(context, searching: searching, free: free);
+  if (reason != CancelReason.driverAsked || !context.mounted) return reason;
+  final rs = RiderStrings.of(context);
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (c) => AlertDialog(
+      key: const ValueKey('off_app_dialog'),
+      icon: const Icon(Icons.shield_outlined, size: 36),
+      title: Text(rs.offAppTitle),
+      content: Text(rs.offAppBody, style: const TextStyle(fontSize: 16)),
+      actionsOverflowDirection: VerticalDirection.up,
+      actions: [
+        TextButton(key: const ValueKey('off_app_cancel'), onPressed: () => Navigator.pop(c, true), child: Text(rs.cancelAnyway)),
+        FilledButton(
+          key: const ValueKey('off_app_keep'),
+          style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
+          onPressed: () => Navigator.pop(c, false),
+          child: Text(rs.keepInApp),
+        ),
+      ],
+    ),
+  );
+  return go == true ? reason : null;
+}
+
+Future<CancelReason?> _askCancelReason(BuildContext context, {required bool searching, required bool free}) async {
   final l = context.l10n;
   final rs = RiderStrings.of(context);
   if (searching) {
@@ -200,6 +227,11 @@ Future<CancelReason?> askCancel(BuildContext context, {required bool searching, 
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: InfoBox(l.cancelFreeInfo, icon: Icons.check_circle_outline, color: BrandColors.success),
               ),
+            Padding(
+              key: const ValueKey('off_app_warning'),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: InfoBox(rs.offAppWarning, icon: Icons.shield_outlined, color: BrandColors.accent),
+            ),
             for (final r in riderCancelReasons)
               ListTile(
                 key: ValueKey('reason_${r.apiName}'),

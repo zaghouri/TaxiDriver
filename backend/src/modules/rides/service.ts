@@ -293,6 +293,15 @@ export async function cancelByRider(ctx: AppContext, riderId: string, rideId: st
     );
     if (r.status === 'searching') await tx.query(`UPDATE bids SET status = 'expired', updated_at = now() WHERE ride_id = $1 AND status = 'active'`, [rideId]);
     await addEvent(tx, rideId, 'cancelled', { id: riderId, role: 'rider' }, { from: r.status, reason, free, counted });
+    if (reason === 'driver_asked' && r.driver_id) {
+      // A driver asking the rider to cancel is the usual start of an off-app (unprotected, untracked) ride: flag it
+      // for the operators instead of letting it disappear as an ordinary cancel.
+      await tx.query(
+        `INSERT INTO reports (ride_id, reporter_id, kind, details) VALUES ($1, $2, 'dispute', $3)`,
+        [rideId, riderId, 'off_app_suspected: the rider cancelled because the driver asked them to'],
+      );
+      await tx.query('UPDATE rides SET flagged = true WHERE id = $1', [rideId]);
+    }
     const r2 = (await getRide(tx, rideId))!;
     const extra: OutboxMessage[] = [];
     if (r.status === 'searching') extra.push({ topic: 'realtime', payload: { target: { cityDrivers: r.city_id }, event: 'ride:request_closed', data: { id: rideId, reason: 'cancelled' } } });
