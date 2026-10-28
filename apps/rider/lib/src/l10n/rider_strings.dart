@@ -133,6 +133,9 @@ class RiderStrings {
         'ar': 'سائقك متأخر. يمكنك البحث عن سائق آخر مجانًا.',
       });
 
+  /// Live ride notification (D69): "To" + the destination.
+  String liveTo(String place) => _t({'en': 'To $place', 'fr': 'Vers $place', 'ar': 'إلى $place'});
+
   String get keepWaiting => _t({'en': 'Keep waiting', 'fr': 'Patienter', 'ar': 'مواصلة الانتظار'});
 
   String get findNewDriver => _t({

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_ride_live">Course en cours</string>
+    <string name="channel_ride_live_desc">L’état de votre course en direct pendant qu’elle a lieu.</string>
+    <string name="channel_ride_updates">Suivi des courses</string>
+    <string name="channel_ride_updates_desc">Chauffeur arrivé, course annulée et autres changements.</string>
+    <string name="channel_offers">Offres</string>
+    <string name="channel_offers_desc">Nouvelles offres des chauffeurs.</string>
+</resources>

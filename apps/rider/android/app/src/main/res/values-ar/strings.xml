@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_ride_live">الرحلة الحالية</string>
+    <string name="channel_ride_live_desc">حالة رحلتك مباشرة أثناء الرحلة.</string>
+    <string name="channel_ride_updates">تحديثات الرحلات</string>
+    <string name="channel_ride_updates_desc">وصول السائق وإلغاء الرحلة وتغييرات أخرى.</string>
+    <string name="channel_offers">العروض</string>
+    <string name="channel_offers_desc">عروض جديدة من السائقين.</string>
+</resources>

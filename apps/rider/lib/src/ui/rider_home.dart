@@ -7,6 +7,7 @@ import 'package:ridema_core/ridema_core.dart';
 import '../env.dart';
 import '../geo/places.dart';
 import '../l10n/rider_strings.dart';
+import '../platform/ride_notification.dart';
 import '../ride/ports.dart';
 import '../ride/ride_controller.dart';
 import 'active_ride.dart';
@@ -87,6 +88,9 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
   bool _locating = false;
   bool _phoneOpen = false;
 
+  /// Live ride status on the lock screen while a driver is assigned (D69).
+  final _live = LiveRideNotificationSync(const ChannelRideNotifier());
+
   @override
   void initState() {
     super.initState();
@@ -99,6 +103,7 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _c.removeListener(_onController);
+    unawaited(_live.update(null, null));
     super.dispose();
   }
 
@@ -193,6 +198,11 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
     if (_c.needsPhoneVerification && !_phoneOpen) unawaited(_openPhoneGate(retry: true));
     final n = _c.takeNotice();
     if (n != null) _showNotice(n);
+    final r = _c.ride;
+    unawaited(_live.update(
+      r?.id,
+      liveRideContent(ride: r, phase: _c.phase, etaMinutes: _c.etaMinutes, l: context.l10n, rs: RiderStrings.of(context)),
+    ));
   }
 
   void _showNotice(RiderNotice n) {
