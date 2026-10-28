@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { AppContext } from '../../context.js';
 import { many } from '../../db/pool.js';
 import { latLng, parse, place, uuid } from '../../lib/validation.js';
+import { MAX_RATING_REASONS } from './rating-reasons.js';
 import * as svc from './service.js';
 import { getRide, rideView } from './views.js';
 
@@ -69,8 +70,15 @@ export async function rideRoutes(app: FastifyInstance, ctx: AppContext) {
   });
 
   app.post('/v1/rides/:id/rating', { config: { auth: 'user' } }, async (req) => {
-    const b = parse(z.object({ stars: z.number().int().min(1).max(5), comment: z.string().max(500).optional() }), req.body);
-    return svc.rate(ctx, req.user!.id, parse(uuid, (req.params as any).id), b.stars, b.comment);
+    const b = parse(
+      z.object({
+        stars: z.number().int().min(1).max(5),
+        comment: z.string().max(500).optional(),
+        reasons: z.array(z.string().max(40)).max(MAX_RATING_REASONS).default([]),
+      }),
+      req.body,
+    );
+    return svc.rate(ctx, req.user!.id, parse(uuid, (req.params as any).id), b.stars, b.comment, b.reasons);
   });
 
   // Driver side

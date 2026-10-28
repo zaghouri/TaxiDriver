@@ -11,6 +11,8 @@ const detail = (over: Record<string, unknown> = {}) => ({
   consents: [{ kind: 'terms', version: '2026-10', locale: 'fr', accepted: true, created_at: '2026-10-01T10:00:00Z' }],
   rides: [{ id: '33333333-3333-4333-8333-333333333333', status: 'completed', final_price: 22, requested_at: '2026-10-02T10:00:00Z' }],
   data_requests: [{ id: 'dr1', kind: 'correction', details: 'Nom mal orthographié', status: 'open', response: null, created_at: '2026-10-03T10:00:00Z' }],
+  rating_reasons: [{ reason: 'late', count: 2, avg_stars: 2.5 }],
+  ratings_received: [{ ride_id: '33333333-3333-4333-8333-333333333333', stars: 2, reasons: ['late', 'wrong_pickup'], comment: null, created_at: '2026-10-02T11:00:00Z' }],
 });
 const renderDetail = () => renderPage(<UserDetail />, { route: `/users/${USER_ID}`, path: '/users/:id' });
 
@@ -32,6 +34,11 @@ describe('Users', () => {
     expect(await screen.findByText("Conditions d'utilisation")).toBeInTheDocument();
     expect(screen.getByText('Nom mal orthographié')).toBeInTheDocument();
     expect(screen.getByText('22 DH')).toBeInTheDocument();
+    // Quality view (D64): reasons other people gave about this rider.
+    const q = screen.getByTestId('rating-quality');
+    expect(q).toHaveTextContent("M'a fait attendre");
+    expect(q).toHaveTextContent('2.5');
+    expect(screen.getByText("M'a fait attendre · Mauvais point de départ")).toBeInTheDocument();
   });
 
   it('block → POST users/:id/block {reason}', async () => {

@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:ridema_core/ridema_core.dart';
 
 import 'support/fake_backend.dart';
@@ -255,6 +257,31 @@ void main() {
     expect(compareVersions('1.10.0', '1.9.9'), greaterThan(0));
     expect(compareVersions('2.0', '2.0.0'), 0);
     expect(compareVersions('1.2.3+45', '1.2.3'), 0);
+  });
+
+  test('rating reasons match the backend lists and follow the stars (D64)', () {
+    final src = File('../../backend/src/modules/rides/rating-reasons.ts').readAsStringSync();
+    List<String> list(String who, String kind) {
+      final block = RegExp('$who: \\{([^}]*)\\}').firstMatch(src)![1]!;
+      final arr = RegExp('$kind: \\[([^\\]]*)\\]').firstMatch(block)![1]!;
+      return RegExp("'([a-z_]+)'").allMatches(arr).map((m) => m[1]!).toList();
+    }
+
+    expect(RatingReasons.driverGood, list('driver', 'good'));
+    expect(RatingReasons.driverBad, list('driver', 'bad'));
+    expect(RatingReasons.riderGood, list('rider', 'good'));
+    expect(RatingReasons.riderBad, list('rider', 'bad'));
+    expect(RatingReasons.forRating(ratingDriver: true, stars: 0), isEmpty);
+    expect(RatingReasons.forRating(ratingDriver: true, stars: 3), RatingReasons.driverBad);
+    expect(RatingReasons.forRating(ratingDriver: false, stars: 4), RatingReasons.riderGood);
+    for (final lang in ['ar', 'fr', 'en']) {
+      final l = lookupAppLocalizations(Locale(lang));
+      for (final (driver, keys) in [(true, [...RatingReasons.driverGood, ...RatingReasons.driverBad]), (false, [...RatingReasons.riderGood, ...RatingReasons.riderBad])]) {
+        for (final k in keys) {
+          expect(RatingReasons.label(l, ratingDriver: driver, reason: k), isNot(k), reason: '$lang $k');
+        }
+      }
+    }
   });
 
   test('driver trust badges (D63)', () {

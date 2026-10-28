@@ -719,11 +719,11 @@ class DriverController extends ChangeNotifier {
   /// "Rider didn't come" is available.
   bool get canReportNoShow => (waitedAtPickup() ?? Duration.zero) >= noShowWait && _active?.status == RideStatus.arrived;
 
-  Future<void> rateRider(int stars, {String? comment}) async {
+  Future<void> rateRider(int stars, {String? comment, List<String> reasons = const []}) async {
     final r = _finished;
     if (r == null) return;
     try {
-      await api.rate(r.id, stars, comment: comment);
+      await api.rate(r.id, stars, comment: comment, reasons: reasons);
     } on ApiException catch (e) {
       if (e.code != 'ALREADY_RATED' && e.code != 'RATING_WINDOW_CLOSED') throw DriverFailure.from(e);
     }

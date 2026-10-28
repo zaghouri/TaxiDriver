@@ -17,6 +17,7 @@ class TripCompleteView extends StatefulWidget {
 
 class _TripCompleteViewState extends State<TripCompleteView> {
   int _stars = 0;
+  Set<String> _reasons = {};
   final _comment = TextEditingController();
   bool _busy = false;
 
@@ -29,7 +30,7 @@ class _TripCompleteViewState extends State<TripCompleteView> {
   Future<void> _send() async {
     setState(() => _busy = true);
     try {
-      await context.read<DriverController>().rateRider(_stars, comment: _comment.text);
+      await context.read<DriverController>().rateRider(_stars, comment: _comment.text, reasons: _reasons.toList());
       if (mounted) showInfoSnack(context, context.l10n.thanksRating);
     } catch (e) {
       if (mounted) showErrorSnack(context, e);
@@ -70,10 +71,15 @@ class _TripCompleteViewState extends State<TripCompleteView> {
                 key: ValueKey('star_$i'),
                 iconSize: 42,
                 tooltip: '$i',
-                onPressed: () => setState(() => _stars = i),
+                onPressed: () => setState(() {
+                  _stars = i;
+                  _reasons = RatingReasonChips.keepAllowed(_reasons, ratingDriver: false, stars: i);
+                }),
                 icon: Icon(i <= _stars ? Icons.star : Icons.star_border, color: BrandColors.accent),
               ),
           ]),
+          RatingReasonChips(ratingDriver: false, stars: _stars, selected: _reasons, onChanged: (s) => setState(() => _reasons = s)),
+          gap8,
           TextField(controller: _comment, maxLength: 300, decoration: InputDecoration(labelText: l.rateComment)),
           gap8,
           PrimaryButton(label: l.rateSubmit, busy: _busy, onPressed: _stars == 0 ? null : _send),

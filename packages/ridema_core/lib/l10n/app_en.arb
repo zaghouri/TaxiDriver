@@ -1456,5 +1456,39 @@
   "checkCar": "Car papers",
   "@checkedByRideMA": {
     "description": "Trust badge on the driver card: the driver's identity and car documents were checked and approved (D63)."
+  },
+  "rateGoodTitle": "What went well?",
+  "@rateGoodTitle": {
+    "description": "Heading of the reason chips after a 4–5 star rating (D64)."
+  },
+  "rateBadTitle": "What went wrong?",
+  "@rateBadTitle": {
+    "description": "Heading of the reason chips after a 1–3 star rating (D64)."
+  },
+  "rateReasonsPrivate": "Optional. The other person never sees your choices; our team uses them to improve rides.",
+  "rrDriverSafeDriving": "Safe driving",
+  "rrDriverPolite": "Polite and friendly",
+  "rrDriverCleanCar": "Clean car",
+  "rrDriverKnewTheWay": "Knew the way",
+  "rrDriverOnTime": "On time",
+  "rrDriverUnsafeDriving": "Unsafe driving",
+  "rrDriverRude": "Rude",
+  "rrDriverDirtyCar": "Dirty car",
+  "rrDriverWrongRoute": "Long or wrong route",
+  "rrDriverLate": "Arrived late",
+  "rrDriverAskedMoreMoney": "Asked for more money",
+  "rrDriverCarMismatch": "Different car or plate",
+  "rrRiderPolite": "Polite and friendly",
+  "rrRiderOnTime": "Ready on time",
+  "rrRiderExactPickup": "Easy to find",
+  "rrRiderRespectful": "Respected the car",
+  "rrRiderLate": "Kept me waiting",
+  "rrRiderRude": "Rude",
+  "rrRiderWrongPickup": "Wrong pickup point",
+  "rrRiderMessy": "Left the car dirty",
+  "rrRiderPaymentProblem": "Payment problem",
+  "errRatingReasonInvalid": "These reasons don’t match your stars. Please choose again.",
+  "@errRatingReasonInvalid": {
+    "description": "Error text for API code RATING_REASON_INVALID"
   }
 }

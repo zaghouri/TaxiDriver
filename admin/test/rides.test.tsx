@@ -21,7 +21,7 @@ const detail = (over: Record<string, unknown> = {}) => ({
   bids: [{ id: 'b1', driver_id: '11111111-1111-4111-8111-111111111111', kind: 'counter', price: 22, eta_s: 240, status: 'accepted', created_at: '2026-10-21T09:01:00Z' }],
   reports: [{ id: 'rp1', kind: 'car_mismatch', details: 'Couleur différente', status: 'open', resolution: null }],
   sos: [],
-  ratings: [{ rater_id: '44444444-4444-4444-8444-444444444444', ratee_id: 'x', stars: 5, comment: 'Parfait' }],
+  ratings: [{ rater_id: '44444444-4444-4444-8444-444444444444', ratee_id: 'x', stars: 5, comment: 'Parfait', reasons: ['clean_car', 'on_time'] }],
 });
 
 describe('Rides', () => {
@@ -50,6 +50,7 @@ describe('Rides', () => {
     expect(screen.getByTestId('marker-pickup')).toHaveTextContent('33.89,-5.54');
     expect(screen.getByText('Véhicule différent')).toBeInTheDocument();
     expect(screen.getByText('Parfait')).toBeInTheDocument();
+    expect(screen.getByTestId('rating-reasons')).toHaveTextContent("Voiture propre · À l'heure");
     expect(screen.getByText('1234 (essais: 0)')).toBeInTheDocument();
   });
 

@@ -2097,4 +2097,81 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get checkCar => 'Papiers de la voiture';
+
+  @override
+  String get rateGoodTitle => 'Qu’est-ce qui s’est bien passé ?';
+
+  @override
+  String get rateBadTitle => 'Qu’est-ce qui n’allait pas ?';
+
+  @override
+  String get rateReasonsPrivate =>
+      'Facultatif. L’autre personne ne voit jamais vos choix ; notre équipe s’en sert pour améliorer les courses.';
+
+  @override
+  String get rrDriverSafeDriving => 'Conduite prudente';
+
+  @override
+  String get rrDriverPolite => 'Poli et aimable';
+
+  @override
+  String get rrDriverCleanCar => 'Voiture propre';
+
+  @override
+  String get rrDriverKnewTheWay => 'Connaissait le chemin';
+
+  @override
+  String get rrDriverOnTime => 'À l’heure';
+
+  @override
+  String get rrDriverUnsafeDriving => 'Conduite dangereuse';
+
+  @override
+  String get rrDriverRude => 'Impoli';
+
+  @override
+  String get rrDriverDirtyCar => 'Voiture sale';
+
+  @override
+  String get rrDriverWrongRoute => 'Trajet trop long ou mauvais';
+
+  @override
+  String get rrDriverLate => 'Arrivé en retard';
+
+  @override
+  String get rrDriverAskedMoreMoney => 'A demandé plus d’argent';
+
+  @override
+  String get rrDriverCarMismatch => 'Autre voiture ou plaque';
+
+  @override
+  String get rrRiderPolite => 'Poli et aimable';
+
+  @override
+  String get rrRiderOnTime => 'Prêt à l’heure';
+
+  @override
+  String get rrRiderExactPickup => 'Facile à trouver';
+
+  @override
+  String get rrRiderRespectful => 'A respecté la voiture';
+
+  @override
+  String get rrRiderLate => 'M’a fait attendre';
+
+  @override
+  String get rrRiderRude => 'Impoli';
+
+  @override
+  String get rrRiderWrongPickup => 'Mauvais point de départ';
+
+  @override
+  String get rrRiderMessy => 'A sali la voiture';
+
+  @override
+  String get rrRiderPaymentProblem => 'Problème de paiement';
+
+  @override
+  String get errRatingReasonInvalid =>
+      'Ces raisons ne correspondent pas à votre note. Choisissez à nouveau.';
 }

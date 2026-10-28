@@ -25,7 +25,7 @@ abstract class RiderRideApi {
 
   /// `{ride, cancels_recent, warning}`.
   Future<Map<String, dynamic>> cancelRide(String rideId, CancelReason reason);
-  Future<void> rate(String rideId, int stars, {String? comment});
+  Future<void> rate(String rideId, int stars, {String? comment, List<String> reasons = const []});
 
   /// `{id, kind, status, can_cancel_free}`.
   Future<Map<String, dynamic>> report(String rideId, String kind, {String? details});
@@ -64,7 +64,8 @@ class CoreRiderRideApi implements RiderRideApi {
   @override
   Future<Map<String, dynamic>> cancelRide(String rideId, CancelReason reason) => api.cancelRide(rideId, reason);
   @override
-  Future<void> rate(String rideId, int stars, {String? comment}) => api.rate(rideId, stars, comment: comment);
+  Future<void> rate(String rideId, int stars, {String? comment, List<String> reasons = const []}) =>
+      api.rate(rideId, stars, comment: comment, reasons: reasons);
   @override
   Future<Map<String, dynamic>> report(String rideId, String kind, {String? details}) =>
       api.report(rideId, kind, details: details);

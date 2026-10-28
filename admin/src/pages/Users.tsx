@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, ApiError, qs } from '../api/client';
 import { useT } from '../i18n';
-import { Badge, Card, Empty, fmtDate, KV, money, Page, short } from '../ui/common';
+import { Badge, Card, Empty, fmtDate, KV, money, Page, reasonLabels, short } from '../ui/common';
 import { useDialog } from '../ui/dialog';
 import { useLoad, useRun } from '../ui/hooks';
 import { useToast } from '../ui/toast';
@@ -219,6 +219,50 @@ export function UserDetail() {
           ) : (
             <Empty />
           )}
+        </Card>
+        <Card title={t('rating_quality')}>
+          {data.rating_reasons?.length ? (
+            <table className="tbl small" data-testid="rating-quality">
+              <thead>
+                <tr>
+                  <th>{t('reason')}</th>
+                  <th>{t('times')}</th>
+                  <th>{t('avg_stars')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.rating_reasons.map((x: any) => (
+                  <tr key={x.reason}>
+                    <td>{reasonLabels(t, u.role === 'driver' ? 'driver' : 'rider', [x.reason])}</td>
+                    <td>{x.count}</td>
+                    <td>{x.avg_stars}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <Empty />
+          )}
+          {data.ratings_received?.length ? (
+            <>
+              <h4>{t('ratings_received')}</h4>
+              <table className="tbl small">
+                <tbody>
+                  {data.ratings_received.map((x: any) => (
+                    <tr key={x.ride_id}>
+                      <td>
+                        <Link to={`/rides/${x.ride_id}`}>{short(x.ride_id)}</Link>
+                      </td>
+                      <td>{'★'.repeat(x.stars)}</td>
+                      <td>{reasonLabels(t, u.role === 'driver' ? 'driver' : 'rider', x.reasons)}</td>
+                      <td>{x.comment ?? ''}</td>
+                      <td>{fmtDate(x.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          ) : null}
         </Card>
         <Card title={t('data_requests')}>
           {data.data_requests.length ? (

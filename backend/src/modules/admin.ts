@@ -266,7 +266,7 @@ export async function adminRoutes(app: FastifyInstance, ctx: AppContext) {
       bids: await many(db, 'SELECT id, driver_id, kind, price, eta_s, status, created_at, expires_at FROM bids WHERE ride_id = $1 ORDER BY created_at', [rideId]),
       reports: await many(db, 'SELECT * FROM reports WHERE ride_id = $1 ORDER BY created_at', [rideId]),
       sos: await many(db, 'SELECT id, service, status, user_id, created_at, note FROM sos_alerts WHERE ride_id = $1', [rideId]),
-      ratings: await many(db, 'SELECT rater_id, ratee_id, stars, comment, created_at FROM ratings WHERE ride_id = $1', [rideId]),
+      ratings: await many(db, 'SELECT rater_id, ratee_id, stars, comment, reasons, created_at FROM ratings WHERE ride_id = $1', [rideId]),
     };
   });
 
@@ -467,6 +467,19 @@ export async function adminRoutes(app: FastifyInstance, ctx: AppContext) {
       consents: await many(db, 'SELECT kind, version, locale, accepted, created_at FROM consents WHERE user_id = $1 ORDER BY created_at', [userId]),
       rides: await many(db, 'SELECT id, status, final_price, requested_at FROM rides WHERE rider_id = $1 OR driver_id = $1 ORDER BY requested_at DESC LIMIT 30', [userId]),
       data_requests: await many(db, 'SELECT * FROM data_requests WHERE user_id = $1 ORDER BY created_at DESC', [userId]),
+      // Quality view (D64): what others said about this person over the last 90 days.
+      rating_reasons: await many(
+        db,
+        `SELECT reason, count(*)::int AS count, round(avg(stars), 1)::float AS avg_stars
+         FROM ratings, unnest(reasons) AS reason WHERE ratee_id = $1 AND created_at > now() - interval '90 days'
+         GROUP BY reason ORDER BY count DESC, reason`,
+        [userId],
+      ),
+      ratings_received: await many(
+        db,
+        'SELECT ride_id, rater_id, stars, reasons, comment, created_at FROM ratings WHERE ratee_id = $1 ORDER BY created_at DESC LIMIT 20',
+        [userId],
+      ),
     };
   });
   app.post('/v1/admin/users/:id/block', { config: A }, async (req) => {

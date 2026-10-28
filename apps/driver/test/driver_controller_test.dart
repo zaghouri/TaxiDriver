@@ -289,8 +289,8 @@ void main() {
       expect(c.finishedRide?.finalPrice, 35);
       expect(c.phase, DriverPhase.online);
 
-      await c.rateRider(5);
-      expect(api.calls, contains('rate:5'));
+      await c.rateRider(5, reasons: ['polite', 'on_time']);
+      expect(api.calls, contains('rate:5:polite,on_time'));
       expect(c.finishedRide, isNull);
     });
 
