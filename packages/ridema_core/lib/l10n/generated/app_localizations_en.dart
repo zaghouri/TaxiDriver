@@ -2057,4 +2057,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errNotADriver => 'This is not a driver account.';
+
+  @override
+  String get checkedByRideMA => 'Documents checked by RideMA';
+
+  @override
+  String get checkIdentity => 'Identity';
+
+  @override
+  String get checkCar => 'Car papers';
 }

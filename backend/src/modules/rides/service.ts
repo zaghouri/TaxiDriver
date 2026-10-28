@@ -9,7 +9,7 @@ import { enqueue, enqueueMany, type OutboxMessage } from '../../core/outbox.js';
 import { abuseAlert } from '../../core/abuse.js';
 import type { City } from '../../core/settings.js';
 import { getUser } from '../users.js';
-import { bidView, bidViewWith, getRide, personCard, rankedOffers, requestView, rideView, vehicleCard, RIDE_COLUMNS, type BidRow, type RideRow } from './views.js';
+import { bidView, bidViewWith, driverCard, getRide, rankedOffers, requestView, rideView, RIDE_COLUMNS, type BidRow, type RideRow } from './views.js';
 
 export const CANCEL_REASONS = ['changed_mind', 'driver_too_far', 'driver_asked', 'wrong_pickup', 'rider_no_show', 'car_mismatch', 'safety', 'other'] as const;
 export type CancelReason = (typeof CANCEL_REASONS)[number];
@@ -401,8 +401,7 @@ export async function placeBid(ctx: AppContext, driverId: string, rideId: string
   if (loc && haversineM(loc, pickup) > city.search_radius_km * 1000 * 1.5) throw unprocessable('TOO_FAR', 'You are too far from the pickup point.');
   const eta = loc ? await ctx.router.route(loc, pickup) : { distance_m: 0, duration_s: 0 };
   const rules = city.cancel_rules;
-  const card: any = await personCard(ctx.db, driverId);
-  if (card) card.vehicle = await vehicleCard(ctx.db, null, driverId, false);
+  const card = await driverCard(ctx.db, driverId, null, false);
 
   try {
     return await withTx(ctx.db, async (tx) => {

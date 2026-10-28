@@ -2088,4 +2088,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errNotADriver => 'Ce n’est pas un compte chauffeur.';
+
+  @override
+  String get checkedByRideMA => 'Documents vérifiés par RideMA';
+
+  @override
+  String get checkIdentity => 'Identité';
+
+  @override
+  String get checkCar => 'Papiers de la voiture';
 }

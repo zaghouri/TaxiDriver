@@ -595,5 +595,8 @@
   "errIdempotencyKeyReused": "حدث خطأ. حاول مرة أخرى.",
   "errNotFound": "غير موجود.",
   "errCityInactive": "الخدمة غير متاحة في هذه المدينة بعد.",
-  "errNotADriver": "هذا ليس حساب سائق."
+  "errNotADriver": "هذا ليس حساب سائق.",
+  "checkedByRideMA": "وثائق تحقّقت منها RideMA",
+  "checkIdentity": "الهوية",
+  "checkCar": "أوراق السيارة"
 }

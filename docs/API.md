@@ -84,9 +84,11 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | POST | `/v1/sos/:id/location` | `{lat, lng}` | keep sending every ~10 s while the SOS screen is open |
 | POST | `/v1/rides/:id/reports` | `{kind:"car_mismatch"\|"dispute"\|"safety"\|"lost_item"\|"other", details?}` | `201 {id, kind, status, can_cancel_free}` |
 
-`Ride = {id, status:"searching"|"accepted"|"arrived"|"in_progress"|"completed"|"cancelled"|"expired", city_id, pickup:{lat,lng,address}, dropoff:{...}, distance_m, duration_s, suggested_price, offered_price, final_price, currency, payment_method:"cash", comment, requested_at, expires_at, accepted_at, arrived_at, started_at, completed_at, cancelled_at, cancelled_by, cancel_reason, pickup_pin? (rider only, accepted/arrived), driver?: {id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour, plate}}, rider: {id, first_name, rating, rating_count, trips}, my_rating, can_cancel_free? (rider), search? (rider/admin while searching): {wave, radius_m, drivers_notified}, can_edit_pickup? (rider), pickup_edited_at? — the request reaches drivers in waves of growing radius (D60)}`
+`Ride = {id, status:"searching"|"accepted"|"arrived"|"in_progress"|"completed"|"cancelled"|"expired", city_id, pickup:{lat,lng,address}, dropoff:{...}, distance_m, duration_s, suggested_price, offered_price, final_price, currency, payment_method:"cash", comment, requested_at, expires_at, accepted_at, arrived_at, started_at, completed_at, cancelled_at, cancelled_by, cancel_reason, pickup_pin? (rider only, accepted/arrived), driver?: {id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour, plate}, checks:{identity, car}}, rider: {id, first_name, rating, rating_count, trips}, my_rating, can_cancel_free? (rider), search? (rider/admin while searching): {wave, radius_m, drivers_notified}, can_edit_pickup? (rider), pickup_edited_at? — the request reaches drivers in waves of growing radius (D60)}`
 
-`Bid = {id, ride_id, kind:"accept"|"counter", price, currency, eta_s, distance_m, status, created_at, expires_at, driver:{id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour}}}`
+`Bid = {id, ride_id, kind:"accept"|"counter", price, currency, eta_s, distance_m, status, created_at, expires_at, driver:{id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour}, checks:{identity, car}}}`
+
+`checks` (D63): `identity` = CIN front + back, licence and selfie each have an approved copy that has not expired; `car` = carte grise, insurance and visite technique likewise; both need the driver account approved. Only these booleans are shared with riders.
 
 ## Driver
 | Method | Path | Body | Response |

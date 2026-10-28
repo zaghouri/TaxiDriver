@@ -110,15 +110,33 @@ class Vehicle {
   }
 }
 
+/// Trust badges on a driver card (D63): every identity / car document was
+/// checked and approved by RideMA and none has expired.
+class DriverChecks {
+  const DriverChecks({this.identity = false, this.car = false});
+  final bool identity;
+  final bool car;
+
+  bool get any => identity || car;
+
+  factory DriverChecks.fromJson(Object? json) {
+    final j = asJson(json);
+    return DriverChecks(identity: j['identity'] == true, car: j['car'] == true);
+  }
+}
+
 /// Public card of the other party (first name, rating, trips, car).
 class PersonCard {
-  const PersonCard({required this.id, required this.firstName, this.rating, this.ratingCount = 0, this.trips = 0, this.vehicle});
+  const PersonCard({required this.id, required this.firstName, this.rating, this.ratingCount = 0, this.trips = 0, this.vehicle, this.checks});
   final String id;
   final String firstName;
   final double? rating;
   final int ratingCount;
   final int trips;
   final Vehicle? vehicle;
+
+  /// Drivers only: documents checked by RideMA.
+  final DriverChecks? checks;
 
   /// Initials for an avatar when there is no photo.
   String get initials => firstName.isEmpty ? '?' : firstName.characters1.toUpperCase();
@@ -132,6 +150,7 @@ class PersonCard {
       ratingCount: asIntOr(j['rating_count']),
       trips: asIntOr(j['trips']),
       vehicle: j['vehicle'] is Map ? Vehicle.fromJson(j['vehicle']) : null,
+      checks: j['checks'] is Map ? DriverChecks.fromJson(j['checks']) : null,
     );
   }
 }
