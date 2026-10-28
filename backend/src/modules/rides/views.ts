@@ -72,6 +72,35 @@ export async function personCard(q: Queryable, userId: string) {
   };
 }
 
+/**
+ * Trust badges for the rider (REA P2 #15, D63): every identity document (CIN both sides, licence, selfie) and every
+ * car document (carte grise, insurance, visite technique) has an approved copy that has not expired, and the driver
+ * account itself is approved. Only booleans leave the server, never document details.
+ */
+export async function driverChecks(q: Queryable, driverId: string): Promise<{ identity: boolean; car: boolean }> {
+  const row = await one<{ identity: boolean; car: boolean }>(
+    q,
+    `WITH ok AS (
+       SELECT DISTINCT type FROM documents
+       WHERE driver_id = $1 AND status = 'approved' AND (expires_on IS NULL OR expires_on >= current_date)
+     )
+     SELECT (d.status = 'approved' AND (SELECT count(*) FROM ok WHERE type IN ('cin_front','cin_back','licence','selfie')) = 4) AS identity,
+            (d.status = 'approved' AND (SELECT count(*) FROM ok WHERE type IN ('carte_grise','insurance','visite_technique')) = 3) AS car
+     FROM drivers d WHERE d.user_id = $1`,
+    [driverId],
+  );
+  return { identity: !!row?.identity, car: !!row?.car };
+}
+
+/** Driver card shown to riders: person card + car (+ plate once accepted) + trust badges. */
+export async function driverCard(q: Queryable, driverId: string, vehicleId: string | null, withPlate: boolean) {
+  const d: any = await personCard(q, driverId);
+  if (!d) return null;
+  d.vehicle = await vehicleCard(q, vehicleId, driverId, withPlate);
+  d.checks = await driverChecks(q, driverId);
+  return d;
+}
+
 export async function vehicleCard(q: Queryable, vehicleId: string | null, driverId?: string | null, withPlate = true) {
   const v = vehicleId
     ? await one<any>(q, 'SELECT make, model, year, colour, plate FROM vehicles WHERE id = $1', [vehicleId])
@@ -113,8 +142,7 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
   };
   if ((isRider || isAdmin) && ['accepted', 'arrived'].includes(r.status)) view.pickup_pin = r.pickup_pin;
   if (r.driver_id) {
-    view.driver = await personCard(q, r.driver_id);
-    if (view.driver) view.driver.vehicle = await vehicleCard(q, r.vehicle_id, r.driver_id, true);
+    view.driver = await driverCard(q, r.driver_id, r.vehicle_id, true);
   }
   view.rider = await personCard(q, r.rider_id);
   if (isRider || isDriver) {
@@ -167,9 +195,7 @@ export interface BidRow {
 }
 
 export async function bidView(q: Queryable, b: BidRow) {
-  const driver: any = await personCard(q, b.driver_id);
-  if (driver) driver.vehicle = await vehicleCard(q, null, b.driver_id, false);
-  return bidViewWith(b, driver);
+  return bidViewWith(b, await driverCard(q, b.driver_id, null, false));
 }
 
 export function bidViewWith(b: BidRow, driver: any) {

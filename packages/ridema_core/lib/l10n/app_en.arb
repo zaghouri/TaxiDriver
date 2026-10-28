@@ -1450,5 +1450,11 @@
   "errNotADriver": "This is not a driver account.",
   "@errNotADriver": {
     "description": "Error text for API code NOT_A_DRIVER"
+  },
+  "checkedByRideMA": "Documents checked by RideMA",
+  "checkIdentity": "Identity",
+  "checkCar": "Car papers",
+  "@checkedByRideMA": {
+    "description": "Trust badge on the driver card: the driver's identity and car documents were checked and approved (D63)."
   }
 }

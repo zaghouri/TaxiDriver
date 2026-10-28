@@ -3675,6 +3675,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This is not a driver account.'**
   String get errNotADriver;
+
+  /// Trust badge on the driver card: the driver's identity and car documents were checked and approved (D63).
+  ///
+  /// In en, this message translates to:
+  /// **'Documents checked by RideMA'**
+  String get checkedByRideMA;
+
+  /// No description provided for @checkIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity'**
+  String get checkIdentity;
+
+  /// No description provided for @checkCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Car papers'**
+  String get checkCar;
 }
 
 class _AppLocalizationsDelegate

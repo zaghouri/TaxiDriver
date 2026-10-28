@@ -77,6 +77,11 @@ class OfferCard extends StatelessWidget {
                       ),
                       if (car.isNotEmpty)
                         Text(car, style: const TextStyle(fontSize: 15)),
+                      if (d?.checks?.any ?? false)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: DriverChecksBadge(checks: d!.checks!, compact: true),
+                        ),
                     ],
                   ),
                 ),

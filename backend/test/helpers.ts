@@ -228,3 +228,25 @@ export const pickupDropoff = (offered = 30) => ({
   dropoff: { ...MARJANE, address: 'Marjane Meknès' },
   offered_price: offered,
 });
+
+/** Rider requests the standard trip (pickup at MEKNES). */
+export async function requestRide(env: TestEnv, rider: Client, offered = 30) {
+  const r = await call(env, 'POST', '/v1/rides', pickupDropoff(offered), rider);
+  if (r.statusCode !== 201) throw new Error(`create ride ${r.statusCode} ${r.body}`);
+  return r.json();
+}
+
+export async function placeBid(env: TestEnv, driver: Client, rideId: string, body: Record<string, unknown> = { kind: 'accept' }) {
+  const r = await call(env, 'POST', `/v1/rides/${rideId}/bids`, body, driver);
+  if (r.statusCode !== 201) throw new Error(`bid ${r.statusCode} ${r.body}`);
+  return r.json();
+}
+
+/** Request + driver accept-bid + rider accepts it. Returns the rider's ride view. */
+export async function acceptedRide(env: TestEnv, rider: Client, driver: Client, bidBody?: Record<string, unknown>) {
+  const { ride } = await requestRide(env, rider);
+  const b = await placeBid(env, driver, ride.id, bidBody);
+  const r = await call(env, 'POST', `/v1/rides/${ride.id}/bids/${b.id}/accept`, {}, rider);
+  if (r.statusCode !== 200) throw new Error(`accept ${r.statusCode} ${r.body}`);
+  return r.json();
+}

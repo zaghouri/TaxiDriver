@@ -222,6 +222,32 @@ void main() {
       expect(find.text('Dacia Logan · Blanc'), findsOneWidget);
     });
 
+    testWidgets('trust badge lists only the checked document groups (D63)', (tester) async {
+      phone(tester);
+      final s = await buildTestServices();
+      await tester.pumpWidget(testApp(
+        s,
+        const Scaffold(
+          body: Column(children: [
+            CarCard(
+              vehicle: Vehicle(make: 'Dacia', model: 'Logan'),
+              driver: PersonCard(id: 'd', firstName: 'Youssef', checks: DriverChecks(identity: true)),
+            ),
+            CarCard(
+              key: ValueKey('none'),
+              vehicle: Vehicle(make: 'Dacia', model: 'Logan'),
+              driver: PersonCard(id: 'e', firstName: 'Ali', checks: DriverChecks()),
+            ),
+          ]),
+        ),
+        locale: 'fr',
+      ));
+      expect(find.byKey(const ValueKey('driver_checks')), findsOneWidget);
+      expect(find.text('Documents vérifiés par RideMA'), findsOneWidget);
+      expect(find.text('Identité'), findsOneWidget);
+      expect(find.text('Papiers de la voiture'), findsNothing);
+    });
+
     testWidgets('receipt view shows price, cash, company RC/ICE', (tester) async {
       phone(tester);
       final s = await buildTestServices();

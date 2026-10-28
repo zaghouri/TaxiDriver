@@ -113,12 +113,89 @@ class CarCard extends StatelessWidget {
                       ),
                     ),
                   if (model.isNotEmpty) Text(model, style: const TextStyle(fontSize: 16)),
+                  if (d?.checks?.any ?? false) ...[
+                    const SizedBox(height: 6),
+                    DriverChecksBadge(checks: d!.checks!),
+                  ],
                 ],
               ),
             ),
             ?trailing,
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "Documents checked by RideMA" with one tick per checked group (D63).
+/// Shows nothing when no group is checked.
+class DriverChecksBadge extends StatelessWidget {
+  const DriverChecksBadge({super.key, required this.checks, this.compact = false});
+
+  final DriverChecks checks;
+
+  /// One short line (offer cards) instead of the title + ticks.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!checks.any) return const SizedBox.shrink();
+    final l = context.l10n;
+    final parts = [if (checks.identity) l.checkIdentity, if (checks.car) l.checkCar];
+    const green = BrandColors.success;
+    if (compact) {
+      return Row(
+        key: const ValueKey('driver_checks'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.verified_user, size: 16, color: green),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              '${l.checkedByRideMA} · ${parts.join(' · ')}',
+              style: const TextStyle(fontSize: 13, color: green, fontWeight: FontWeight.w600),
+              maxLines: 2,
+            ),
+          ),
+        ],
+      );
+    }
+    return Semantics(
+      key: const ValueKey('driver_checks'),
+      label: '${l.checkedByRideMA}: ${parts.join(', ')}',
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.verified_user, size: 18, color: green),
+              const SizedBox(width: 4),
+              Flexible(child: Text(l.checkedByRideMA, style: const TextStyle(fontSize: 14, color: green, fontWeight: FontWeight.w700))),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (final p in parts)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(color: green.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check, size: 14, color: green),
+                      const SizedBox(width: 2),
+                      Text(p, style: const TextStyle(fontSize: 13)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

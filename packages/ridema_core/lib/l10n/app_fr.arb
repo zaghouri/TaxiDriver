@@ -595,5 +595,8 @@
   "errIdempotencyKeyReused": "Un problème est survenu. Réessayez.",
   "errNotFound": "Introuvable.",
   "errCityInactive": "Le service n’est pas encore ouvert dans cette ville.",
-  "errNotADriver": "Ce n’est pas un compte chauffeur."
+  "errNotADriver": "Ce n’est pas un compte chauffeur.",
+  "checkedByRideMA": "Documents vérifiés par RideMA",
+  "checkIdentity": "Identité",
+  "checkCar": "Papiers de la voiture"
 }

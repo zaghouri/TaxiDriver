@@ -93,6 +93,7 @@ void main() {
       },
     });
     expect(b.isCounter, isTrue);
+    expect(b.driver!.checks, isNull);
     expect(b.etaMinutes, 5);
     expect(b.driver!.vehicle!.plate, isNull);
     expect(b.expiresAt!.difference(b.createdAt!), const Duration(seconds: 60));
@@ -254,6 +255,14 @@ void main() {
     expect(compareVersions('1.10.0', '1.9.9'), greaterThan(0));
     expect(compareVersions('2.0', '2.0.0'), 0);
     expect(compareVersions('1.2.3+45', '1.2.3'), 0);
+  });
+
+  test('driver trust badges (D63)', () {
+    final p = PersonCard.fromJson({'id': 'd', 'first_name': 'Y', 'checks': {'identity': true, 'car': false}});
+    expect(p.checks!.identity, isTrue);
+    expect(p.checks!.car, isFalse);
+    expect(p.checks!.any, isTrue);
+    expect(PersonCard.fromJson({'id': 'd', 'first_name': 'Y', 'checks': {}}).checks!.any, isFalse);
   });
 
   test('Ride.search: wave, radius and drivers notified while searching (D60)', () {

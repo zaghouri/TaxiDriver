@@ -64,6 +64,7 @@ Map<String, dynamic> rideJson({
           'rating_count': 120,
           'trips': 342,
           'vehicle': {'make': 'Dacia', 'model': 'Logan', 'year': 2022, 'colour': 'Blanc', 'plate': '12345-A-6'},
+          'checks': {'identity': true, 'car': true},
         },
       'rider': {'id': 'rider-1', 'first_name': 'Amina', 'rating': 4.9, 'rating_count': 10, 'trips': 12},
     };

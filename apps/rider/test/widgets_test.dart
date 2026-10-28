@@ -246,6 +246,9 @@ void main() {
         expect(find.text(d), findsOneWidget);
       }
       expect(find.text('Arrives in 4 min'), findsOneWidget);
+      expect(find.text('Documents checked by RideMA'), findsOneWidget);
+      expect(find.text('Identity'), findsOneWidget);
+      expect(find.text('Car papers'), findsOneWidget);
       for (final k in ['ride_call', 'ride_share', 'ride_sos', 'ride_cancel', 'ride_car_mismatch']) {
         expect(find.byKey(ValueKey(k)), findsOneWidget);
       }

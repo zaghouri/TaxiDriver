@@ -2032,4 +2032,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errNotADriver => 'هذا ليس حساب سائق.';
+
+  @override
+  String get checkedByRideMA => 'وثائق تحقّقت منها RideMA';
+
+  @override
+  String get checkIdentity => 'الهوية';
+
+  @override
+  String get checkCar => 'أوراق السيارة';
 }
