@@ -47,6 +47,7 @@ Each line names where it lives and how it was verified.
 - [x] Nightly backups + scripted restore test — WAL-G sidecar + `scripts/restore-test.sh` → **PASS** locally against MinIO; needs backup bucket on the server (B7)
 - [~] Uptime and error alerts; health endpoints — `/health/live`, `/health/ready` (tested), Sentry wiring, abuse webhook; external uptime monitor + `SENTRY_DSN` to configure (RUNBOOK §7, B6)
 - [x] Server-side minimum app version check (force update) — 426 `UPGRADE_REQUIRED` + `/v1/app/config.force_update`; `admin.test.ts › forced update`
+- [~] Driver "Ready to drive" checklist (DND, battery saver, battery optimisation, background restriction, airplane, notifications + request channel, location always) with Fix links (D62) — unit + widget tests; native checks to confirm on phones (PHONE_TEST)
 - [x] Driver battery setup guide (Xiaomi/Redmi/POCO, Tecno, Infinix, Oppo/Realme, Samsung, other) in ar/fr/en — `BatteryGuideScreen`; `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is NOT in the driver manifest (checked)
 - [x] Feature flags and city settings from admin without redeploy — settings cache 5 s; `admin.test.ts › cities … applied without redeploy`
 

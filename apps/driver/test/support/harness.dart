@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:ridema_core/ridema_core.dart';
 import 'package:ridema_driver/src/controller/driver_controller.dart';
 import 'package:ridema_driver/src/controller/profile_controller.dart';
+import 'package:ridema_driver/src/platform/readiness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fakes.dart';
@@ -29,8 +30,13 @@ class FakeLocationPlatform implements LocationPlatform {
   Future<bool> requestBackground() async => background;
   @override
   Future<bool> backgroundGranted() async => background;
+  int appSettingsOpened = 0;
   @override
-  Future<bool> openAppSettings() async => true;
+  Future<bool> openAppSettings() async {
+    appSettingsOpened++;
+    return true;
+  }
+
   @override
   Future<bool> openLocationSettings() async => true;
   @override
@@ -111,8 +117,9 @@ class Harness {
     return Harness._(s, controller, DriverProfileController(api, clock: c.call), api, rt, loc, locPlatform, c);
   }
 
-  Widget wrap(Widget child, {String locale = 'fr'}) => MultiProvider(
+  Widget wrap(Widget child, {String locale = 'fr', ReadinessChecks? readiness}) => MultiProvider(
         providers: [
+          if (readiness != null) Provider<ReadinessChecks>.value(value: readiness),
           Provider<CoreServices>.value(value: services),
           ChangeNotifierProvider<AuthController>.value(value: services.auth),
           ChangeNotifierProvider<LocaleController>.value(value: services.locale),

@@ -30,6 +30,18 @@ class DriverStrings {
   String get mapPlaceholder => _t('mapPlaceholder');
   String get you => _t('you');
   String counterAbove(int amount) => _f('counterAbove', {'amount': amount});
+  // "Ready to drive" checklist (D62).
+  String get readyTitle => _t('readyTitle');
+  String get readyMenu => _t('readyMenu');
+  String get readyAllSet => _t('readyAllSet');
+  String readyToFix(int count) => _f('readyToFix', {'count': count});
+  String readyBanner(int count) => _f('readyBanner', {'count': count});
+  String get readyGroupReceive => _t('readyGroupReceive');
+  String get readyGroupBackground => _t('readyGroupBackground');
+  String get readyFix => _t('readyFix');
+  String get readyBatteryGuide => _t('readyBatteryGuide');
+  String readyItem(String wire) => _t('ready_$wire');
+
   String pickupChanged(String? address) =>
       address == null || address.trim().isEmpty ? _t('pickupChanged') : _f('pickupChangedTo', {'address': address.trim()});
   String tooFarFromPickup(int metres) => _f('tooFarFromPickup', {'distance': distance(metres)});
@@ -138,6 +150,24 @@ class DriverStrings {
       'counterAbove': 'Enter an amount above {amount} DH.',
       'tooFarFromPickup': 'You are {distance} from the pickup point. Tap “I’ve arrived” when you get there.',
       'pickupChanged': 'The rider moved the pickup point. Check the new route.',
+      'readyTitle': 'Ready to drive',
+      'readyMenu': 'Ready to drive check',
+      'readyAllSet': 'All set. You will get ride requests, even with the app in the background.',
+      'readyToFix': '{count} to fix so you don’t miss ride requests',
+      'readyBanner': 'Your phone may hide ride requests. Tap to fix ({count}).',
+      'readyGroupReceive': 'To receive requests',
+      'readyGroupBackground': 'To keep working in the background',
+      'readyFix': 'Fix',
+      'readyBatteryGuide': 'Battery setup for my phone brand',
+      'ready_location_service': 'Location turned on',
+      'ready_airplane': 'Airplane mode off',
+      'ready_notifications': 'Notifications allowed for RideMA',
+      'ready_request_channel': '“New ride requests” notifications on',
+      'ready_location_always': 'Location allowed “All the time”',
+      'ready_battery_optimized': 'Battery optimisation off for RideMA',
+      'ready_background_restricted': 'Background activity allowed',
+      'ready_power_save': 'Battery saver off',
+      'ready_dnd': '“Do not disturb” off',
       'pickupChangedTo': 'New pickup point: {address}. Check the new route.',
       'unitM': 'm',
       'unitKm': 'km',
@@ -200,6 +230,24 @@ class DriverStrings {
       'counterAbove': 'Entrez un montant supérieur à {amount} DH.',
       'tooFarFromPickup': 'Vous êtes à {distance} du point de prise en charge. Appuyez sur « Je suis arrivé » une fois sur place.',
       'pickupChanged': 'Le passager a déplacé le point de prise en charge. Vérifiez le nouvel itinéraire.',
+      'readyTitle': 'Prêt à rouler',
+      'readyMenu': 'Vérifier mon téléphone',
+      'readyAllSet': 'Tout est prêt. Vous recevrez les demandes, même avec l’application en arrière-plan.',
+      'readyToFix': '{count} à corriger pour ne pas manquer de demandes',
+      'readyBanner': 'Votre téléphone peut masquer des demandes. Touchez pour corriger ({count}).',
+      'readyGroupReceive': 'Pour recevoir les demandes',
+      'readyGroupBackground': 'Pour fonctionner en arrière-plan',
+      'readyFix': 'Corriger',
+      'readyBatteryGuide': 'Réglages batterie pour ma marque',
+      'ready_location_service': 'Localisation activée',
+      'ready_airplane': 'Mode avion désactivé',
+      'ready_notifications': 'Notifications autorisées pour RideMA',
+      'ready_request_channel': 'Notifications « Nouvelles demandes » activées',
+      'ready_location_always': 'Localisation autorisée « Toujours »',
+      'ready_battery_optimized': 'Optimisation de la batterie désactivée pour RideMA',
+      'ready_background_restricted': 'Activité en arrière-plan autorisée',
+      'ready_power_save': 'Économiseur de batterie désactivé',
+      'ready_dnd': '« Ne pas déranger » désactivé',
       'pickupChangedTo': 'Nouveau point de prise en charge : {address}. Vérifiez le nouvel itinéraire.',
       'unitM': 'm',
       'unitKm': 'km',
@@ -262,6 +310,24 @@ class DriverStrings {
       'counterAbove': 'أدخل مبلغًا أكبر من {amount} درهم.',
       'tooFarFromPickup': 'أنت على بعد {distance} من نقطة الانطلاق. اضغط على «لقد وصلت» عندما تصل إليها.',
       'pickupChanged': 'غيّر الراكب نقطة الانطلاق. تحقق من المسار الجديد.',
+      'readyTitle': 'جاهز للقيادة',
+      'readyMenu': 'فحص الهاتف',
+      'readyAllSet': 'كل شيء جاهز. ستصلك طلبات الرحلات حتى والتطبيق في الخلفية.',
+      'readyToFix': '{count} للإصلاح حتى لا تفوتك الطلبات',
+      'readyBanner': 'قد يُخفي هاتفك طلبات الرحلات. اضغط للإصلاح ({count}).',
+      'readyGroupReceive': 'لاستقبال الطلبات',
+      'readyGroupBackground': 'للعمل في الخلفية',
+      'readyFix': 'إصلاح',
+      'readyBatteryGuide': 'إعدادات البطارية حسب نوع هاتفي',
+      'ready_location_service': 'الموقع مفعّل',
+      'ready_airplane': 'وضع الطيران متوقف',
+      'ready_notifications': 'الإشعارات مسموحة لـ RideMA',
+      'ready_request_channel': 'إشعارات «طلبات رحلات جديدة» مفعّلة',
+      'ready_location_always': 'الموقع مسموح «طوال الوقت»',
+      'ready_battery_optimized': 'تحسين البطارية متوقف لـ RideMA',
+      'ready_background_restricted': 'النشاط في الخلفية مسموح',
+      'ready_power_save': 'موفّر البطارية متوقف',
+      'ready_dnd': '«عدم الإزعاج» متوقف',
       'pickupChangedTo': 'نقطة الانطلاق الجديدة: {address}. تحقق من المسار الجديد.',
       'unitM': 'م',
       'unitKm': 'كم',
