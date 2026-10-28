@@ -7,6 +7,8 @@ export interface PushMessage {
   data?: Record<string, string>;
   /** Android channel id; drivers' ride requests use a high-importance channel with sound. */
   channel?: string;
+  /** Android notification tag: a later push with the same tag replaces the earlier one (the rider's live ride notification, D69). */
+  tag?: string;
 }
 
 export interface PushProvider {
@@ -46,7 +48,7 @@ export class FcmPushProvider implements PushProvider {
       tokens,
       notification: { title: msg.title, body: msg.body },
       data: msg.data ?? {},
-      android: { priority: 'high', notification: { channelId: msg.channel ?? 'default' } },
+      android: { priority: 'high', notification: { channelId: msg.channel ?? 'default', ...(msg.tag ? { tag: msg.tag } : {}) } },
       apns: { payload: { aps: { sound: 'default' } } },
     });
     const invalid: string[] = [];

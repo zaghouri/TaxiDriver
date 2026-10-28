@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_ride_live">Current ride</string>
+    <string name="channel_ride_live_desc">Live status of your ride while it is going on.</string>
+    <string name="channel_ride_updates">Ride updates</string>
+    <string name="channel_ride_updates_desc">Driver arrived, ride cancelled and other changes.</string>
+    <string name="channel_offers">Offers</string>
+    <string name="channel_offers_desc">New offers from drivers.</string>
+</resources>

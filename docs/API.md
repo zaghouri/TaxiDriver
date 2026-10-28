@@ -141,6 +141,8 @@ Client → server (use emitWithAck; ack is `{ok:true,...}` or `{ok:false, error}
 - `call:*` `{ride_id, ...webrtc payload (sdp / candidate)}`
 - `reauth` `<new access token>` after a refresh.
 
+Rider ride pushes (driver arrived, driver late, trip started, trip completed, cancelled by the driver) carry the Android notification tag `ride-<ride id>` so each one replaces the previous one; the rider app's ongoing live notification uses the same tag (D69).
+
 Trip-share watchers connect with `auth: {share: <token>}` (no login).
 
 ## Admin (`/v1/admin/*`, admin role, TOTP session, IP allowlist; every write audited)

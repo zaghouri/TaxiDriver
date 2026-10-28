@@ -9,7 +9,7 @@ import type { Logger } from '../logger.js';
 
 export type OutboxMessage =
   | { topic: 'realtime'; payload: { target: Target; event: string; data: unknown } }
-  | { topic: 'push'; payload: { user_ids: string[]; title: MsgKey; body: MsgKey; vars?: Record<string, string | number>; data?: Record<string, string>; channel?: string } }
+  | { topic: 'push'; payload: { user_ids: string[]; title: MsgKey; body: MsgKey; vars?: Record<string, string | number>; data?: Record<string, string>; channel?: string; tag?: string } }
   | { topic: 'email'; payload: { to: string; subject: string; text: string } };
 
 /**
@@ -97,6 +97,7 @@ export class OutboxDispatcher {
           body: msg(p.body, locale, p.vars),
           data: p.data,
           channel: p.channel,
+          tag: p.tag,
         });
         if (invalid.length) await tx.query('UPDATE devices SET fcm_token = NULL WHERE fcm_token = ANY($1)', [invalid]);
       }

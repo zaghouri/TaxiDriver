@@ -30,6 +30,9 @@ export async function addEvent(q: Queryable, rideId: string, type: string, actor
   ]);
 }
 
+/** Tag of the rider's live ride notification: ride pushes with it replace each other on the lock screen (D69). */
+export const liveTag = (rideId: string) => `ride-${rideId}`;
+
 /** Queues ride:update for both participants, the share page and the admin live map. */
 export async function notifyRideUpdate(q: Queryable, r: RideRow, extra: OutboxMessage[] = []) {
   const msgs: OutboxMessage[] = [
@@ -494,6 +497,12 @@ async function driverStep(ctx: AppContext, driverId: string, rideId: string, fro
   });
 }
 
+/** "Dacia Logan" + plate for the rider's push when the driver arrives. */
+async function carVars(ctx: AppContext, r: RideRow): Promise<{ car: string; plate: string }> {
+  const v = await one<{ make: string; model: string; colour: string | null; plate: string }>(ctx.db, 'SELECT make, model, colour, plate FROM vehicles WHERE id = $1', [r.vehicle_id]);
+  return { car: v ? [v.make, v.model, v.colour].filter(Boolean).join(' ') : '', plate: v?.plate ?? '' };
+}
+
 /** A fix older than this says nothing about where the driver is now. */
 const ARRIVE_FIX_MAX_AGE_MS = 120_000;
 
@@ -551,13 +560,14 @@ export async function arrived(ctx: AppContext, driverId: string, rideId: string)
     throw unprocessable('TOO_FAR_FROM_PICKUP', `You are ${distanceM} m from the pickup point. Tap again when you are there.`, { distance_m: distanceM, max_m: maxM });
   }
   // Late arrival is recorded against the time the driver was due (their promise, else the route estimate — D66).
+  const car = await carVars(ctx, r0);
   const lateS = r0.pickup_due_at ? Math.max(0, Math.round((Date.now() - new Date(r0.pickup_due_at).getTime()) / 1000)) : null;
   const r = await driverStep(
     ctx, driverId, rideId, 'accepted', 'arrived',
     `arrived_at = now(), arrived_late_s = CASE WHEN pickup_due_at IS NULL THEN NULL ELSE GREATEST(0, extract(epoch FROM now() - pickup_due_at))::int END`,
     'arrived',
     (r2) => [
-      { topic: 'push', payload: { user_ids: [r2.rider_id], title: 'push_arrived_title', body: 'push_arrived_body', vars: { car: '', plate: '' }, data: { type: 'driver_arrived', ride_id: r2.id }, channel: 'ride_updates' } },
+      { topic: 'push', payload: { user_ids: [r2.rider_id], title: 'push_arrived_title', body: 'push_arrived_body', vars: car, data: { type: 'driver_arrived', ride_id: r2.id }, channel: 'ride_updates', tag: liveTag(r2.id) } },
     ],
     { distance_m: distanceM, late_s: lateS, eta_promised: r0.eta_promised },
   );
@@ -577,12 +587,16 @@ export async function startTrip(ctx: AppContext, driverId: string, rideId: strin
       throw unprocessable('PIN_INVALID', 'Wrong PIN. Ask the rider for the 4 digits shown in their app.');
     }
   }
-  const r2 = await driverStep(ctx, driverId, rideId, 'arrived', 'in_progress', 'started_at = now()', 'started');
+  const r2 = await driverStep(ctx, driverId, rideId, 'arrived', 'in_progress', 'started_at = now()', 'started', (r3) => [
+    { topic: 'push', payload: { user_ids: [r3.rider_id], title: 'push_trip_started_title', body: 'push_trip_started_body', vars: { place: r3.dropoff_address ?? '' }, data: { type: 'trip_started', ride_id: r3.id }, channel: 'ride_updates', tag: liveTag(r3.id) } },
+  ]);
   return rideView(ctx.db, r2, { id: driverId, role: 'driver' });
 }
 
 export async function completeTrip(ctx: AppContext, driverId: string, rideId: string) {
-  const r2 = await driverStep(ctx, driverId, rideId, 'in_progress', 'completed', 'completed_at = now()', 'completed');
+  const r2 = await driverStep(ctx, driverId, rideId, 'in_progress', 'completed', 'completed_at = now()', 'completed', (r3) => [
+    { topic: 'push', payload: { user_ids: [r3.rider_id], title: 'push_trip_completed_title', body: 'push_trip_completed_body', vars: { price: r3.final_price ?? r3.offered_price }, data: { type: 'trip_completed', ride_id: r3.id }, channel: 'ride_updates', tag: liveTag(r3.id) } },
+  ]);
   await ctx.geo.setAvailable(driverId, r2.city_id, true);
   await ctx.db.query(`UPDATE trip_shares SET expires_at = now() + interval '1 hour' WHERE ride_id = $1`, [rideId]);
   return rideView(ctx.db, r2, { id: driverId, role: 'driver' });
@@ -619,7 +633,7 @@ export async function cancelByDriver(ctx: AppContext, driverId: string, rideId: 
     await addEvent(tx, rideId, 'cancelled', { id: driverId, role: 'driver' }, { from: r.status, reason, penalty: !noShow, blocked_until: blockedUntil });
     const r2 = (await getRide(tx, rideId))!;
     await notifyRideUpdate(tx, r2, [
-      { topic: 'push', payload: { user_ids: [r.rider_id], title: 'push_cancelled_title', body: 'push_cancelled_body', data: { type: 'ride_cancelled', ride_id: rideId }, channel: 'ride_updates' } },
+      { topic: 'push', payload: { user_ids: [r.rider_id], title: 'push_cancelled_title', body: 'push_cancelled_body', data: { type: 'ride_cancelled', ride_id: rideId }, channel: 'ride_updates', tag: liveTag(rideId) } },
     ]);
     return { r2, penalty: !noShow, blockedUntil };
   });
@@ -776,7 +790,7 @@ export async function markDriverLate(ctx: AppContext, rideId: string): Promise<b
     const r = (await getRide(tx, rideId))!;
     const min = Math.max(1, Math.round(upd.late_s / 60));
     await notifyRideUpdate(tx, r, [
-      { topic: 'push', payload: { user_ids: [r.rider_id], title: 'push_driver_late_title', body: 'push_driver_late_body', vars: { min }, data: { type: 'driver_late', ride_id: r.id }, channel: 'ride_updates' } },
+      { topic: 'push', payload: { user_ids: [r.rider_id], title: 'push_driver_late_title', body: 'push_driver_late_body', vars: { min }, data: { type: 'driver_late', ride_id: r.id }, channel: 'ride_updates', tag: liveTag(r.id) } },
       { topic: 'push', payload: { user_ids: [r.driver_id!], title: 'push_you_are_late_title', body: 'push_you_are_late_body', vars: { min }, data: { type: 'driver_late', ride_id: r.id }, channel: 'ride_updates' } },
     ]);
     return true;
