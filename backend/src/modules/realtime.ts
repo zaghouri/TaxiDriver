@@ -88,19 +88,16 @@ export async function attachSocketServer(ctx: AppContext, server: HttpServer, op
     }
   });
 
-  io.on('connection', async (socket: Socket) => {
+  // Every handler is registered synchronously, before any await: Socket.IO drops events that arrive before their
+  // handler exists, and apps emit (e.g. driver:location) as soon as they are connected.
+  io.on('connection', (socket: Socket) => {
     const claims: AccessClaims | undefined = socket.data.user;
     if (!claims) {
-      const share = await one<{ ride_id: string }>(ctx.db, `SELECT ride_id FROM trip_shares WHERE token = $1 AND (expires_at IS NULL OR expires_at > now())`, [String(socket.handshake.auth.share).slice(0, 64)]);
-      if (!share) return socket.disconnect(true);
-      socket.join(roomOf({ share: share.ride_id }));
+      // Trip-share viewers only receive; they have no handlers.
+      void joinShare(socket).catch(() => socket.disconnect(true));
       return;
     }
     const userId = claims.sub;
-    socket.join(roomOf({ user: userId }));
-    if (claims.role === 'admin') socket.join('admins');
-    // Clients must re-fetch GET /v1/rides/active on every (re)connect; this is the hint.
-    socket.emit('session:ready', { user_id: userId, role: claims.role, server_time: new Date().toISOString() });
 
     socket.on('reauth', async (token: unknown, ack?: (r: unknown) => void) => {
       try {
@@ -161,17 +158,29 @@ export async function attachSocketServer(ctx: AppContext, server: HttpServer, op
       });
     }
 
-    // Only after every handler is registered: an event the app sends right after connecting (a call invite, a
-    // location) must not arrive while this handler is still awaiting the database.
+    void joinRooms(socket, claims).catch(() => socket.disconnect(true));
+  });
+
+  async function joinShare(socket: Socket) {
+    const share = await one<{ ride_id: string }>(ctx.db, `SELECT ride_id FROM trip_shares WHERE token = $1 AND (expires_at IS NULL OR expires_at > now())`, [String(socket.handshake.auth.share).slice(0, 64)]);
+    if (!share) return socket.disconnect(true);
+    socket.join(roomOf({ share: share.ride_id }));
+  }
+
+  async function joinRooms(socket: Socket, claims: AccessClaims) {
+    const userId = claims.sub;
+    socket.join(roomOf({ user: userId }));
+    if (claims.role === 'admin') socket.join('admins');
     if (claims.role === 'driver') {
       const d = await one<{ city_id: string }>(ctx.db, 'SELECT city_id FROM drivers WHERE user_id = $1', [userId]);
       if (d?.city_id) socket.join(roomOf({ cityDrivers: d.city_id }));
     }
-
+    if (!socket.connected) return;
+    // Clients must re-fetch GET /v1/rides/active on every (re)connect; this is the hint. Sent once the rooms are joined.
+    socket.emit('session:ready', { user_id: userId, role: claims.role, server_time: new Date().toISOString() });
     // A call that started ringing while this app was closed or offline (D73): ring now if it is still pending.
-    // Last, so no handler above is registered late.
     const pending = await ctx.redis.get(callKey(ctx, userId)).catch(() => null);
     if (pending && socket.connected) socket.emit('call:invite', JSON.parse(pending));
-  });
+  }
   return io;
 }
