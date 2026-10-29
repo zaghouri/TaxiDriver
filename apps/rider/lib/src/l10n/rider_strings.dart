@@ -188,6 +188,27 @@ class RiderStrings {
         'ar': 'الخريطة غير متوفرة في هذه النسخة',
       });
 
+  // Saved places (REA P3 #23, D81).
+  String get placeHome => _t({'en': 'Home', 'fr': 'Domicile', 'ar': 'المنزل'});
+  String get placeWork => _t({'en': 'Work', 'fr': 'Travail', 'ar': 'العمل'});
+  String get addHome => _t({
+        'en': 'Add your home address',
+        'fr': 'Ajouter l’adresse de votre domicile',
+        'ar': 'أضف عنوان منزلك',
+      });
+  String get addWork => _t({
+        'en': 'Add your work address',
+        'fr': 'Ajouter l’adresse de votre travail',
+        'ar': 'أضف عنوان عملك',
+      });
+  String get setHomeTitle => _t({'en': 'Home address', 'fr': 'Adresse du domicile', 'ar': 'عنوان المنزل'});
+  String get setWorkTitle => _t({'en': 'Work address', 'fr': 'Adresse du travail', 'ar': 'عنوان العمل'});
+  String get recentPlaces => _t({'en': 'Recent', 'fr': 'Récents', 'ar': 'الأخيرة'});
+  String get changePlace => _t({'en': 'Change address', 'fr': 'Changer l’adresse', 'ar': 'تغيير العنوان'});
+  String get removePlace => _t({'en': 'Remove', 'fr': 'Supprimer', 'ar': 'حذف'});
+  String get placeSaved => _t({'en': 'Address saved.', 'fr': 'Adresse enregistrée.', 'ar': 'تم حفظ العنوان.'});
+  String get placeRemoved => _t({'en': 'Address removed.', 'fr': 'Adresse supprimée.', 'ar': 'تم حذف العنوان.'});
+
   String get noAddressFound => _t({
         'en': 'No address found. Try another spelling.',
         'fr': 'Aucune adresse trouvée. Essayez une autre orthographe.',
@@ -313,6 +334,50 @@ class RiderStrings {
   // ---------------------------------------------------------------- errors
 
   /// Translations for API codes the shared package does not map.
+  // Ask the drivers who offered again (REA P3 #21, D84).
+  String askAgain(int n) => _t({
+        'en': n == 1 ? 'Ask the driver who offered again' : 'Ask the $n drivers who offered again',
+        'fr': n == 1 ? 'Redemander au chauffeur qui a fait une offre' : 'Redemander aux $n chauffeurs qui ont fait une offre',
+        'ar': n == 1 ? 'اطلب من جديد من السائق الذي قدّم عرضًا' : 'اطلب من جديد من $n سائقين قدّموا عروضًا',
+      });
+  String askedAgainResult(int n) => n == 0
+      ? _t({
+          'en': 'None of them is free right now. Your request stays open for other drivers.',
+          'fr': 'Aucun n’est libre pour le moment. Votre demande reste ouverte aux autres chauffeurs.',
+          'ar': 'لا أحد منهم متاح الآن. يبقى طلبك مفتوحًا لسائقين آخرين.',
+        })
+      : _t({
+          'en': n == 1 ? 'We asked 1 driver again.' : 'We asked $n drivers again.',
+          'fr': n == 1 ? 'Nous avons redemandé à 1 chauffeur.' : 'Nous avons redemandé à $n chauffeurs.',
+          'ar': n == 1 ? 'طلبنا من جديد من سائق واحد.' : 'طلبنا من جديد من $n سائقين.',
+        });
+
+  // Far driver confirm (REA P3 #22, D85).
+  String longEtaTitle(int min) => _t({
+        'en': 'This driver is about $min min away',
+        'fr': 'Ce chauffeur est à environ $min min',
+        'ar': 'هذا السائق على بعد $min د تقريبًا',
+      });
+  String longEtaBody(String name) => _t({
+        'en': '${name.isEmpty ? 'The driver' : name} will take a while to reach you. Accept anyway, or keep looking for a closer driver?',
+        'fr': '${name.isEmpty ? 'Le chauffeur' : name} mettra un moment à arriver. Accepter quand même, ou chercher un chauffeur plus proche ?',
+        'ar': 'سيستغرق ${name.isEmpty ? 'السائق' : name} بعض الوقت للوصول إليك. هل تقبل رغم ذلك، أم تواصل البحث عن سائق أقرب؟',
+      });
+  String get acceptAnyway => _t({'en': 'Accept anyway', 'fr': 'Accepter quand même', 'ar': 'قبول رغم ذلك'});
+  String get keepLooking => _t({'en': 'Keep looking', 'fr': 'Continuer à chercher', 'ar': 'مواصلة البحث'});
+
+  // Driver booked while finishing another trip (REA P3 #26, D88).
+  String get queuedTitle => _t({
+        'en': 'Your driver is finishing a trip nearby',
+        'fr': 'Votre chauffeur termine une course tout près',
+        'ar': 'سائقك ينهي رحلة قريبة',
+      });
+  String queuedBody(String time) => _t({
+        'en': 'They come to you right after, around $time. You can cancel for free until then.',
+        'fr': 'Il vient vers vous juste après, vers $time. Vous pouvez annuler sans frais d’ici là.',
+        'ar': 'سيأتي إليك مباشرة بعد ذلك، حوالي $time. يمكنك الإلغاء مجانًا إلى ذلك الحين.',
+      });
+
   String? errorForCode(String code) => switch (code) {
         'RETRY' || 'CONFLICT' || 'INVALID_STATE' => _t({
             'en': 'Something changed in the meantime. Please try again.',
@@ -349,6 +414,21 @@ class RiderStrings {
             'en': 'Your driver is not at the pickup point yet.',
             'fr': 'Votre chauffeur n’est pas encore au point de départ.',
             'ar': 'سائقك لم يصل بعد إلى نقطة الانطلاق.',
+          }),
+        'NO_DRIVERS_TO_ASK' => _t({
+            'en': 'No driver to ask again for this request.',
+            'fr': 'Aucun chauffeur à qui redemander pour cette demande.',
+            'ar': 'لا يوجد سائق لنطلب منه من جديد لهذا الطلب.',
+          }),
+        'RENOTIFY_LIMIT' => _t({
+            'en': 'You already asked these drivers again 3 times.',
+            'fr': 'Vous avez déjà redemandé 3 fois à ces chauffeurs.',
+            'ar': 'سبق أن طلبت من هؤلاء السائقين 3 مرات.',
+          }),
+        'RENOTIFY_TOO_SOON' => _t({
+            'en': 'You just asked them. Wait a minute before asking again.',
+            'fr': 'Vous venez de leur demander. Attendez une minute avant de redemander.',
+            'ar': 'طلبت منهم للتو. انتظر دقيقة قبل أن تطلب من جديد.',
           }),
         'NOT_CONNECTED' => _t({
             'en': 'Not connected. We keep trying…',

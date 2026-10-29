@@ -15,6 +15,7 @@ import '../../platform/readiness.dart';
 import '../device_check_screen.dart';
 import '../documents_screen.dart';
 import '../earnings_screen.dart';
+import '../onboarding/first_ride_tips.dart';
 import '../readiness_screen.dart';
 import '../request_detail_screen.dart';
 import '../ride/active_ride_view.dart';
@@ -33,6 +34,7 @@ class HomeScreen extends StatefulWidget {
   final bool restoreOnline;
 
   static const batteryGuideShownKey = 'ridema.driver.battery_guide_shown';
+  static const demandMapKey = 'ridema.driver.demand_map';
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -45,6 +47,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _notificationsOff = false;
   Set<ReadinessItem> _readiness = const {};
 
+  /// Today's income for the daily goal bar (D82); null until loaded or when the call fails.
+  DriverEarnings? _earnings;
+  String? _lastFinishedId;
+  /// Demand layer on the map (D87): remembered on the phone, refreshed every minute while shown.
+  bool _demandOn = false;
+  DemandMap? _demand;
+  Timer? _demandTimer;
+
   CoreServices get _s => CoreServices.of(context);
   DriverController get _c => context.read<DriverController>();
 
@@ -54,8 +64,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _sub = _c.events.listen(_onEvent);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_s.prefs.getBool(HomeScreen.demandMapKey) ?? false) _setDemand(true, save: false);
       await _checkNotifications();
       await _checkReadiness();
+      unawaited(_loadEarnings());
       if (widget.restoreOnline && mounted && !_c.online) await _restoreOnline();
     });
   }
@@ -64,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _sub?.cancel();
+    _demandTimer?.cancel();
     super.dispose();
   }
 
@@ -75,7 +88,44 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       unawaited(context.read<DriverProfileController>().load());
       unawaited(_checkNotifications());
       unawaited(_checkReadiness());
+      unawaited(_loadEarnings());
       if (_locationBlocked || _locationServiceOff) unawaited(_recheckLocation());
+    }
+  }
+
+  Future<void> _loadEarnings() async {
+    try {
+      final e = await _c.api.earnings();
+      if (mounted) setState(() => _earnings = e);
+    } catch (_) {
+      // The goal bar is optional; the rest of the home screen works without it.
+    }
+  }
+
+  Future<void> _openEarnings() async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const EarningsScreen()));
+    await _loadEarnings();
+  }
+
+  void _setDemand(bool on, {bool save = true}) {
+    _demandTimer?.cancel();
+    _demandTimer = null;
+    setState(() {
+      _demandOn = on;
+      if (!on) _demand = null;
+    });
+    if (save) unawaited(_s.prefs.setBool(HomeScreen.demandMapKey, on));
+    if (!on) return;
+    unawaited(_loadDemand());
+    _demandTimer = Timer.periodic(const Duration(minutes: 1), (_) => _loadDemand());
+  }
+
+  Future<void> _loadDemand() async {
+    try {
+      final d = await _c.api.demand();
+      if (mounted && _demandOn) setState(() => _demand = d);
+    } catch (_) {
+      // Keep the last cells; the map works without them.
     }
   }
 
@@ -282,6 +332,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
+  Future<void> _openFirstRideTips() async {
+    await Navigator.of(context).push(MaterialPageRoute<bool>(builder: (_) => FirstRideTipsScreen(prefs: _s.prefs)));
+    if (mounted) setState(() {});
+  }
+
   Future<void> _maybeBatteryGuide() async {
     final prefs = _s.prefs;
     if (prefs.getBool(HomeScreen.batteryGuideShownKey) ?? false) return;
@@ -298,7 +353,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _configureForeground();
 
     final finished = c.finishedRide;
-    if (finished != null && c.activeRide == null) return TripCompleteView(ride: finished);
+    if (finished?.id != _lastFinishedId) {
+      // A trip just ended (or its summary was closed): today's total changed.
+      _lastFinishedId = finished?.id;
+      if (finished != null) WidgetsBinding.instance.addPostFrameCallback((_) => _loadEarnings());
+    }
+    // Shown even when a queued next ride just became active (D88): collect the fare first.
+    if (finished != null) return TripCompleteView(ride: finished);
 
     final active = c.activeRide;
     final pos = c.position;
@@ -314,13 +375,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       // Notifications and the location service already have their own banner / card.
       if (_readiness.difference({ReadinessItem.notifications, ReadinessItem.locationService}).isNotEmpty)
         ReadinessBanner(count: _readiness.length, onTap: _openReadiness),
+      // Just approved (D86): tips until the driver closes them.
+      if (active == null && !FirstRideTips.done(_s.prefs)) FirstRideTipsBanner(onTap: _openFirstRideTips),
     ];
 
     return CallHost(
       child: Scaffold(
         drawer: const DriverDrawer(),
         body: Stack(children: [
-          Positioned.fill(child: DriverMap(me: me, pickup: active?.pickup, dropoff: active?.dropoff)),
+          Positioned.fill(
+            child: DriverMap(me: me, pickup: active?.pickup, dropoff: active?.dropoff, demand: active == null ? _demand?.cells ?? const [] : const []),
+          ),
           SafeArea(
             child: Column(children: [
               Padding(
@@ -337,11 +402,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   _MapButton(
                     icon: Icons.account_balance_wallet_outlined,
                     tooltip: l.earningsTitle,
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const EarningsScreen())),
+                    onTap: _openEarnings,
                   ),
                 ]),
               ),
+              // Under the wallet button; hidden during a ride (the map shows the trip then).
+              if (active == null)
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 8, bottom: 4),
+                    child: _MapButton(
+                      key: const ValueKey('demand_toggle'),
+                      icon: _demandOn ? Icons.whatshot : Icons.whatshot_outlined,
+                      tooltip: _demandOn ? context.ds.demandHide : context.ds.demandShow,
+                      onTap: () => _setDemand(!_demandOn),
+                    ),
+                  ),
+                ),
               ...banners,
+              if (active == null && _earnings?.goal != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: GoalCard(earnings: _earnings!, compact: true, onEdit: _openEarnings),
+                ),
+              if (_demandOn && active == null && _demand != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Chip(
+                    key: const ValueKey('demand_legend'),
+                    avatar: const Icon(Icons.whatshot, color: BrandColors.accent, size: 18),
+                    label: Text(_demand!.cells.isEmpty ? context.ds.demandEmpty : context.ds.demandLegend(_demand!.windowMin)),
+                    backgroundColor: Colors.white,
+                  ),
+                ),
               if (_locationServiceOff)
                 Padding(
                   padding: const EdgeInsets.all(8),
@@ -394,7 +488,7 @@ Future<void> _openBatteryGuide(BuildContext context) async {
 }
 
 class _MapButton extends StatelessWidget {
-  const _MapButton({required this.icon, required this.tooltip, required this.onTap});
+  const _MapButton({super.key, required this.icon, required this.tooltip, required this.onTap});
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;

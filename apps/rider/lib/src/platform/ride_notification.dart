@@ -61,6 +61,8 @@ class ChannelRideNotifier implements RideNotifier {
         title: r.driverLate ? rs.driverLateTitle : l.driverOnTheWay,
         body: [who, ?when].where((s) => s.isNotEmpty).join('\n'),
       );
+    case RiderPhase.queued:
+      return (title: rs.queuedTitle, body: who);
     case RiderPhase.arrived:
       return (title: l.driverArrivedTitle, body: who);
     case RiderPhase.inProgress:

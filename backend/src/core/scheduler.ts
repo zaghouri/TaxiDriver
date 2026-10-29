@@ -1,7 +1,7 @@
 import { Queue } from 'bullmq';
 import type { Redis } from 'ioredis';
 
-export type JobName = 'ride-expire' | 'bid-expire' | 'ride-wave' | 'ride-late' | 'wait-reminder';
+export type JobName = 'ride-expire' | 'bid-expire' | 'ride-wave' | 'ride-late' | 'wait-reminder' | 'ride-speeding' | 'ride-queue-timeout';
 export const TIMEOUT_QUEUE = 'ridema-timeouts';
 
 export interface Scheduler {

@@ -20,6 +20,8 @@ export async function runRetention(ctx: AppContext): Promise<Record<string, numb
   const days = (k: string, d: number) => r[k] ?? d;
 
   await exec('route_points', `DELETE FROM ride_route_points WHERE recorded_at < now() - make_interval(days => $1)`, [days('route_points', 365)]);
+  // Speeding summaries hold positions from the route: same retention as the route points (D83).
+  await exec('ride_speeding', `DELETE FROM ride_speeding WHERE checked_at < now() - make_interval(days => $1)`, [days('route_points', 365)]);
   await exec('verification_codes', `DELETE FROM verification_codes WHERE created_at < now() - make_interval(days => $1)`, [days('verification_codes', 7)]);
   await exec('refresh_tokens', `DELETE FROM refresh_tokens WHERE (expires_at < now() OR revoked_at IS NOT NULL) AND created_at < now() - make_interval(days => $1)`, [days('refresh_tokens_expired', 30)]);
   await exec('idempotency_keys', `DELETE FROM idempotency_keys WHERE created_at < now() - make_interval(days => $1)`, [days('idempotency_keys', 2)]);
@@ -29,6 +31,8 @@ export async function runRetention(ctx: AppContext): Promise<Record<string, numb
   await exec('sos_alerts', `DELETE FROM sos_alerts WHERE status = 'resolved' AND created_at < now() - make_interval(days => $1)`, [days('sos_alerts', 730)]);
   await exec('admin_audit_log', `DELETE FROM admin_audit_log WHERE created_at < now() - make_interval(days => $1)`, [days('admin_audit_log', 1825)], true);
   await exec('document_access_log', `DELETE FROM document_access_log WHERE created_at < now() - make_interval(days => $1)`, [days('admin_audit_log', 1825)], true);
+  // Safety net: deleteAccount removes saved places at once (D81); catch rows of accounts deleted another way.
+  await exec('saved_places_deleted_users', `DELETE FROM saved_places s USING users u WHERE u.id = s.user_id AND u.status = 'deleted'`, []);
   await exec('consents_deleted_users', `DELETE FROM consents c USING users u WHERE u.id = c.user_id AND u.status = 'deleted' AND u.deleted_at < now() - make_interval(days => $1)`, [days('consents_after_deletion', 1825)], true);
 
   // Rejected/replaced driver documents and old ID checks: files first, then rows.

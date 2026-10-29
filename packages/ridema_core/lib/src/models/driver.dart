@@ -1,4 +1,5 @@
 import 'json.dart';
+import 'ride.dart' show LatLng;
 
 /// Driver application/approval status.
 enum DriverStatus {
@@ -196,6 +197,7 @@ class DriverProfile {
     this.problemCode,
     this.problemMessage,
     this.maxPickupKm,
+    this.dailyGoal,
   });
 
   final DriverStatus status;
@@ -218,6 +220,9 @@ class DriverProfile {
 
   /// Request notifications only for pickups this close (D68); null = any distance.
   final double? maxPickupKm;
+
+  /// Optional daily income goal in DH (D82); null = none.
+  final int? dailyGoal;
 
   /// Latest document of each type.
   Map<String, DriverDocument> get latestDocuments {
@@ -251,6 +256,139 @@ class DriverProfile {
       problemCode: p == null ? null : asString(p['code']),
       problemMessage: p == null ? null : asString(p['message']),
       maxPickupKm: asDouble(j['max_pickup_km']),
+      dailyGoal: asInt(j['daily_goal']),
+    );
+  }
+}
+
+/// Trips and cash of one day (`day` = `YYYY-MM-DD` in the city time zone).
+class EarningsDay {
+  const EarningsDay({required this.day, this.trips = 0, this.cash = 0});
+  final String day;
+  final int trips;
+  final int cash;
+
+  DateTime? get date => DateTime.tryParse(day);
+
+  factory EarningsDay.fromJson(Object? json) {
+    final j = asJson(json);
+    return EarningsDay(day: asStringOr(j['day']), trips: asInt(j['trips']) ?? 0, cash: asInt(j['cash']) ?? 0);
+  }
+}
+
+/// `GET /v1/driver/earnings` (D82): last N days, today, one calendar month and the daily goal.
+class DriverEarnings {
+  const DriverEarnings({
+    this.days = const [],
+    this.totalTrips = 0,
+    this.totalCash = 0,
+    this.today = const EarningsDay(day: ''),
+    this.month = '',
+    this.monthIsCurrent = true,
+    this.monthTrips = 0,
+    this.monthCash = 0,
+    this.monthDays = const [],
+    this.goal,
+    this.goalLeft = 0,
+  });
+
+  final List<EarningsDay> days;
+  final int totalTrips;
+  final int totalCash;
+  final EarningsDay today;
+
+  /// `YYYY-MM`.
+  final String month;
+  final bool monthIsCurrent;
+  final int monthTrips;
+  final int monthCash;
+  final List<EarningsDay> monthDays;
+
+  /// Daily goal in DH (null = none) and what is still missing today.
+  final int? goal;
+  final int goalLeft;
+
+  bool get goalReached => goal != null && goalLeft <= 0;
+
+  /// 0..1 progress towards the goal (0 when there is none).
+  double get goalProgress => goal == null || goal! <= 0 ? 0 : (today.cash / goal!).clamp(0, 1).toDouble();
+
+  factory DriverEarnings.fromJson(Object? json) {
+    final j = asJson(json);
+    final total = asJson(j['total']);
+    final m = asJson(j['month']);
+    final g = j['daily_goal'] is Map ? asJson(j['daily_goal']) : null;
+    return DriverEarnings(
+      days: asJsonList(j['days']).map(EarningsDay.fromJson).toList(),
+      totalTrips: asInt(total['trips']) ?? 0,
+      totalCash: asInt(total['cash']) ?? 0,
+      today: j['today'] is Map ? EarningsDay.fromJson(j['today']) : const EarningsDay(day: ''),
+      month: asStringOr(m['month']),
+      monthIsCurrent: m['current'] is bool ? m['current'] as bool : true,
+      monthTrips: asInt(m['trips']) ?? 0,
+      monthCash: asInt(m['cash']) ?? 0,
+      monthDays: asJsonList(m['days']).map(EarningsDay.fromJson).toList(),
+      goal: g == null ? null : asInt(g['amount']),
+      goalLeft: g == null ? 0 : asInt(g['left']) ?? 0,
+    );
+  }
+}
+
+/// One open request in the preview for drivers under review (D86): area level only, nothing about the rider.
+class RequestPreview {
+  const RequestPreview({required this.pickupArea, required this.dropoffArea, required this.tripKm, required this.offeredPrice, this.minutesAgo = 0, this.awayKm});
+  final String pickupArea;
+  final String dropoffArea;
+  final double tripKm;
+  final int offeredPrice;
+  final int minutesAgo;
+
+  /// Rounded to 0.5 km; null when the app sent no position.
+  final double? awayKm;
+
+  factory RequestPreview.fromJson(Object? json) {
+    final j = asJson(json);
+    return RequestPreview(
+      pickupArea: asStringOr(j['pickup_area']),
+      dropoffArea: asStringOr(j['dropoff_area']),
+      tripKm: asDouble(j['trip_km']) ?? 0,
+      offeredPrice: asInt(j['offered_price']) ?? 0,
+      minutesAgo: asInt(j['minutes_ago']) ?? 0,
+      awayKm: asDouble(j['away_km']),
+    );
+  }
+}
+
+/// One cell of the driver demand map (D87): where riders asked for rides recently, no rider data.
+class DemandCell {
+  const DemandCell({required this.lat, required this.lng, required this.level});
+  final double lat;
+  final double lng;
+
+  /// 1 (some) … 3 (most).
+  final int level;
+
+  LatLng get latLng => LatLng(lat, lng);
+
+  factory DemandCell.fromJson(Object? json) {
+    final j = asJson(json);
+    return DemandCell(lat: asDouble(j['lat']) ?? 0, lng: asDouble(j['lng']) ?? 0, level: (asInt(j['level']) ?? 1).clamp(1, 3));
+  }
+}
+
+/// `GET /v1/driver/demand`.
+class DemandMap {
+  const DemandMap({this.cells = const [], this.windowMin = 45, this.cellM = 500});
+  final List<DemandCell> cells;
+  final int windowMin;
+  final int cellM;
+
+  factory DemandMap.fromJson(Object? json) {
+    final j = asJson(json);
+    return DemandMap(
+      cells: asJsonList(j['cells']).map(DemandCell.fromJson).toList(),
+      windowMin: asInt(j['window_min']) ?? 45,
+      cellM: asInt(j['cell_m']) ?? 500,
     );
   }
 }

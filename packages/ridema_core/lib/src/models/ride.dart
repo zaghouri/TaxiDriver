@@ -3,6 +3,9 @@ import 'json.dart';
 /// Ride lifecycle states (D15).
 enum RideStatus {
   searching,
+
+  /// Accepted by a driver who is finishing another trip (D88); becomes [accepted] when that trip ends.
+  queued,
   accepted,
   arrived,
   inProgress,
@@ -13,6 +16,7 @@ enum RideStatus {
 
   static RideStatus parse(Object? v) => switch (v) {
         'searching' => RideStatus.searching,
+        'queued' => RideStatus.queued,
         'accepted' => RideStatus.accepted,
         'arrived' => RideStatus.arrived,
         'in_progress' => RideStatus.inProgress,
@@ -194,6 +198,7 @@ class Ride {
     this.canCancelFree,
     this.search,
     this.canEditPickup,
+    this.longEtaConfirmS,
     this.pickupEditedAt,
     this.pickupDueAt,
     this.etaPromised = false,
@@ -202,6 +207,9 @@ class Ride {
     this.waitingFee = 0,
     this.waitingS,
     this.waitingRules,
+    this.speedRules,
+    this.renotify,
+    this.queuedPickupAt,
   });
 
   final String id;
@@ -242,6 +250,9 @@ class Ride {
   /// Rider only: the pickup point can still be moved (once, before arrival — D61).
   final bool? canEditPickup;
 
+  /// Rider only, while searching (D85): offers arriving in this many seconds or more ask for a confirmation; 0 = never.
+  final int? longEtaConfirmS;
+
   /// Set once the rider moved the pickup point.
   final DateTime? pickupEditedAt;
 
@@ -264,6 +275,13 @@ class Ride {
 
   /// While arrived, when the city charges for waiting (D70).
   final WaitingRules? waitingRules;
+
+  /// Driver only, during the trip (D83): when to show the "slow down" warning.
+  final SpeedRules? speedRules;
+  /// Rider only (D84): "ask the drivers who offered again" is available.
+  final RenotifyInfo? renotify;
+  /// While `queued` (D88): estimated pickup time once the driver's current trip ends.
+  final DateTime? queuedPickupAt;
 
   /// Agreed price once accepted, else the current offer.
   int get fare => finalPrice ?? offeredPrice;
@@ -303,6 +321,7 @@ class Ride {
       canCancelFree: j['can_cancel_free'] is bool ? j['can_cancel_free'] as bool : null,
       search: j['search'] is Map ? RideSearch.fromJson(j['search']) : null,
       canEditPickup: j['can_edit_pickup'] is bool ? j['can_edit_pickup'] as bool : null,
+      longEtaConfirmS: asInt(j['long_eta_confirm_s']),
       pickupEditedAt: asDate(j['pickup_edited_at']),
       pickupDueAt: asDate(j['pickup_due_at']),
       etaPromised: j['eta_promised'] == true,
@@ -311,7 +330,38 @@ class Ride {
       waitingFee: asIntOr(j['waiting_fee']),
       waitingS: asInt(j['waiting_s']),
       waitingRules: j['waiting_rules'] is Map ? WaitingRules.fromJson(j['waiting_rules']) : null,
+      speedRules: j['speed_rules'] is Map ? SpeedRules.fromJson(j['speed_rules']) : null,
+      renotify: j['renotify'] is Map ? RenotifyInfo.fromJson(j['renotify']) : null,
+      queuedPickupAt: j['queued'] is Map ? asDate(asJson(j['queued'])['estimated_pickup_at']) : null,
     );
+  }
+}
+
+/// City speeding rule (D83): above [limitKmh] + [marginKmh] for [minS] seconds.
+class SpeedRules {
+  const SpeedRules({required this.limitKmh, required this.marginKmh, required this.minS});
+  final int limitKmh;
+  final int marginKmh;
+  final int minS;
+
+  int get thresholdKmh => limitKmh + marginKmh;
+
+  factory SpeedRules.fromJson(Object? json) {
+    final j = asJson(json);
+    return SpeedRules(limitKmh: asInt(j['limit_kmh']) ?? 60, marginKmh: asInt(j['margin_kmh']) ?? 20, minS: asInt(j['min_s']) ?? 30);
+  }
+}
+
+/// `Ride.renotify` (D84): [drivers] whose offers ran out can be asked again, [left] times more, in [waitS] seconds.
+class RenotifyInfo {
+  const RenotifyInfo({required this.drivers, required this.left, this.waitS = 0});
+  final int drivers;
+  final int left;
+  final int waitS;
+
+  factory RenotifyInfo.fromJson(Object? json) {
+    final j = asJson(json);
+    return RenotifyInfo(drivers: asInt(j['drivers']) ?? 0, left: asInt(j['left']) ?? 0, waitS: asInt(j['wait_s']) ?? 0);
   }
 }
 
@@ -394,6 +444,9 @@ class Bid {
   bool get isCounter => kind == 'counter';
   int get etaMinutes => (etaS / 60).ceil();
   int? get promisedEtaMinutes => promisedEtaS == null ? null : (promisedEtaS! / 60).ceil();
+
+  /// When the driver will really be there: the later of the estimate and the promise (as in the ranking, D66).
+  int get effectiveEtaS => promisedEtaS != null && promisedEtaS! > etaS ? promisedEtaS! : etaS;
 
   factory Bid.fromJson(Object? json) {
     final j = asJson(json);
@@ -513,7 +566,7 @@ class RideRequest {
 
 /// `GET /v1/rides/active`.
 class ActiveRide {
-  const ActiveRide({this.ride, this.offers = const [], this.pendingBids = const []});
+  const ActiveRide({this.ride, this.offers = const [], this.pendingBids = const [], this.queuedRide});
 
   final Ride? ride;
 
@@ -523,12 +576,16 @@ class ActiveRide {
   /// Driver: own bids still waiting for an answer.
   final List<Bid> pendingBids;
 
+  /// Driver: the next ride waiting behind the current trip (D88).
+  final Ride? queuedRide;
+
   factory ActiveRide.fromJson(Object? json) {
     final j = asJson(json);
     return ActiveRide(
       ride: j['ride'] is Map ? Ride.fromJson(j['ride']) : null,
       offers: asJsonList(j['offers']).map(Bid.fromJson).toList(),
       pendingBids: asJsonList(j['pending_bids']).map(Bid.fromJson).toList(),
+      queuedRide: j['queued_ride'] is Map ? Ride.fromJson(j['queued_ride']) : null,
     );
   }
 }

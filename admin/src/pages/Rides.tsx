@@ -9,8 +9,8 @@ import { useDialog } from '../ui/dialog';
 import { useLoad, useRun } from '../ui/hooks';
 import MapView, { type MapMarker } from '../ui/MapView';
 
-const STATUSES = ['', 'searching', 'accepted', 'arrived', 'in_progress', 'completed', 'cancelled', 'expired'];
-const ACTIVE = ['searching', 'accepted', 'arrived', 'in_progress'];
+const STATUSES = ['', 'searching', 'queued', 'accepted', 'arrived', 'in_progress', 'completed', 'cancelled', 'expired'];
+const ACTIVE = ['searching', 'queued', 'accepted', 'arrived', 'in_progress'];
 
 export function RidesList() {
   const t = useT();
@@ -112,7 +112,10 @@ export function RideDetail() {
       const ev = data.events.find((e: any) => e.type === 'sos' && e.data?.sos_id === s.id);
       return ev ? { id: `sos-${i}`, lat: ev.data.lat, lng: ev.data.lng, color: COLORS.danger, radius: 10, label: 'SOS' } : null;
     }),
+    // Where each speeding stretch peaked (D83).
+    ...(data.speeding?.episodes ?? []).map((e: any, i: number) => ({ id: `speed-${i}`, lat: e.lat, lng: e.lng, color: COLORS.accent, radius: 8, label: t('speeding_peak', { kmh: e.max_kmh }) })),
   ].filter(Boolean);
+  const sp = data.speeding;
   return (
     <Page
       title={
@@ -168,6 +171,41 @@ export function RideDetail() {
           <small className="muted">{t('route_points', { n: route.length })}</small>
         </Card>
       </div>
+      <Card title={t('speeding')}>
+        <div data-testid="speeding">
+          {!sp ? (
+            <span className="muted">{r.status === 'completed' ? t('speeding_pending') : t('speeding_after_trip')}</span>
+          ) : (
+            <>
+              <p>
+                {sp.flagged ? <Badge value="flagged" label={t('speeding_flagged')} /> : <Badge value="ok" label={t('speeding_ok')} />}{' '}
+                {t('speeding_rule', { limit: sp.limit_kmh, threshold: sp.threshold_kmh, s: sp.min_s })} · {t('speeding_max', { kmh: sp.max_kmh ?? '—' })} ·{' '}
+                {t('route_points', { n: sp.points })}
+              </p>
+              {sp.episodes.length > 0 && (
+                <table className="tbl small">
+                  <thead>
+                    <tr>
+                      <th>{t('speeding_from')}</th>
+                      <th>{t('speeding_duration')}</th>
+                      <th>{t('speeding_top')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sp.episodes.map((e: any, i: number) => (
+                      <tr key={i}>
+                        <td>{fmtDate(e.start)}</td>
+                        <td>{e.duration_s} s</td>
+                        <td>{e.max_kmh} km/h</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </>
+          )}
+        </div>
+      </Card>
       <Card title={t('event_log')}>
         <ol className="timeline" data-testid="timeline">
           {data.events.map((e: any) => (

@@ -60,6 +60,31 @@ describe('Rides', () => {
     expect(screen.getByText('1234 (essais: 0)')).toBeInTheDocument();
   });
 
+  it('shows the speeding check with each stretch and its peak on the map (D83)', async () => {
+    mockApi({
+      [`GET ${R}`]: {
+        ...detail({ status: 'completed', flagged: true }),
+        speeding: {
+          limit_kmh: 60, threshold_kmh: 80, min_s: 30, flagged: true, max_kmh: 104, points: 240, checked_at: '2026-10-21T09:30:00Z',
+          episodes: [{ start: '2026-10-21T09:12:00Z', end: '2026-10-21T09:12:45Z', duration_s: 45, max_kmh: 104, lat: 33.88, lng: -5.53 }],
+        },
+      },
+    });
+    renderPage(<RideDetail />, { route: `/rides/${RIDE_ID}`, path: '/rides/:id' });
+    const box = await screen.findByTestId('speeding');
+    expect(box).toHaveTextContent('Excès de vitesse');
+    expect(box).toHaveTextContent('Limite 60 km/h, signalé au-dessus de 80 km/h pendant 30 s');
+    expect(box).toHaveTextContent('45 s');
+    expect(box).toHaveTextContent('104 km/h');
+    expect(screen.getByTestId('marker-speed-0')).toHaveTextContent('33.88,-5.53');
+  });
+
+  it('a ride not checked yet says so', async () => {
+    mockApi({ [`GET ${R}`]: { ...detail({ status: 'in_progress' }), speeding: null } });
+    renderPage(<RideDetail />, { route: `/rides/${RIDE_ID}`, path: '/rides/:id' });
+    expect(await screen.findByTestId('speeding')).toHaveTextContent('Contrôlée à la fin de la course.');
+  });
+
   it('shows when the driver was due and how late they arrived (D66)', async () => {
     mockApi({ [`GET ${R}`]: detail({ pickup_due_at: '2026-10-21T09:07:00Z', eta_promised: true, arrived_late_s: 420, waiting_fee: 4, waiting_s: 290, final_price: 22, total_price: 26 }) });
     renderPage(<RideDetail />, { route: `/rides/${RIDE_ID}`, path: '/rides/:id' });

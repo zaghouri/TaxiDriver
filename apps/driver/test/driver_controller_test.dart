@@ -353,6 +353,93 @@ void main() {
       expect(c.tracking, isTrue, reason: 'location keeps streaming during a ride');
     });
 
+    test('slow-down warning after 30 s above the city threshold during the trip (D83)', () async {
+      await online();
+      api.active = ActiveRide(
+        ride: Ride.fromJson({
+          ...rideJson('r5', 'in_progress'),
+          'speed_rules': {'limit_kmh': 60, 'margin_kmh': 20, 'min_s': 30},
+        }),
+      );
+      await c.refreshActive();
+      var lat = 33.8935;
+      void drive(double kmh) {
+        clock.advance(const Duration(seconds: 5));
+        lat += 0.0005;
+        loc.stream.add(fix(lat: lat, at: clock.now, speed: kmh / 3.6));
+      }
+
+      for (var i = 0; i < 6; i++) {
+        drive(95);
+      }
+      await settle();
+      expect(c.speedWarning, isFalse, reason: '25 s is not long enough');
+      drive(95);
+      drive(95);
+      await settle();
+      expect(c.speedWarning, isTrue);
+      drive(78); // just under the threshold: stays on (hysteresis)
+      expect(c.speedWarning, isTrue);
+      drive(70);
+      await settle();
+      expect(c.speedWarning, isFalse);
+    });
+
+    test('chain (D88): requests near the destination, a queued next ride, promoted when the trip ends', () async {
+      await online();
+      api.active = ActiveRide(ride: makeRide('trip', 'in_progress'));
+      await c.refreshActive();
+      // Driving: the trip panel asks for requests near the destination, at most every 20 s.
+      api.requestList = [request('next')];
+      final before = api.calls.where((x) => x == 'requests').length;
+      loc.stream.add(fix(at: clock.now));
+      await settle();
+      expect(api.calls.where((x) => x == 'requests'), hasLength(before + 1));
+      expect(c.nextRequests.map((r) => r.id), ['next']);
+      clock.advance(const Duration(seconds: 5));
+      loc.stream.add(fix(lat: 33.8945, at: clock.now));
+      await settle();
+      expect(api.calls.where((x) => x == 'requests'), hasLength(before + 1));
+      await c.acceptRequest('next');
+      expect(api.calls, contains('bid:next:accept'));
+
+      // The rider accepts: the ride is queued behind the trip.
+      rt.rideUpdate.add(makeRide('next', 'queued'));
+      await settle();
+      expect(c.queuedRide?.id, 'next');
+      expect(c.activeRide?.id, 'trip');
+      expect(c.nextRequests, isEmpty);
+
+      // Completing the trip promotes it: trip summary first, then the next ride is active.
+      api.active = ActiveRide(ride: makeRide('next', 'accepted'));
+      await c.completeTrip();
+      expect(c.finishedRide?.id, 'trip');
+      expect(c.activeRide?.id, 'next');
+      expect(c.phase, DriverPhase.toPickup);
+      expect(c.queuedRide, isNull);
+    });
+
+    test('chain (D88): the driver drops the queued ride; a rider cancel clears it too', () async {
+      await online();
+      api.active = ActiveRide(ride: makeRide('trip', 'in_progress'), queuedRide: makeRide('next', 'queued'));
+      await c.refreshActive();
+      expect(c.queuedRide?.id, 'next');
+      await c.dropQueued();
+      expect(api.calls, contains('cancel:other'));
+      expect(c.queuedRide, isNull);
+      rt.rideUpdate.add(makeRide('next2', 'queued'));
+      await settle();
+      expect(c.queuedRide?.id, 'next2');
+      final events = <DriverEvent>[];
+      final sub = c.events.listen(events.add);
+      rt.rideUpdate.add(makeRide('next2', 'cancelled', cancelledBy: 'rider'));
+      await settle();
+      expect(c.queuedRide, isNull);
+      expect(c.activeRide?.id, 'trip');
+      expect(events.whereType<RideCancelledEvent>(), hasLength(1));
+      await sub.cancel();
+    });
+
     test('resume after the ride ended in the background shows trip complete', () async {
       api.active = ActiveRide(ride: makeRide('r2', 'in_progress'));
       await c.refreshActive();

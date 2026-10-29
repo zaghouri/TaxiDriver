@@ -39,6 +39,15 @@ class RideMaApi {
   Future<List<GeoPlace>> geoSearch(String q) async =>
       asJsonList(asJson(await client.get('/v1/geo/search', query: {'q': q}))['items']).map(GeoPlace.fromJson).toList();
 
+  /// Rider Home / Work and recent places (D81).
+  Future<SavedPlaces> savedPlaces() async => SavedPlaces.fromJson(await client.get('/v1/me/places'));
+
+  /// [kind] is `home` or `work`.
+  Future<SavedPlaces> setSavedPlace(String kind, Place p) async => SavedPlaces.fromJson(
+      await client.put('/v1/me/places/$kind', data: {'lat': p.lat, 'lng': p.lng, 'address': (p.address ?? '').trim()}));
+
+  Future<SavedPlaces> removeSavedPlace(String kind) async => SavedPlaces.fromJson(await client.delete('/v1/me/places/$kind'));
+
   /// [locale] is `ar`, `fr` or `en`; otherwise the server uses Accept-Language.
   Future<ReverseGeocode> geoReverse(double lat, double lng, {String? locale}) async => ReverseGeocode.fromJson(await client.get(
         '/v1/geo/reverse',
@@ -243,8 +252,15 @@ class RideMaApi {
         if (pickup.address != null && pickup.address!.trim().isNotEmpty) 'address': pickup.address!.trim(),
       }));
 
-  Future<Ride> acceptBid(String rideId, String bidId) async =>
-      Ride.fromJson(await client.post('/v1/rides/$rideId/bids/$bidId/accept'));
+  /// Ask the drivers whose offers ran out again (D84). On an expired request this sends a new one ([created]).
+  Future<({Ride ride, bool created, int askedAgain})> renotify(String rideId) async {
+    final j = asJson(await client.post('/v1/rides/$rideId/renotify'));
+    return (ride: Ride.fromJson(j['ride']), created: j['created'] == true, askedAgain: asInt(j['asked_again']) ?? 0);
+  }
+
+  /// [longEtaConfirmed]: the rider confirmed a far driver (D85), kept in the trip log.
+  Future<Ride> acceptBid(String rideId, String bidId, {bool longEtaConfirmed = false}) async => Ride.fromJson(await client
+      .post('/v1/rides/$rideId/bids/$bidId/accept', data: longEtaConfirmed ? {'long_eta_confirmed': true} : null));
 
   Future<void> declineBid(String rideId, String bidId) => client.post('/v1/rides/$rideId/bids/$bidId/decline');
 
@@ -365,7 +381,22 @@ class RideMaApi {
 
   Future<Ride> completeTrip(String rideId) async => Ride.fromJson(await client.post('/v1/rides/$rideId/complete'));
 
+  /// Read-only preview of open requests while the application is under review (D86).
+  Future<List<RequestPreview>> driverPreview({double? lat, double? lng}) async => asJsonList(asJson(await client
+          .get('/v1/driver/preview', query: {if (lat != null && lng != null) ...{'lat': lat, 'lng': lng}}))['items'])
+      .map(RequestPreview.fromJson)
+      .toList();
+  /// Recent demand per ~500 m cell for the home map (D87).
+  Future<DemandMap> driverDemand() async => DemandMap.fromJson(await client.get('/v1/driver/demand'));
+
   Future<Json> earnings({int days = 7}) async => asJson(await client.get('/v1/driver/earnings', query: {'days': days}));
+
+  /// Typed income (D82); [month] is `YYYY-MM` (default: this month).
+  Future<DriverEarnings> driverEarnings({int days = 7, String? month}) async => DriverEarnings.fromJson(
+      await client.get('/v1/driver/earnings', query: {'days': days, 'month': ?month}));
+
+  /// Daily income goal in DH; null removes it.
+  Future<void> setDailyGoal(int? amount) => client.put('/v1/driver/preferences', data: {'daily_goal': amount});
 
   Future<Json> subscription() async => asJson(await client.get('/v1/driver/subscription'));
 

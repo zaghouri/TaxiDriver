@@ -36,6 +36,7 @@ class DriverStrings {
   String etaChoiceMin(int min) => _f('etaChoiceMin', {'min': min});
   String etaPromisedTo(String time) => _f('etaPromisedTo', {'time': time});
   String get youAreLate => _t('youAreLate');
+  String get slowDown => _t('slowDown');
   // Request feed: hide / report, alert distance (D68).
   String get requestMore => _t('requestMore');
   String get hideRequest => _t('hideRequest');
@@ -96,6 +97,44 @@ class DriverStrings {
   String get docsAllSent => _t('docsAllSent');
   String get documentProblemsIntro => _t('documentProblemsIntro');
   String get earningsEmpty => _t('earningsEmpty');
+  // Income: month view and daily goal (D82).
+  String get earningsMonthTab => _t('earningsMonthTab');
+  String get monthPrev => _t('monthPrev');
+  String get monthNext => _t('monthNext');
+  String get goalTitle => _t('goalTitle');
+  String goalProgress(int done, int goal) => _f('goalProgress', {'done': done, 'goal': goal});
+  String goalLeft(int left) => _f('goalLeft', {'left': left});
+  String get goalReached => _t('goalReached');
+  String get goalSet => _t('goalSet');
+  String get goalEdit => _t('goalEdit');
+  String get goalRemove => _t('goalRemove');
+  String get goalHint => _t('goalHint');
+  String get goalInvalid => _t('goalInvalid');
+  // Preview while under review, first-ride tips (D86).
+  String get previewTitle => _t('previewTitle');
+  String get previewHint => _t('previewHint');
+  String get previewEmpty => _t('previewEmpty');
+  String previewTrip(String km) => _f('previewTrip', {'km': km});
+  String previewAway(String km) => _f('previewAway', {'km': km});
+  String previewAgo(int min) => min < 1 ? _t('previewNow') : _f('previewAgo', {'min': min});
+  String get firstRideBanner => _t('firstRideBanner');
+  String get firstRideTitle => _t('firstRideTitle');
+  String get firstRideIntro => _t('firstRideIntro');
+  String get firstRideDone => _t('firstRideDone');
+  String firstRideTip(String id) => _t('tip_$id');
+  String firstRideTipBody(String id) => _t('tip_${id}_body');
+  // Demand map (D87).
+  String get demandShow => _t('demandShow');
+  String get demandHide => _t('demandHide');
+  String demandLegend(int min) => _f('demandLegend', {'min': min});
+  String get demandEmpty => _t('demandEmpty');
+  // Chain of requests (D88).
+  String get nextRideTitle => _t('nextRideTitle');
+  String get nextRideHint => _t('nextRideHint');
+  String get dropNextRide => _t('dropNextRide');
+  String get dropNextConfirm => _t('dropNextConfirm');
+  String get nextRequestsTitle => _t('nextRequestsTitle');
+  String get nextRideAfterFare => _t('nextRideAfterFare');
   String get refresh => _t('refresh');
   String get deviceCheckTitle => _t('deviceCheckTitle');
   String get serviceReopen => _t('serviceReopen');
@@ -215,6 +254,49 @@ class DriverStrings {
       'docsAllSent': 'All documents are uploaded.',
       'documentProblemsIntro': 'To go online, fix these documents:',
       'earningsEmpty': 'No trips in this period yet.',
+      'earningsMonthTab': 'Month',
+      'monthPrev': 'Previous month',
+      'monthNext': 'Next month',
+      'goalTitle': 'Daily goal',
+      'goalProgress': '{done} / {goal} DH today',
+      'goalLeft': '{left} DH to go',
+      'goalReached': 'Goal reached. Well done!',
+      'goalSet': 'Set a daily goal',
+      'goalEdit': 'Change goal',
+      'goalRemove': 'Remove goal',
+      'goalHint': 'How much do you want to collect each day? (DH)',
+      'goalInvalid': 'Enter an amount between 10 and 5000 DH.',
+      'previewTitle': 'Requests right now',
+      'previewHint': 'A preview while we check your documents: areas only, no rider details. You can make offers once your account is approved.',
+      'previewEmpty': 'No open request in your city at the moment.',
+      'previewTrip': '{km} km trip',
+      'previewAway': 'about {km} km from you',
+      'previewAgo': '{min} min ago',
+      'previewNow': 'just now',
+      'firstRideBanner': 'You are approved! 5 tips for your first ride',
+      'firstRideTitle': 'Your first ride',
+      'firstRideIntro': 'Tick each one when you are ready.',
+      'firstRideDone': 'Got it',
+      'tip_ready': 'Run the “Ready to drive” check',
+      'tip_ready_body': 'Fix anything in red so requests reach you, even with the screen off.',
+      'tip_online': 'Go online where riders are',
+      'tip_online_body': 'Train stations, the medina gates and big shops get many requests.',
+      'tip_offer': 'Answer quickly',
+      'tip_offer_body': 'Accept the rider’s fare or send a counter-offer. The rider sees your offer for about a minute.',
+      'tip_pin': 'Ask for the PIN before you start',
+      'tip_pin_body': 'The rider tells you a 4-digit code. It confirms you picked up the right person.',
+      'tip_cash': 'Collect cash, then rate the rider',
+      'tip_cash_body': 'The app shows the total to collect, waiting fee included. RideMA takes 0 % commission.',
+      'demandShow': 'Show where riders ask',
+      'demandHide': 'Hide demand',
+      'demandLegend': 'Where riders asked in the last {min} min',
+      'demandEmpty': 'Few requests right now',
+      'nextRideTitle': 'Next ride after this trip',
+      'nextRideHint': 'Drop off your rider first. We tell the next rider you are coming.',
+      'dropNextRide': 'Drop the next ride',
+      'dropNextConfirm': 'The next rider will look for another driver. It counts as a cancellation.',
+      'nextRequestsTitle': 'Requests near your destination',
+      'nextRideAfterFare': 'Your next ride is waiting: collect the fare, then go to the pickup.',
       'refresh': 'Refresh',
       'deviceCheckTitle': 'Phone check',
       'serviceReopen': 'Open RideMA to stay online.',
@@ -246,6 +328,7 @@ class DriverStrings {
       'etaChoiceMin': '{min} min',
       'etaPromisedTo': 'You promised to be there by {time}',
       'youAreLate': 'You are late for the pickup. The rider can now cancel for free.',
+      'slowDown': 'You are driving fast. Please slow down: your rider’s safety comes first.',
       'requestMore': 'More actions',
       'hideRequest': 'Hide this request',
       'reportRequest': 'Report this request',
@@ -315,6 +398,49 @@ class DriverStrings {
       'docsAllSent': 'Tous les documents sont envoyés.',
       'documentProblemsIntro': 'Pour passer en ligne, réglez ces documents :',
       'earningsEmpty': 'Aucune course sur cette période.',
+      'earningsMonthTab': 'Mois',
+      'monthPrev': 'Mois précédent',
+      'monthNext': 'Mois suivant',
+      'goalTitle': 'Objectif du jour',
+      'goalProgress': '{done} / {goal} DH aujourd’hui',
+      'goalLeft': 'Encore {left} DH',
+      'goalReached': 'Objectif atteint. Bravo !',
+      'goalSet': 'Fixer un objectif par jour',
+      'goalEdit': 'Modifier l’objectif',
+      'goalRemove': 'Supprimer l’objectif',
+      'goalHint': 'Combien voulez-vous encaisser par jour ? (DH)',
+      'goalInvalid': 'Entrez un montant entre 10 et 5000 DH.',
+      'previewTitle': 'Demandes en ce moment',
+      'previewHint': 'Un aperçu pendant que nous vérifions vos documents : quartiers seulement, aucune donnée du passager. Vous pourrez faire des offres une fois votre compte validé.',
+      'previewEmpty': 'Aucune demande ouverte dans votre ville pour le moment.',
+      'previewTrip': 'course de {km} km',
+      'previewAway': 'à environ {km} km de vous',
+      'previewAgo': 'il y a {min} min',
+      'previewNow': 'à l’instant',
+      'firstRideBanner': 'Compte validé ! 5 conseils pour votre première course',
+      'firstRideTitle': 'Votre première course',
+      'firstRideIntro': 'Cochez chaque point quand vous êtes prêt.',
+      'firstRideDone': 'C’est compris',
+      'tip_ready': 'Faites la vérification « Prêt à rouler »',
+      'tip_ready_body': 'Corrigez ce qui est en rouge pour recevoir les demandes, même écran éteint.',
+      'tip_online': 'Passez en ligne là où sont les passagers',
+      'tip_online_body': 'Les gares, les portes de la médina et les grands magasins reçoivent beaucoup de demandes.',
+      'tip_offer': 'Répondez vite',
+      'tip_offer_body': 'Acceptez le prix du passager ou faites une contre-offre. Le passager voit votre offre pendant environ une minute.',
+      'tip_pin': 'Demandez le code PIN avant de démarrer',
+      'tip_pin_body': 'Le passager vous donne un code à 4 chiffres. Il confirme que c’est la bonne personne.',
+      'tip_cash': 'Encaissez en espèces, puis notez le passager',
+      'tip_cash_body': 'L’application affiche le total à encaisser, frais d’attente compris. RideMA prend 0 % de commission.',
+      'demandShow': 'Voir où les passagers demandent',
+      'demandHide': 'Masquer la demande',
+      'demandLegend': 'Demandes des {min} dernières minutes',
+      'demandEmpty': 'Peu de demandes en ce moment',
+      'nextRideTitle': 'Prochaine course après celle-ci',
+      'nextRideHint': 'Déposez d’abord votre passager. Nous prévenons le suivant que vous arrivez.',
+      'dropNextRide': 'Renoncer à la prochaine course',
+      'dropNextConfirm': 'Le prochain passager cherchera un autre chauffeur. Cela compte comme une annulation.',
+      'nextRequestsTitle': 'Demandes près de votre destination',
+      'nextRideAfterFare': 'Votre prochaine course attend : encaissez, puis allez au point de départ.',
       'refresh': 'Actualiser',
       'deviceCheckTitle': 'Vérification du téléphone',
       'serviceReopen': 'Ouvrez RideMA pour rester en ligne.',
@@ -346,6 +472,7 @@ class DriverStrings {
       'etaChoiceMin': '{min} min',
       'etaPromisedTo': 'Vous avez promis d’être là à {time}',
       'youAreLate': 'Vous êtes en retard au départ. Le passager peut maintenant annuler gratuitement.',
+      'slowDown': 'Vous roulez vite. Ralentissez s’il vous plaît : la sécurité du passager passe d’abord.',
       'requestMore': 'Plus d’actions',
       'hideRequest': 'Masquer cette demande',
       'reportRequest': 'Signaler cette demande',
@@ -415,6 +542,49 @@ class DriverStrings {
       'docsAllSent': 'تم إرسال كل الوثائق.',
       'documentProblemsIntro': 'لتصبح متصلًا، صحّح هذه الوثائق:',
       'earningsEmpty': 'لا توجد رحلات في هذه الفترة.',
+      'earningsMonthTab': 'الشهر',
+      'monthPrev': 'الشهر السابق',
+      'monthNext': 'الشهر التالي',
+      'goalTitle': 'هدف اليوم',
+      'goalProgress': '{done} / {goal} درهم اليوم',
+      'goalLeft': 'باقي {left} درهم',
+      'goalReached': 'تم بلوغ الهدف. أحسنت!',
+      'goalSet': 'حدّد هدفًا يوميًا',
+      'goalEdit': 'تغيير الهدف',
+      'goalRemove': 'حذف الهدف',
+      'goalHint': 'كم تريد أن تحصّل كل يوم؟ (درهم)',
+      'goalInvalid': 'أدخل مبلغًا بين 10 و5000 درهم.',
+      'previewTitle': 'الطلبات الآن',
+      'previewHint': 'معاينة أثناء التحقق من وثائقك: الأحياء فقط، دون أي معلومات عن الراكب. يمكنك تقديم العروض بعد قبول حسابك.',
+      'previewEmpty': 'لا يوجد طلب مفتوح في مدينتك حاليًا.',
+      'previewTrip': 'رحلة {km} كلم',
+      'previewAway': 'على بعد {km} كلم منك تقريبًا',
+      'previewAgo': 'منذ {min} د',
+      'previewNow': 'الآن',
+      'firstRideBanner': 'تم قبول حسابك! 5 نصائح لرحلتك الأولى',
+      'firstRideTitle': 'رحلتك الأولى',
+      'firstRideIntro': 'ضع علامة على كل نقطة عندما تكون جاهزًا.',
+      'firstRideDone': 'فهمت',
+      'tip_ready': 'قم بفحص «جاهز للقيادة»',
+      'tip_ready_body': 'أصلح كل ما هو باللون الأحمر حتى تصلك الطلبات، حتى والشاشة مطفأة.',
+      'tip_online': 'اتصل حيث يوجد الركاب',
+      'tip_online_body': 'محطات القطار وأبواب المدينة القديمة والمتاجر الكبرى تتلقى طلبات كثيرة.',
+      'tip_offer': 'أجب بسرعة',
+      'tip_offer_body': 'اقبل ثمن الراكب أو قدّم عرضًا مضادًا. يرى الراكب عرضك لمدة دقيقة تقريبًا.',
+      'tip_pin': 'اطلب الرمز قبل الانطلاق',
+      'tip_pin_body': 'يعطيك الراكب رمزًا من 4 أرقام. يؤكد أن الراكب الذي معك هو الشخص الصحيح.',
+      'tip_cash': 'استلم الثمن نقدًا ثم قيّم الراكب',
+      'tip_cash_body': 'يعرض التطبيق المبلغ الإجمالي، بما فيه رسوم الانتظار. عمولة RideMA هي 0 %.',
+      'demandShow': 'أظهر أين يطلب الركاب',
+      'demandHide': 'إخفاء الطلب',
+      'demandLegend': 'أماكن الطلبات في آخر {min} دقيقة',
+      'demandEmpty': 'طلبات قليلة الآن',
+      'nextRideTitle': 'الرحلة التالية بعد هذه',
+      'nextRideHint': 'أوصل راكبك أولًا. سنخبر الراكب التالي بأنك قادم.',
+      'dropNextRide': 'التخلي عن الرحلة التالية',
+      'dropNextConfirm': 'سيبحث الراكب التالي عن سائق آخر. يُحتسب ذلك إلغاءً.',
+      'nextRequestsTitle': 'طلبات قرب وجهتك',
+      'nextRideAfterFare': 'رحلتك التالية في الانتظار: استلم الثمن ثم توجّه إلى نقطة الانطلاق.',
       'refresh': 'تحديث',
       'deviceCheckTitle': 'فحص الهاتف',
       'serviceReopen': 'افتح RideMA لتبقى متصلًا.',
@@ -446,6 +616,7 @@ class DriverStrings {
       'etaChoiceMin': '{min} د',
       'etaPromisedTo': 'وعدت بالوصول قبل {time}',
       'youAreLate': 'أنت متأخر عن نقطة الانطلاق. يمكن للراكب الآن الإلغاء مجانًا.',
+      'slowDown': 'أنت تسير بسرعة. خفّف السرعة من فضلك: سلامة الراكب أولًا.',
       'requestMore': 'إجراءات أخرى',
       'hideRequest': 'إخفاء هذا الطلب',
       'reportRequest': 'الإبلاغ عن هذا الطلب',

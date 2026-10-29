@@ -11,6 +11,7 @@ import type { City } from '../../core/settings.js';
 import { getUser } from '../users.js';
 import { allowedReasons } from './rating-reasons.js';
 import { waitingFee, waitingRules } from './waiting.js';
+import { chainRules, chainSlot, expireQueued, promoteQueued } from './chain.js';
 import { bidView, bidViewWith, driverCard, getRide, rankedOffers, requestView, rideView, RIDE_COLUMNS, type BidRow, type RideRow } from './views.js';
 
 export const CANCEL_REASONS = ['changed_mind', 'driver_too_far', 'driver_asked', 'wrong_pickup', 'rider_no_show', 'car_mismatch', 'safety', 'driver_late', 'other'] as const;
@@ -268,7 +269,7 @@ export async function raiseOffer(ctx: AppContext, riderId: string, rideId: strin
   });
 }
 
-export async function acceptBid(ctx: AppContext, riderId: string, rideId: string, bidId: string) {
+export async function acceptBid(ctx: AppContext, riderId: string, rideId: string, bidId: string, opts: { longEtaConfirmed?: boolean } = {}) {
   try {
     const res = await withTx(ctx.db, async (tx) => {
       const r = await loadOwnRide(tx, rideId, riderId, 'rider');
@@ -278,7 +279,9 @@ export async function acceptBid(ctx: AppContext, riderId: string, rideId: string
       // Serialise every acceptance involving this driver (lock order: ride, then driver) to avoid deadlocks.
       await tx.query('SELECT 1 FROM drivers WHERE user_id = $1 FOR UPDATE', [candidate.driver_id]);
       const busy = await one(tx, `SELECT 1 FROM rides WHERE driver_id = $1 AND status IN ('accepted','arrived','in_progress')`, [candidate.driver_id]);
-      if (busy) {
+      // A driver finishing a trip in the chain window (D88) gets this one as their next ride, queued.
+      const slot = busy ? await chainSlot(ctx, tx, candidate.driver_id) : null;
+      if (busy && !slot) {
         await tx.query(`UPDATE bids SET status = 'lost', updated_at = now() WHERE id = $1 AND status = 'active'`, [bidId]);
         return { busy: true as const };
       }
@@ -289,27 +292,40 @@ export async function acceptBid(ctx: AppContext, riderId: string, rideId: string
       );
       if (!bid) throw conflict('BID_NOT_AVAILABLE', 'This offer has expired or was withdrawn.');
       const pin = String(randomInt(0, 10000)).padStart(4, '0');
-      const upd = await one(
-        tx,
-        `UPDATE rides SET status = 'accepted', driver_id = $2, final_price = $3, accepted_bid_id = $4, pickup_pin = $5, accepted_at = now(), updated_at = now(),
-           vehicle_id = (SELECT id FROM vehicles WHERE driver_id = $2 AND active),
-           pickup_due_at = now() + make_interval(secs => $6), eta_promised = $7
-         WHERE id = $1 AND status = 'searching' RETURNING id`,
-        [rideId, bid.driver_id, bid.price, bid.id, pin, bid.promised_eta_s ?? bid.eta_s, bid.promised_eta_s !== null],
-      );
+      const upd = slot
+        ? await one(
+            tx,
+            `UPDATE rides SET status = 'queued', driver_id = $2, final_price = $3, accepted_bid_id = $4, pickup_pin = $5, queued_at = now(), queued_behind = $8,
+               updated_at = now(), vehicle_id = (SELECT id FROM vehicles WHERE driver_id = $2 AND active),
+               pickup_due_at = now() + make_interval(secs => $6), eta_promised = $7
+             WHERE id = $1 AND status = 'searching' RETURNING id`,
+            [rideId, bid.driver_id, bid.price, bid.id, pin, bid.promised_eta_s ?? bid.eta_s, bid.promised_eta_s !== null, slot.current.id],
+          )
+        : await one(
+            tx,
+            `UPDATE rides SET status = 'accepted', driver_id = $2, final_price = $3, accepted_bid_id = $4, pickup_pin = $5, accepted_at = now(), updated_at = now(),
+               vehicle_id = (SELECT id FROM vehicles WHERE driver_id = $2 AND active),
+               pickup_due_at = now() + make_interval(secs => $6), eta_promised = $7
+             WHERE id = $1 AND status = 'searching' RETURNING id`,
+            [rideId, bid.driver_id, bid.price, bid.id, pin, bid.promised_eta_s ?? bid.eta_s, bid.promised_eta_s !== null],
+          );
       if (!upd) throw conflict('RIDE_NOT_SEARCHING', 'This request is no longer open.');
       const lost = await many<BidRow>(
         tx,
         `UPDATE bids SET status = 'lost', updated_at = now() WHERE status = 'active' AND (ride_id = $1 OR driver_id = $2) AND id <> $3 RETURNING *`,
         [rideId, bid.driver_id, bid.id],
       );
-      await addEvent(tx, rideId, 'accepted', { id: riderId, role: 'rider' }, {
+      await addEvent(tx, rideId, slot ? 'queued' : 'accepted', { id: riderId, role: 'rider' }, {
+        ...(slot ? { behind_ride_id: slot.current.id, remaining_m: slot.remaining_m } : {}),
         bid_id: bid.id, driver_id: bid.driver_id, price: bid.price, kind: bid.kind, eta_s: bid.eta_s, promised_eta_s: bid.promised_eta_s,
+        ...(opts.longEtaConfirmed ? { long_eta_confirmed: true } : {}),
       });
       const r2 = (await getRide(tx, rideId))!;
       const extra: OutboxMessage[] = [
         { topic: 'realtime', payload: { target: { cityDrivers: r.city_id }, event: 'ride:request_closed', data: { id: rideId, reason: 'taken' } } },
-        { topic: 'push', payload: { user_ids: [bid.driver_id], title: 'push_accepted_title', body: 'push_accepted_body', data: { type: 'ride_accepted', ride_id: rideId }, channel: 'ride_updates' } },
+        slot
+          ? { topic: 'push', payload: { user_ids: [bid.driver_id], title: 'push_queued_title', body: 'push_queued_body', data: { type: 'ride_queued', ride_id: rideId }, channel: 'ride_updates' } }
+          : { topic: 'push', payload: { user_ids: [bid.driver_id], title: 'push_accepted_title', body: 'push_accepted_body', data: { type: 'ride_accepted', ride_id: rideId }, channel: 'ride_updates' } },
         ...lost.map((b) => ({ topic: 'realtime' as const, payload: { target: { user: b.driver_id }, event: 'bid:update', data: { id: b.id, ride_id: b.ride_id, status: 'lost' } } })),
       ];
       // Riders whose offers from this driver just vanished get a refresh hint.
@@ -321,6 +337,11 @@ export async function acceptBid(ctx: AppContext, riderId: string, rideId: string
       return r2;
     });
     if ('busy' in res) throw conflict('DRIVER_BUSY', 'This driver just took another ride. Choose another offer.');
+    if (res.status === 'queued') {
+      const wait = chainRules((await ctx.settings.city(res.city_id)).cancel_rules).max_wait_s;
+      await ctx.scheduler.schedule('ride-queue-timeout', { rideId }, wait * 1000, `ride-queue-timeout-${rideId}`);
+      return rideView(ctx.db, res, { id: riderId, role: 'rider' });
+    }
     await ctx.geo.setAvailable(res.driver_id!, res.city_id, false);
     const lateAfter = driverLateAfterS(await ctx.settings.city(res.city_id));
     if (lateAfter > 0 && res.pickup_due_at) {
@@ -329,7 +350,7 @@ export async function acceptBid(ctx: AppContext, riderId: string, rideId: string
     return rideView(ctx.db, res, { id: riderId, role: 'rider' });
   } catch (e: any) {
     if (e.code === '40P01') throw conflict('RETRY', 'Please try again.');
-    if (e.code === '23505' && e.constraint === 'rides_one_active_per_driver') {
+    if (e.code === '23505' && (e.constraint === 'rides_one_active_per_driver' || e.constraint === 'rides_one_queued_per_driver')) {
       await ctx.db.query(`UPDATE bids SET status = 'lost', updated_at = now() WHERE id = $1 AND status = 'active'`, [bidId]);
       throw conflict('DRIVER_BUSY', 'This driver just took another ride. Choose another offer.');
     }
@@ -361,11 +382,12 @@ async function riderCancelCount(q: Queryable, riderId: string, days: number): Pr
 export async function cancelByRider(ctx: AppContext, riderId: string, rideId: string, reason: CancelReason) {
   const res = await withTx(ctx.db, async (tx) => {
     const r = await loadOwnRide(tx, rideId, riderId, 'rider');
-    if (!['searching', 'accepted', 'arrived'].includes(r.status)) throw conflict('CANNOT_CANCEL', r.status === 'in_progress' ? 'The trip has started. Use SOS if you are in danger.' : 'This ride is already finished.');
+    if (!['searching', 'queued', 'accepted', 'arrived'].includes(r.status)) throw conflict('CANNOT_CANCEL', r.status === 'in_progress' ? 'The trip has started. Use SOS if you are in danger.' : 'This ride is already finished.');
     // "Find a new driver" after the late prompt (D67): only while the driver is late, never counted for the rider.
     const late = reason === 'driver_late';
     if (late && !(r.status === 'accepted' && r.driver_late_at)) throw conflict('DRIVER_NOT_LATE', 'Your driver is not late. You can still cancel with another reason.');
-    const counted = r.status !== 'searching' && reason !== 'car_mismatch' && !late;
+    // A queued ride (D88) is cancelled for free: the driver has not started towards the rider.
+    const counted = r.status !== 'searching' && r.status !== 'queued' && reason !== 'car_mismatch' && !late;
     const free = r.status !== 'arrived';
     await tx.query(
       `UPDATE rides SET status = 'cancelled', cancelled_by = 'rider', cancel_reason = $2, cancelled_at = now(), rider_cancel_counted = $3, updated_at = now() WHERE id = $1`,
@@ -393,7 +415,9 @@ export async function cancelByRider(ctx: AppContext, riderId: string, rideId: st
     await notifyRideUpdate(tx, r2, extra);
     return { r2, prevDriver: r.driver_id };
   });
-  if (res.prevDriver) await ctx.geo.setAvailable(res.prevDriver, res.r2.city_id, true);
+  if (res.prevDriver && !(await one(ctx.db, `SELECT 1 FROM rides WHERE driver_id = $1 AND status IN ('accepted','arrived','in_progress')`, [res.prevDriver]))) {
+    await ctx.geo.setAvailable(res.prevDriver, res.r2.city_id, true);
+  }
   const city = await ctx.settings.city(res.r2.city_id);
   const rules = city.cancel_rules;
   const n = await riderCancelCount(ctx.db, riderId, rules.rider_window_days ?? 7);
@@ -421,10 +445,16 @@ export async function placeBid(ctx: AppContext, driverId: string, rideId: string
   if (driverCity?.city_id !== r0.city_id) throw notFound('RIDE_NOT_FOUND');
   const subProblem = await subscriptionProblem(ctx, ctx.db, driverId, city);
   if (subProblem) throw new AppError(402, subProblem.code, subProblem.message);
-  const loc = await ctx.geo.get(driverId);
   const pickup = { lat: r0.pickup_lat, lng: r0.pickup_lng };
+  // Near the end of a trip (D88): the offer is measured from that trip's destination, remaining time included.
+  const slot = await chainSlot(ctx, ctx.db, driverId);
+  const loc = slot ? slot.from : await ctx.geo.get(driverId);
   if (loc && haversineM(loc, pickup) > city.search_radius_km * 1000 * 1.5) throw unprocessable('TOO_FAR', 'You are too far from the pickup point.');
   const eta = loc ? await ctx.router.route(loc, pickup) : { distance_m: 0, duration_s: 0 };
+  if (slot) {
+    const rest = await ctx.router.route(await ctx.geo.get(driverId) ?? slot.from, slot.from);
+    eta.duration_s += rest.duration_s;
+  }
   const promisedS = input.eta_min ? input.eta_min * 60 : null;
   if (promisedS !== null && promisedS < eta.duration_s * ETA_PROMISE_MIN_RATIO) {
     const minMinutes = Math.ceil((eta.duration_s * ETA_PROMISE_MIN_RATIO) / 60);
@@ -441,8 +471,11 @@ export async function placeBid(ctx: AppContext, driverId: string, rideId: string
       // A driver on a ride makes no new offers (REA P3 #20). KEY SHARE waits for an acceptance in flight (it holds the
       // driver row FOR UPDATE, lock order ride → driver as there), so a bid can't slip in next to a fresh acceptance.
       await tx.query('SELECT 1 FROM drivers WHERE user_id = $1 FOR KEY SHARE', [driverId]);
-      const busy = await one(tx, `SELECT 1 FROM rides WHERE driver_id = $1 AND status IN ('accepted','arrived','in_progress')`, [driverId]);
-      if (busy) throw conflict('ON_ANOTHER_RIDE', 'Finish your current ride before making a new offer.');
+      const busy = await one<{ id: string; status: string }>(tx, `SELECT id, status FROM rides WHERE driver_id = $1 AND status IN ('accepted','arrived','in_progress')`, [driverId]);
+      // Allowed only in the chain window checked above, re-checked under the lock (D88).
+      if (busy && !(slot && busy.id === slot.current.id && (await chainSlot(ctx, tx, driverId)))) {
+        throw conflict('ON_ANOTHER_RIDE', 'Finish your current ride before making a new offer.');
+      }
       const prior = await many<{ status: string }>(tx, 'SELECT status FROM bids WHERE ride_id = $1 AND driver_id = $2', [rideId, driverId]);
       if (prior.some((p) => p.status === 'declined')) throw conflict('BID_DECLINED_BEFORE', 'The rider declined your offer for this ride.');
       if (prior.length >= (rules.max_bids_per_driver ?? 3)) throw conflict('TOO_MANY_BIDS', 'You already made the maximum number of offers on this ride.');
@@ -606,19 +639,47 @@ export async function startTrip(ctx: AppContext, driverId: string, rideId: strin
 }
 
 export async function completeTrip(ctx: AppContext, driverId: string, rideId: string) {
-  const r2 = await driverStep(ctx, driverId, rideId, 'in_progress', 'completed', 'completed_at = now()', 'completed', (r3) => [
-    { topic: 'push', payload: { user_ids: [r3.rider_id], title: 'push_trip_completed_title', body: 'push_trip_completed_body', vars: { price: (r3.final_price ?? r3.offered_price) + r3.waiting_fee }, data: { type: 'trip_completed', ride_id: r3.id }, channel: 'ride_updates', tag: liveTag(r3.id) } },
-  ]);
-  await ctx.geo.setAvailable(driverId, r2.city_id, true);
+  const out = await withTx(ctx.db, async (tx) => {
+    const r = await loadOwnRide(tx, rideId, driverId, 'driver');
+    // Serialised with acceptances of this driver (lock order ride → driver, as in acceptBid): a request queued behind
+    // this trip is either committed before (and promoted below) or sees the driver free (D88).
+    await tx.query('SELECT 1 FROM drivers WHERE user_id = $1 FOR UPDATE', [driverId]);
+    const upd = await one(tx, `UPDATE rides SET status = 'completed', completed_at = now(), updated_at = now() WHERE id = $1 AND driver_id = $2 AND status = 'in_progress' RETURNING id`, [rideId, driverId]);
+    if (!upd) throw conflict('INVALID_STATE', `This ride is ${r.status}.`, { status: r.status });
+    await addEvent(tx, rideId, 'completed', { id: driverId, role: 'driver' });
+    const r2 = (await getRide(tx, rideId))!;
+    await notifyRideUpdate(tx, r2, [
+      { topic: 'push', payload: { user_ids: [r2.rider_id], title: 'push_trip_completed_title', body: 'push_trip_completed_body', vars: { price: (r2.final_price ?? r2.offered_price) + r2.waiting_fee }, data: { type: 'trip_completed', ride_id: r2.id }, channel: 'ride_updates', tag: liveTag(r2.id) } },
+    ]);
+    const next = await promoteQueued(ctx, tx, driverId, { lat: r2.dropoff_lat, lng: r2.dropoff_lng });
+    return { r2, next };
+  }).catch((e) => {
+    if (e.code === '40P01') throw conflict('RETRY', 'Please try again.');
+    throw e;
+  });
+  const { r2, next } = out;
+  if (next) await afterPromotion(ctx, next);
+  else await ctx.geo.setAvailable(driverId, r2.city_id, true);
   await ctx.db.query(`UPDATE trip_shares SET expires_at = now() + interval '1 hour' WHERE ride_id = $1`, [rideId]);
+  // Speeding check on the recorded route (D83); the sweeper catches a lost job.
+  await ctx.scheduler.schedule('ride-speeding', { rideId }, 5000, `ride-speeding-${rideId}`);
   return rideView(ctx.db, r2, { id: driverId, role: 'driver' });
+}
+
+/** After a queued ride became `accepted` (D88): the driver stays busy and the late timer starts (D67). */
+export async function afterPromotion(ctx: AppContext, next: RideRow) {
+  await ctx.geo.setAvailable(next.driver_id!, next.city_id, false);
+  const lateAfter = driverLateAfterS(await ctx.settings.city(next.city_id));
+  if (lateAfter > 0 && next.pickup_due_at) {
+    await ctx.scheduler.schedule('ride-late', { rideId: next.id }, new Date(next.pickup_due_at).getTime() - Date.now() + lateAfter * 1000, `ride-late-${next.id}`);
+  }
 }
 
 export async function cancelByDriver(ctx: AppContext, driverId: string, rideId: string, reason: CancelReason) {
   const city = await ctx.settings.city((await loadOwnRide(ctx.db, rideId, driverId, 'driver', false)).city_id);
   const res = await withTx(ctx.db, async (tx) => {
     const r = await loadOwnRide(tx, rideId, driverId, 'driver');
-    if (!['accepted', 'arrived'].includes(r.status)) throw conflict('CANNOT_CANCEL', 'This ride cannot be cancelled now.');
+    if (!['queued', 'accepted', 'arrived'].includes(r.status)) throw conflict('CANNOT_CANCEL', 'This ride cannot be cancelled now.');
     const rules = city.cancel_rules;
     const waited = r.arrived_at ? (Date.now() - new Date(r.arrived_at).getTime()) / 1000 : 0;
     const noShow = r.status === 'arrived' && reason === 'rider_no_show' && waited >= (rules.no_show_wait_s ?? 300);
@@ -650,7 +711,10 @@ export async function cancelByDriver(ctx: AppContext, driverId: string, rideId: 
     return { r2, penalty: !noShow, blockedUntil };
   });
   if (res.blockedUntil) await ctx.geo.remove(driverId, res.r2.city_id);
-  else await ctx.geo.setAvailable(driverId, res.r2.city_id, true);
+  // Dropping a queued next ride (D88) leaves the driver on the current trip.
+  else if (!(await one(ctx.db, `SELECT 1 FROM rides WHERE driver_id = $1 AND status IN ('accepted','arrived','in_progress')`, [driverId]))) {
+    await ctx.geo.setAvailable(driverId, res.r2.city_id, true);
+  }
   return { ride: await rideView(ctx.db, res.r2, { id: driverId, role: 'driver' }), penalty: res.penalty, blocked_until: res.blockedUntil };
 }
 
@@ -703,12 +767,15 @@ export async function offersFor(ctx: AppContext, riderId: string, rideId: string
 
 export async function activeFor(ctx: AppContext, user: { id: string; role: string }) {
   const col = user.role === 'driver' ? 'driver_id' : 'rider_id';
-  const statuses = user.role === 'driver' ? ['accepted', 'arrived', 'in_progress'] : ['searching', 'accepted', 'arrived', 'in_progress'];
+  const statuses = user.role === 'driver' ? ['accepted', 'arrived', 'in_progress'] : ['searching', 'queued', 'accepted', 'arrived', 'in_progress'];
   const row = await one<{ id: string }>(ctx.db, `SELECT id FROM rides WHERE ${col} = $1 AND status = ANY($2) LIMIT 1`, [user.id, statuses]);
   const ride = row ? await rideView(ctx.db, (await getRide(ctx.db, row.id))!, user) : null;
   const out: any = { ride };
   if (ride && ride.status === 'searching') out.offers = (await offersFor(ctx, user.id, ride.id)).offers;
   if (user.role === 'driver') {
+    // The next ride waiting behind the current trip (D88).
+    const queued = await one<{ id: string }>(ctx.db, `SELECT id FROM rides WHERE driver_id = $1 AND status = 'queued'`, [user.id]);
+    out.queued_ride = queued ? await rideView(ctx.db, (await getRide(ctx.db, queued.id))!, user) : null;
     const bids = await many<BidRow>(ctx.db, `SELECT * FROM bids WHERE driver_id = $1 AND status = 'active' AND expires_at > now()`, [user.id]);
     out.pending_bids = await Promise.all(bids.map((b) => bidView(ctx.db, b)));
   }
@@ -830,7 +897,7 @@ export async function markDriverLate(ctx: AppContext, rideId: string): Promise<b
 }
 
 /** Safety net if Redis lost delayed jobs: expires everything overdue. */
-export async function sweepTimeouts(ctx: AppContext): Promise<{ rides: number; bids: number; waves: number; late: number }> {
+export async function sweepTimeouts(ctx: AppContext): Promise<{ rides: number; bids: number; waves: number; late: number; queued: number }> {
   const rides = await many<{ id: string }>(ctx.db, `SELECT id FROM rides WHERE status = 'searching' AND expires_at <= now() LIMIT 500`);
   const bids = await many<{ id: string }>(ctx.db, `SELECT id FROM bids WHERE status = 'active' AND expires_at <= now() LIMIT 2000`);
   let nr = 0;
@@ -855,5 +922,9 @@ export async function sweepTimeouts(ctx: AppContext): Promise<{ rides: number; b
   let nl = 0;
   const due = await many<{ id: string }>(ctx.db, `SELECT id FROM rides WHERE status = 'accepted' AND driver_late_at IS NULL AND pickup_due_at < now() LIMIT 500`);
   for (const r of due) if (await markDriverLate(ctx, r.id)) nl++;
-  return { rides: nr, bids: nb, waves: nw, late: nl };
+  // Queued rides whose timeout job was lost (D88).
+  let nq = 0;
+  const stale = await many<{ id: string; city_id: string }>(ctx.db, `SELECT id, city_id FROM rides WHERE status = 'queued' AND queued_at < now() - interval '2 minutes' LIMIT 200`);
+  for (const r of stale) if (await expireQueued(ctx, r.id)) nq++;
+  return { rides: nr, bids: nb, waves: nw, late: nl, queued: nq };
 }

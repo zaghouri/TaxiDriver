@@ -471,6 +471,37 @@ void main() {
       expect(h.c.phase, RiderPhase.searching);
     });
 
+    test('ask the drivers who offered again (D84): expired → a new request in one tap', () async {
+      await h.searching();
+      Ride withAsk(String status, {String id = 'ride-1'}) =>
+          Ride.fromJson({...rideJson(id: id, status: status), 'renotify': {'drivers': 2, 'left': 3, 'wait_s': 0}});
+      h.rt.rideUpdate.add(withAsk('expired'));
+      expect(h.c.phase, RiderPhase.expired);
+      expect(h.c.renotify?.drivers, 2);
+      h.api.onRenotify = (id) async => (ride: mkRide(id: 'ride-2'), created: true, askedAgain: 1);
+      expect(await h.c.askDriversAgain(), isTrue);
+      expect(h.api.calls, contains('renotify:ride-1'));
+      expect(h.c.phase, RiderPhase.searching);
+      expect(h.c.ride?.id, 'ride-2');
+      expect(h.c.askedAgain, 1);
+    });
+
+    test('ask again while searching keeps the request; errors are shown', () async {
+      await h.searching();
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'searching'), 'renotify': {'drivers': 3, 'left': 1}}));
+      expect(h.c.renotify?.drivers, 3);
+      expect(await h.c.askDriversAgain(), isTrue);
+      expect(h.c.askedAgain, 2);
+      expect(h.c.phase, RiderPhase.searching);
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'searching'), 'renotify': {'drivers': 3, 'left': 1}}));
+      h.api.onRenotify = (_) async => throw const ApiException('RENOTIFY_TOO_SOON', 'wait', status: 429);
+      expect(await h.c.askDriversAgain(), isFalse);
+      expect((h.c.error as ApiException).code, 'RENOTIFY_TOO_SOON');
+      // Used up: no button.
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'searching'), 'renotify': {'drivers': 3, 'left': 0}}));
+      expect(h.c.renotify, isNull);
+    });
+
     test('countdown reaching zero triggers a sync', () {
       fakeAsync((async) {
         h.c.start();

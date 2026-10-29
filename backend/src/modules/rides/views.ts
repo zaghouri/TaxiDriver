@@ -2,9 +2,11 @@ import type { Queryable } from '../../db/pool.js';
 import { many, one } from '../../db/pool.js';
 import { effectiveRating, firstName } from '../users.js';
 import { waitingRules } from './waiting.js';
+import { speedRules } from './speed-rules.js';
+import { renotifyInfo } from './renotify-info.js';
 
 export const ACTIVE_STATUSES = ['accepted', 'arrived', 'in_progress'] as const;
-export type RideStatus = 'searching' | 'accepted' | 'arrived' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
+export type RideStatus = 'searching' | 'queued' | 'accepted' | 'arrived' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
 
 export const RIDE_COLUMNS = `r.id, r.city_id, r.rider_id, r.driver_id, r.status,
   ST_Y(r.pickup::geometry) AS pickup_lat, ST_X(r.pickup::geometry) AS pickup_lng, r.pickup_address,
@@ -12,7 +14,8 @@ export const RIDE_COLUMNS = `r.id, r.city_id, r.rider_id, r.driver_id, r.status,
   r.distance_m, r.duration_s, r.suggested_price, r.offered_price, r.final_price, r.accepted_bid_id, r.vehicle_id,
   r.pickup_pin, r.pin_attempts, r.rider_comment, r.flagged, r.cancelled_by, r.cancel_reason,
   r.requested_at, r.expires_at, r.accepted_at, r.arrived_at, r.started_at, r.completed_at, r.cancelled_at,
-  r.search_wave, r.search_radius_m, r.drivers_notified, r.pickup_edited_at, r.pickup_due_at, r.eta_promised, r.arrived_late_s, r.driver_late_at, r.waiting_s, r.waiting_fee`;
+  r.search_wave, r.search_radius_m, r.drivers_notified, r.pickup_edited_at, r.pickup_due_at, r.eta_promised, r.arrived_late_s, r.driver_late_at, r.waiting_s, r.waiting_fee,
+  r.queued_at, r.queued_behind`;
 
 export interface RideRow {
   id: string;
@@ -56,6 +59,8 @@ export interface RideRow {
   driver_late_at: Date | null;
   waiting_s: number | null;
   waiting_fee: number;
+  queued_at: Date | null;
+  queued_behind: string | null;
 }
 
 export async function getRide(q: Queryable, id: string, lock = false): Promise<RideRow | null> {
@@ -118,6 +123,12 @@ export async function vehicleCard(q: Queryable, vehicleId: string | null, driver
   return withPlate ? v : { make: v.make, model: v.model, year: v.year, colour: v.colour };
 }
 
+/** Arrival time from which the rider confirms an offer (D85): `cancel_rules.long_eta_confirm_min`, default 10 min, 0 = off. */
+export function longEtaS(rules: Record<string, any> | null | undefined): number {
+  const m = rules?.long_eta_confirm_min;
+  return typeof m === 'number' && Number.isFinite(m) && m >= 0 ? Math.round(m * 60) : 600;
+}
+
 /** What a participant (or admin) sees about a ride. The pickup PIN goes to the rider only. */
 export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; role: string }) {
   const isRider = viewer.id === r.rider_id;
@@ -150,7 +161,7 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
     cancelled_by: r.cancelled_by,
     cancel_reason: r.cancel_reason,
   };
-  if ((isRider || isAdmin) && ['accepted', 'arrived'].includes(r.status)) view.pickup_pin = r.pickup_pin;
+  if ((isRider || isAdmin) && ['queued', 'accepted', 'arrived'].includes(r.status)) view.pickup_pin = r.pickup_pin;
   if (r.driver_id) {
     view.driver = await driverCard(q, r.driver_id, r.vehicle_id, true);
   }
@@ -159,7 +170,11 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
     const rated = await one(q, 'SELECT stars FROM ratings WHERE ride_id = $1 AND rater_id = $2', [r.id, viewer.id]);
     view.my_rating = rated?.stars ?? null;
   }
-  if (isRider) view.can_cancel_free = r.status === 'searching' || r.status === 'accepted';
+  if (isRider) view.can_cancel_free = r.status === 'searching' || r.status === 'queued' || r.status === 'accepted';
+  if (r.status === 'queued') {
+    // Accepted by a driver finishing another trip (D88): picked up after it. No live position of the driver meanwhile.
+    view.queued = { queued_at: r.queued_at, estimated_pickup_at: r.pickup_due_at };
+  }
   if (isRider) view.can_edit_pickup = r.status === 'accepted' && !r.pickup_edited_at;
   if (r.pickup_edited_at) view.pickup_edited_at = r.pickup_edited_at;
   if (r.pickup_due_at) {
@@ -176,10 +191,26 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
     const rules = c ? waitingRules(c.cancel_rules) : null;
     if (rules) view.waiting_rules = rules;
   }
+  if (isDriver && r.status === 'in_progress') {
+    // Gentle in-app warning while driving (D83); the same rules flag the ride for admins afterwards.
+    const c = await one<{ cancel_rules: Record<string, any> }>(q, 'SELECT cancel_rules FROM cities WHERE id = $1', [r.city_id]);
+    const rules = speedRules(c?.cancel_rules);
+    if (rules.limit_kmh > 0) view.speed_rules = rules;
+  }
   if (r.driver_late_at) view.driver_late_at = r.driver_late_at;
   if (isRider || isDriver || isAdmin) view.driver_late = r.status === 'accepted' && !!r.driver_late_at;
+  // "Ask these drivers again" (D84): only while it can be used.
+  if (isRider && (r.status === 'searching' || r.status === 'expired')) {
+    const info = await renotifyInfo(q, r);
+    if (info) view.renotify = info;
+  }
   if ((isRider || isAdmin) && r.status === 'searching') {
     view.search = { wave: r.search_wave, radius_m: r.search_radius_m, drivers_notified: r.drivers_notified };
+  }
+  if (isRider && r.status === 'searching') {
+    // Offers arriving later than this ask the rider to confirm before accepting (D85); 0 = never.
+    const c = await one<{ cancel_rules: Record<string, any> }>(q, 'SELECT cancel_rules FROM cities WHERE id = $1', [r.city_id]);
+    view.long_eta_confirm_s = longEtaS(c?.cancel_rules);
   }
   if (isAdmin) {
     view.flagged = r.flagged;

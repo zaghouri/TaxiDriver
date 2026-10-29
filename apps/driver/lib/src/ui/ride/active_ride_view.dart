@@ -7,6 +7,8 @@ import 'package:ridema_core/ridema_core.dart';
 import '../../controller/driver_controller.dart';
 import '../../l10n/driver_strings.dart';
 import '../../platform/navigation.dart';
+import '../home/request_card.dart';
+import '../request_detail_screen.dart';
 import '../widgets.dart';
 import 'pin_keypad.dart';
 
@@ -139,6 +141,12 @@ class _ActiveRideViewState extends State<ActiveRideView> {
     await _doCancel(reason);
   }
 
+  Future<void> _dropNext() async {
+    final ds = context.ds;
+    if (!await confirmDialog(context, message: ds.dropNextConfirm, confirmLabel: ds.yesCancel)) return;
+    await _run(_c.dropQueued);
+  }
+
   Future<void> _noShow() async {
     final ds = context.ds;
     if (!await confirmDialog(context, message: ds.noShowConfirm, confirmLabel: ds.yesCancel)) return;
@@ -262,6 +270,18 @@ class _ActiveRideViewState extends State<ActiveRideView> {
           ),
         ],
       _ => [
+          if (c.speedWarning) ...[
+            InfoBox(ds.slowDown, icon: Icons.speed, color: BrandColors.accent, key: const ValueKey('speed_warning')),
+            gap8,
+          ],
+          // Chain of requests (D88): the next ride, or requests near the destination when the city allows it.
+          if (c.queuedRide != null) ...[
+            NextRideCard(ride: c.queuedRide!, onDrop: _busy ? null : _dropNext),
+            gap8,
+          ] else if (c.nextRequests.isNotEmpty) ...[
+            NextRequestsList(requests: c.nextRequests.take(3).toList()),
+            gap8,
+          ],
           PrimaryButton(key: const ValueKey('complete_button'), label: l.completeTrip, busy: _busy, onPressed: () => _run(_c.completeTrip)),
         ],
     };
@@ -298,6 +318,67 @@ class _ActiveRideViewState extends State<ActiveRideView> {
         ),
       ),
     );
+  }
+}
+
+/// The next ride booked behind this trip (D88).
+class NextRideCard extends StatelessWidget {
+  const NextRideCard({super.key, required this.ride, this.onDrop});
+  final Ride ride;
+  final VoidCallback? onDrop;
+
+  @override
+  Widget build(BuildContext context) {
+    final ds = context.ds;
+    final l = context.l10n;
+    return Card(
+      key: const ValueKey('next_ride_card'),
+      color: BrandColors.primary.withValues(alpha: 0.08),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            const Icon(Icons.queue, color: BrandColors.primary),
+            const SizedBox(width: 8),
+            Expanded(child: Text(ds.nextRideTitle, style: const TextStyle(fontWeight: FontWeight.w700))),
+            Text(l.priceDh(ride.price), style: const TextStyle(fontWeight: FontWeight.w800)),
+          ]),
+          gap8,
+          Text([ride.rider?.firstName, ride.pickup.address].whereType<String>().where((s) => s.isNotEmpty).join(' · ')),
+          Text(ds.nextRideHint, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton(
+              key: const ValueKey('drop_next_ride'),
+              onPressed: onDrop,
+              style: TextButton.styleFrom(foregroundColor: BrandColors.danger),
+              child: Text(ds.dropNextRide),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Requests near the destination while finishing a trip (D88): tap to offer as usual.
+class NextRequestsList extends StatelessWidget {
+  const NextRequestsList({super.key, required this.requests});
+  final List<RideRequest> requests;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.watch<DriverController>();
+    return Column(key: const ValueKey('next_requests'), crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Text(context.ds.nextRequestsTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
+      for (final r in requests)
+        RequestCard(
+          request: r,
+          myBid: c.bidFor(r.id),
+          now: () => c.now,
+          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => RequestDetailScreen(rideId: r.id))),
+        ),
+    ]);
   }
 }
 

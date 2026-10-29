@@ -5,6 +5,7 @@ import { many } from '../../db/pool.js';
 import { latLng, parse, place, uuid } from '../../lib/validation.js';
 import { MAX_RATING_REASONS } from './rating-reasons.js';
 import * as svc from './service.js';
+import { renotify } from './renotify.js';
 import { getRide, rideView } from './views.js';
 
 const price = z.number().int().positive().max(5000);
@@ -48,6 +49,11 @@ export async function rideRoutes(app: FastifyInstance, ctx: AppContext) {
     return svc.raiseOffer(ctx, req.user!.id, parse(uuid, (req.params as any).id), b.offered_price);
   });
 
+  app.post('/v1/rides/:id/renotify', { config: { auth: 'rider' } }, async (req, reply) => {
+    const out = await renotify(ctx, req.user!.id, parse(uuid, (req.params as any).id));
+    return reply.status(out.created ? 201 : 200).send(out);
+  });
+
   app.post('/v1/rides/:id/pickup', { config: { auth: 'rider' } }, async (req) => {
     const b = parse(latLng.extend({ address: z.string().trim().max(300).optional() }), req.body);
     return svc.editPickup(ctx, req.user!.id, parse(uuid, (req.params as any).id), b);
@@ -55,7 +61,9 @@ export async function rideRoutes(app: FastifyInstance, ctx: AppContext) {
 
   app.post('/v1/rides/:id/bids/:bidId/accept', { config: { auth: 'rider' } }, async (req) => {
     const p = req.params as any;
-    return svc.acceptBid(ctx, req.user!.id, parse(uuid, p.id), parse(uuid, p.bidId));
+    // The rider confirmed a far driver (D85): kept in the trip log.
+    const b = parse(z.object({ long_eta_confirmed: z.boolean().optional() }).optional(), req.body ?? undefined);
+    return svc.acceptBid(ctx, req.user!.id, parse(uuid, p.id), parse(uuid, p.bidId), { longEtaConfirmed: b?.long_eta_confirmed === true });
   });
 
   app.post('/v1/rides/:id/bids/:bidId/decline', { config: { auth: 'rider' } }, async (req) => {

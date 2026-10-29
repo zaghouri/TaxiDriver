@@ -31,7 +31,7 @@ export function Card({ title, actions, children, className }: { title?: ReactNod
 
 const TONE: Record<string, string> = {
   approved: 'ok', active: 'ok', passed: 'ok', verified: 'ok', resolved: 'ok', done: 'ok', completed: 'ok', online: 'ok', on: 'ok',
-  pending: 'warn', open: 'danger', acknowledged: 'warn', searching: 'warn', draft: 'muted', accepted: 'info', arrived: 'info', in_progress: 'info',
+  pending: 'warn', open: 'danger', acknowledged: 'warn', searching: 'warn', queued: 'info', draft: 'muted', accepted: 'info', arrived: 'info', in_progress: 'info',
   rejected: 'danger', suspended: 'danger', failed: 'danger', expired: 'muted', cancelled: 'muted', deleted: 'muted', replaced: 'muted', off: 'muted', flagged: 'danger',
 };
 

@@ -58,6 +58,19 @@ export function nearestLandmark(p: LatLng, locale: Locale) {
   return best;
 }
 
+/** Beyond this, a point is just "in the city": the preview for pending drivers stays at area level (D86). */
+const AREA_MAX_M = 2000;
+
+/** Area-level name of a point: the nearest built-in landmark within 2 km, else null (caller shows the city). */
+export function areaName(p: LatLng, locale: Locale): string | null {
+  let best: { place: (typeof MEKNES_PLACES)[number]; d: number } | null = null;
+  for (const place of MEKNES_PLACES) {
+    const d = haversineM(p, place);
+    if (d <= AREA_MAX_M && (!best || d < best.d)) best = { place, d };
+  }
+  return best ? (locale === 'ar' ? best.place.name_ar : best.place.name) : null;
+}
+
 /**
  * Pickup address for a GPS point without any paid API (D56): street name from the self-hosted OSRM road graph,
  * nearest built-in landmark, and the service city. Cached per ~11 m cell and language.

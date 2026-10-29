@@ -6,6 +6,7 @@ import 'package:ridema_core/ridema_core.dart'
 
 import 'location_throttle.dart';
 import 'ports.dart';
+import 'speed_watch.dart';
 
 /// What the driver is doing right now.
 enum DriverPhase { offline, online, toPickup, arrived, onTrip }
@@ -205,6 +206,11 @@ class DriverController extends ChangeNotifier {
   DriverPosition? get position => _position;
   Ride? get activeRide => _active;
 
+  final SpeedWatch _speed = SpeedWatch();
+
+  /// Show "slow down" on the trip panel (D83).
+  bool get speedWarning => _speed.warning;
+
   /// Completed ride waiting for "collect cash" + rating.
   Ride? get finishedRide => _finished;
   bool get tracking => _posSub != null;
@@ -395,11 +401,17 @@ class DriverController extends ChangeNotifier {
   void _onPosition(DriverPosition p) {
     _position = p;
     foreground.beat();
+    _maybePollNext();
     if (p.mocked) {
       unawaited(_forceOffline('MOCK_LOCATION'));
       return;
     }
-    if (!throttle.shouldSend(p, now)) return;
+    final trip = _active?.status == RideStatus.inProgress ? _active : null;
+    final speedChanged = _speed.update(trip?.speedRules, p.speed, p.timestamp);
+    if (!throttle.shouldSend(p, now)) {
+      if (speedChanged) _notify();
+      return;
+    }
     _notify();
     unawaited(sendPosition(p));
   }
@@ -418,6 +430,56 @@ class DriverController extends ChangeNotifier {
     } on ApiException catch (e) {
       if (e.code == 'MOCK_LOCATION') await _forceOffline('MOCK_LOCATION');
     } catch (_) {}
+  }
+
+  // ------------------------------------------------------- chain of requests (D88)
+
+  Ride? _queued;
+  DateTime? _nextPolledAt;
+
+  /// How often the trip panel asks for requests near the destination while driving.
+  static const nextPollInterval = Duration(seconds: 20);
+
+  /// The next ride booked behind the current trip.
+  Ride? get queuedRide => _queued;
+
+  /// Requests the server offers near the current trip's destination (only in the city's chain window).
+  List<RideRequest> get nextRequests => phase == DriverPhase.onTrip && _queued == null ? requests : const [];
+
+  void _maybePollNext() {
+    if (_active?.status != RideStatus.inProgress || _queued != null) return;
+    final last = _nextPolledAt;
+    if (last != null && now.difference(last) < nextPollInterval) return;
+    _nextPolledAt = now;
+    unawaited(refreshNextRequests());
+  }
+
+  /// `GET /v1/driver/requests` during a trip: empty unless the driver is close to the destination (D88).
+  Future<void> refreshNextRequests() async {
+    try {
+      final list = await api.requests();
+      if (_active?.status != RideStatus.inProgress || _queued != null) return;
+      final ids = list.map((r) => r.id).toSet();
+      _requests.removeWhere((id, _) => !ids.contains(id) && _bids[id]?.isActive != true);
+      for (final r in list.where((r) => !_hidden.contains(r.id))) {
+        _requests[r.id] = r;
+        _receivedAt[r.id] ??= now;
+      }
+      _notify();
+    } catch (_) {}
+  }
+
+  /// Drops the queued next ride; counts like a cancel after accepting (D12).
+  Future<void> dropQueued() async {
+    final q = _queued;
+    if (q == null) return;
+    try {
+      await api.cancelRide(q.id, CancelReason.other);
+    } on ApiException catch (e) {
+      if (e.status != 409 && e.status != 404) throw DriverFailure.from(e);
+    }
+    _queued = null;
+    _notify();
   }
 
   // --------------------------------------------------------------- requests
@@ -512,6 +574,25 @@ class DriverController extends ChangeNotifier {
   }
 
   void _onRideUpdate(Ride r) {
+    // The next ride booked behind the current trip (D88).
+    if (r.status == RideStatus.queued) {
+      final had = _bids.containsKey(r.id);
+      _queued = r;
+      _requests.remove(r.id);
+      _bids.remove(r.id);
+      _notify();
+      if (had) _emit(BidResultEvent(r.id, 'accepted'));
+      return;
+    }
+    if (_queued?.id == r.id) {
+      _queued = null;
+      if (r.status != RideStatus.accepted) {
+        _emit(RideCancelledEvent(r));
+        _notify();
+        return;
+      }
+      // Promoted: the trip before it just ended. Becomes the active ride below (or on the next refresh).
+    }
     final cur = _active;
     if (r.status == RideStatus.accepted || r.status == RideStatus.arrived || r.status == RideStatus.inProgress) {
       if (cur != null && cur.id != r.id) return;
@@ -531,13 +612,16 @@ class DriverController extends ChangeNotifier {
 
   void _setActive(Ride r) {
     final prev = _active;
+    if (prev?.id != r.id || r.status != RideStatus.inProgress) _speed.reset();
     final wasNew = prev == null;
     final hadBid = _bids.containsKey(r.id);
     final pickupMoved = prev != null && prev.id == r.id && (prev.pickup.lat != r.pickup.lat || prev.pickup.lng != r.pickup.lng);
     _active = r;
-    _requests.clear();
-    _receivedAt.clear();
-    _bids.clear();
+    if (wasNew || prev.id != r.id) {
+      _requests.clear();
+      _receivedAt.clear();
+      _bids.clear();
+    }
     unawaited(_syncTracking());
     _notify();
     if (wasNew && hadBid) _emit(BidResultEvent(r.id, 'accepted'));
@@ -555,6 +639,7 @@ class DriverController extends ChangeNotifier {
     try {
       final a = await api.activeRide();
       final r = a.ride;
+      _queued = a.queuedRide;
       if (r != null && r.status.isActive && r.status != RideStatus.searching) {
         _setActive(r);
       } else {
@@ -735,6 +820,12 @@ class DriverController extends ChangeNotifier {
     final r = await _rideCall(() => api.completeTrip(id));
     _active = null;
     _finished = r;
+    _nextPolledAt = null;
+    // A queued next ride (D88) was promoted with this completion: load it (its ride:update may have come first).
+    if (_queued != null) {
+      _queued = null;
+      await refreshActive();
+    }
     await _syncTracking();
     _notify();
   }
@@ -788,6 +879,8 @@ class DriverController extends ChangeNotifier {
     _setOfflineLocally();
     _active = null;
     _finished = null;
+    _queued = null;
+    _nextPolledAt = null;
     _error = null;
     _deviceBlock = null;
     _position = null;

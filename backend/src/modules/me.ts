@@ -13,7 +13,7 @@ import { sniffMime } from './drivers.js';
  * so the other party's history, receipts and dispute records remain valid.
  */
 export async function deleteAccount(ctx: AppContext, userId: string, by: 'self' | 'admin') {
-  const active = await one(ctx.db, `SELECT 1 FROM rides WHERE (rider_id = $1 OR driver_id = $1) AND status IN ('searching','accepted','arrived','in_progress')`, [userId]);
+  const active = await one(ctx.db, `SELECT 1 FROM rides WHERE (rider_id = $1 OR driver_id = $1) AND status IN ('searching','queued','accepted','arrived','in_progress')`, [userId]);
   if (active) throw conflict('ACTIVE_RIDE', 'Finish or cancel your current ride first.');
   const files = await withTx(ctx.db, async (tx) => {
     const u = await getUser(tx, userId);
@@ -34,14 +34,16 @@ export async function deleteAccount(ctx: AppContext, userId: string, by: 'self' 
     await tx.query('DELETE FROM trip_shares WHERE created_by = $1', [userId]);
     await tx.query('DELETE FROM emergency_contacts WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM id_checks WHERE user_id = $1', [userId]);
+    await tx.query('DELETE FROM saved_places WHERE user_id = $1', [userId]);
     await tx.query('UPDATE ratings SET comment = NULL WHERE rater_id = $1', [userId]);
     await tx.query('UPDATE data_requests SET details = NULL WHERE user_id = $1', [userId]);
     await tx.query('UPDATE rides SET rider_comment = NULL, pickup_address = NULL, dropoff_address = NULL WHERE rider_id = $1', [userId]);
     await tx.query('DELETE FROM ride_route_points WHERE ride_id IN (SELECT id FROM rides WHERE rider_id = $1 OR driver_id = $1)', [userId]);
+    await tx.query('DELETE FROM ride_speeding WHERE driver_id = $1', [userId]);
     if (u.role === 'driver') {
       await tx.query('DELETE FROM documents WHERE driver_id = $1', [userId]);
       await tx.query(`UPDATE vehicles SET plate = 'DELETED', active = false WHERE driver_id = $1`, [userId]);
-      await tx.query(`UPDATE drivers SET cin_last4 = NULL, licence_issued_on = NULL, online = false, status = 'rejected', status_reason = 'account deleted' WHERE user_id = $1`, [userId]);
+      await tx.query(`UPDATE drivers SET cin_last4 = NULL, licence_issued_on = NULL, daily_goal = NULL, max_pickup_m = NULL, online = false, status = 'rejected', status_reason = 'account deleted' WHERE user_id = $1`, [userId]);
       await tx.query(`UPDATE bids SET status = 'withdrawn' WHERE driver_id = $1 AND status = 'active'`, [userId]);
     }
     await tx.query(`INSERT INTO data_requests (user_id, kind, status, response, resolved_at) VALUES ($1, 'deletion', 'done', $2, now())`, [userId, `account deleted (${by})`]);
@@ -64,11 +66,13 @@ export async function exportData(ctx: AppContext, userId: string) {
     rides: await q(`SELECT id, status, pickup_address, dropoff_address, ST_AsGeoJSON(pickup)::json AS pickup, ST_AsGeoJSON(dropoff)::json AS dropoff,
       distance_m, offered_price, final_price, requested_at, completed_at, cancelled_at, cancel_reason
       FROM rides WHERE rider_id = $1 OR driver_id = $1 ORDER BY requested_at DESC`),
+    saved_places: await q('SELECT kind, lat, lng, address, updated_at FROM saved_places WHERE user_id = $1 ORDER BY kind'),
     ratings_given: await q('SELECT ride_id, stars, reasons, comment, created_at FROM ratings WHERE rater_id = $1'),
     ratings_received: await q('SELECT ride_id, stars, reasons, created_at FROM ratings WHERE ratee_id = $1'),
-    driver: await one(ctx.db, 'SELECT driver_type, status, cin_last4, licence_issued_on, created_at FROM drivers WHERE user_id = $1', [userId]),
+    driver: await one(ctx.db, 'SELECT driver_type, status, cin_last4, licence_issued_on, max_pickup_m, daily_goal, created_at FROM drivers WHERE user_id = $1', [userId]),
     vehicles: await q('SELECT make, model, year, colour, plate, created_at FROM vehicles WHERE driver_id = $1'),
     documents: await q('SELECT type, status, expires_on, created_at FROM documents WHERE driver_id = $1'),
+    speeding_checks: await q('SELECT ride_id, limit_kmh, threshold_kmh, flagged, max_kmh, episodes, checked_at FROM ride_speeding WHERE driver_id = $1 ORDER BY checked_at DESC'),
     sos_alerts: await q('SELECT ride_id, service, status, created_at FROM sos_alerts WHERE user_id = $1'),
     messages_sent: await q('SELECT ride_id, body, quick, created_at FROM ride_messages WHERE sender_id = $1 ORDER BY created_at'),
     emergency_contacts: await q('SELECT name, phone, created_at FROM emergency_contacts WHERE user_id = $1'),

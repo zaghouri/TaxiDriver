@@ -15,6 +15,7 @@ Each line names where it lives and how it was verified.
 ## Morocco law-ready
 - [x] Consent screens at signup with consent log (timestamp, version, exact text), incl. US transfers (Firebase, Google Maps, WhatsApp) — `consents` table (append-only trigger), signup rejects missing/outdated consents; `auth.test.ts › requires every consent and logs the exact text`
 - [x] Retention period per data type + scheduled automatic deletion — `retention_days` setting (editable in admin), worker job daily 02:30; `drivers.test.ts › retention deletes old data`
+- [x] Rider saved Home / Work addresses (D81): in the data export (`saved_places`), deleted with the account, retention safety net for deleted accounts — `saved-places.test.ts`. Lawyer review: name "saved addresses" in the privacy policy at the next legal-text version (the text was not changed so users are not asked to accept again)
 - [x] In-app data access (export) and correction requests — `GET /v1/me/data-export`, `POST /v1/me/data-requests`, admin resolution; `admin.test.ts › data requests`
 - [x] Partial CIN only; ID documents envelope-encrypted, private storage, every view logged — `cin_last4` (≤4 chars), AES-256-GCM per file + wrapped key, `document_access_log` (append-only); `drivers.test.ts › upload (encrypted) … views logged`, `crypto.test.ts`
 - [x] Prices in DH; terms accepted at signup; trip receipts; company RC/ICE in admin settings and shown in apps — receipts `GET /v1/rides/:id/receipt`, `company` setting exposed in `/v1/app/config` and legal texts; `rides.test.ts`, `admin.test.ts › feature flags and settings`
@@ -32,12 +33,14 @@ Each line names where it lives and how it was verified.
 - [x] Off-app warning in the rider cancel flow; "driver asked me to cancel" flags the ride + report (D58) — `rides.test.ts`, rider widget test
 - [x] Pickup PIN; plate/model/colour before pickup; "car doesn't match" report — `rides.test.ts › full ride lifecycle` (PIN rider-only, wrong PIN refused), reports + free cancel (`admin.test.ts`)
 - [x] Destination shown to driver before accepting; rider rating visible to drivers — `ride:request` payload; `rides.test.ts › sends the request only to eligible nearby drivers, with destination and rider rating`
+- [x] Speeding flag for admins + gentle driver warning (D83): above `speed_limit_kmh` + `speeding_margin_kmh` for `speeding_min_s` (60 + 20 km/h for 30 s by default) on the recorded route → ride flagged, `speeding` event, Speed card in the ride view; summaries follow the route-point retention — `speeding.test.ts`, admin `rides.test.tsx`, driver `speed_watch_test.dart`. Real GPS speeds to check on a phone (PHONE_TEST)
 - [x] Full trip log (state changes + route points) — append-only `ride_events`, `ride_route_points`; `rides.test.ts`, simulator invariants
 
 ## Security and fraud
 - [x] Per-object authorization on every API route (tested) — `rides.test.ts › per-object authorization`, `docs/SECURITY_REVIEW.md` API1
 - [x] Rate limits per account, IP, device; phone codes max 3/day/number; abuse alerts — `http/hooks.ts`, `auth.test.ts › limits codes to 3 per number per day and raises an abuse alert`
 - [~] Mock-location + root detection + Play Integrity (driver app) — server side tested (`drivers.test.ts`); Kotlin `ma.ridema/device_integrity` channel (root, `isMock`, Play Integrity Standard API) + geolocator `isMocked` in apps/driver; device check blocks going online (unit tested); real-device check pending (B16), Play Integrity keys (B11)
+- [~] Chain of requests (D88), **off by default** (`cancel_rules.chain_enabled`): `queued` state outside the one-active-ride index, at most one queued ride per driver (unique index), promotion inside the completion transaction, 15-min queue timeout — `chain.test.ts` (window, flag, queue → promote, two riders racing, completion racing acceptance, cancels, DB indexes), driver/rider app tests; needs the phone run in PHONE_TEST before a city turns it on
 - [x] One active ride per driver (partial unique index); race-safe bid acceptance (409); idempotency keys on every write — `rides.test.ts › race safety` (concurrent accepts), `auth.test.ts › idempotency`
 - [x] Admin: 2FA required, IP allowlist, audit log of every admin action — `admin.test.ts` (TOTP enrolment forced, allowlist incl. spoofed X-Forwarded-For, an audit row asserted for every action)
 - [x] Secrets only in `.env` (gitignored), `.env.example` committed — `.gitignore`; production refuses to boot without keys

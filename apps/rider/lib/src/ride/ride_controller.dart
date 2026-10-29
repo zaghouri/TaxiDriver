@@ -13,6 +13,9 @@ enum RiderPhase {
   /// Request open, offers arriving.
   searching,
 
+  /// Accepted by a driver who is finishing another trip (D88): picked up right after it.
+  queued,
+
   /// 5 minutes passed without an accepted offer: "No driver found".
   expired,
 
@@ -211,17 +214,18 @@ class RideController extends ChangeNotifier {
   String? get visiblePin {
     final pin = _ride?.pickupPin;
     if (pin == null || pin.isEmpty) return null;
-    return _phase == RiderPhase.accepted || _phase == RiderPhase.arrived ? pin : null;
+    return _phase == RiderPhase.queued || _phase == RiderPhase.accepted || _phase == RiderPhase.arrived ? pin : null;
   }
 
   /// Free until the driver taps "I've arrived" (D11).
   bool get cancelIsFree {
-    if (_phase == RiderPhase.searching) return true;
+    if (_phase == RiderPhase.searching || _phase == RiderPhase.queued) return true;
     if (_phase == RiderPhase.accepted) return _ride?.canCancelFree ?? true;
     return false;
   }
 
-  bool get canCancel => _phase == RiderPhase.searching || _phase == RiderPhase.accepted || _phase == RiderPhase.arrived;
+  bool get canCancel =>
+      _phase == RiderPhase.searching || _phase == RiderPhase.queued || _phase == RiderPhase.accepted || _phase == RiderPhase.arrived;
 
   /// ETA in minutes: to pickup while accepted, to the destination on trip.
   int? get etaMinutes {
@@ -256,10 +260,11 @@ class RideController extends ChangeNotifier {
 
   static int _rank(RideStatus s) => switch (s) {
         RideStatus.searching => 0,
-        RideStatus.accepted => 1,
-        RideStatus.arrived => 2,
-        RideStatus.inProgress => 3,
-        RideStatus.completed || RideStatus.cancelled || RideStatus.expired => 4,
+        RideStatus.queued => 1,
+        RideStatus.accepted => 2,
+        RideStatus.arrived => 3,
+        RideStatus.inProgress => 4,
+        RideStatus.completed || RideStatus.cancelled || RideStatus.expired => 5,
         RideStatus.unknown => -1,
       };
 
@@ -446,6 +451,7 @@ class RideController extends ChangeNotifier {
       );
       _bids.clear();
       _offersTotal = 0;
+      _askedAgain = null;
       _driversNotified = res.driversNotified;
       _applyRide(res.ride, offers: const [], force: true);
       return true;
@@ -515,16 +521,24 @@ class RideController extends ChangeNotifier {
       if (_offersTotal > 0) _offersTotal--;
       _notify();
     }
+    // An offer that ran out makes "ask again" possible (D84): the ride view says for how many drivers.
+    if (u.status == 'expired' || u.status == 'outdated') unawaited(sync());
     // Queued offers move up: fetch the new top N.
     unawaited(refreshOffers());
   }
 
+  /// The offer's driver is far (city setting, D85): ask the rider before accepting.
+  bool needsLongEtaConfirm(Bid bid) {
+    final limit = _ride?.longEtaConfirmS ?? 600;
+    return limit > 0 && bid.effectiveEtaS >= limit;
+  }
+
   /// Accepts an offer. On 409 the offer list is refreshed (or the whole ride).
-  Future<bool> acceptOffer(Bid bid) async {
+  Future<bool> acceptOffer(Bid bid, {bool longEtaConfirmed = false}) async {
     final r = _ride;
     if (r == null || _phase != RiderPhase.searching) return false;
     return _act(() async {
-      final updated = await api.acceptBid(r.id, bid.id);
+      final updated = await api.acceptBid(r.id, bid.id, longEtaConfirmed: longEtaConfirmed);
       _acceptedEtaS = bid.etaS;
       _applyRide(updated, force: true);
       return true;
@@ -610,6 +624,40 @@ class RideController extends ChangeNotifier {
     final max = maxFare;
     if (max != null && next > max) next = max;
     return next;
+  }
+
+  // ------------------------------------------------------- ask again (D84)
+
+  /// Drivers whose offers ran out can be asked again (while searching, or just after "No driver found").
+  RenotifyInfo? get renotify {
+    final info = _ride?.renotify;
+    if (info == null || info.left <= 0) return null;
+    return _phase == RiderPhase.searching || _phase == RiderPhase.expired ? info : null;
+  }
+
+  /// How many drivers the last "ask again" reached on the current request (null = not used).
+  int? get askedAgain => _askedAgain;
+  int? _askedAgain;
+
+  /// One tap: pings the drivers who offered. On an expired request the server sends the same request again.
+  Future<bool> askDriversAgain() async {
+    final r = _ride;
+    if (r == null || renotify == null) return false;
+    return _act(() async {
+      final res = await api.renotify(r.id);
+      if (res.created) {
+        _bids.clear();
+        _offersTotal = 0;
+        _applyRide(res.ride, offers: const [], force: true);
+      } else {
+        _applyRide(res.ride);
+      }
+      _askedAgain = res.askedAgain;
+      return true;
+    }, onError: (e) async {
+      if (e.code == 'RIDE_NOT_SEARCHING' || e.code == 'NO_DRIVERS_TO_ASK' || e.code == 'RIDE_ALREADY_ACTIVE') await sync();
+      return false;
+    });
   }
 
   // ------------------------------------------------------------ expired flow
@@ -794,6 +842,10 @@ class RideController extends ChangeNotifier {
         if (offers != null) _replaceBids(offers);
         if (offers != null) _offersTotal = _activeBids().length;
         _startTimers();
+      case RideStatus.queued:
+        _phase = RiderPhase.queued;
+        _bids.clear();
+        _stopTimers();
       case RideStatus.accepted:
         _phase = RiderPhase.accepted;
         _bids.clear();

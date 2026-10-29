@@ -280,8 +280,20 @@ class SearchingPanel extends StatelessWidget {
                 ),
               ],
             ),
-          )
-        else
+          ),
+        if (offers.isEmpty && c.renotify != null)
+          SecondaryButton(
+            key: const ValueKey('ask_again'),
+            label: rs.askAgain(c.renotify!.drivers),
+            icon: Icons.notifications_active_outlined,
+            onPressed: c.busy ? null : c.askDriversAgain,
+          ),
+        if (offers.isEmpty && c.askedAgain != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(rs.askedAgainResult(c.askedAgain!), key: const ValueKey('asked_again'), textAlign: TextAlign.center),
+          ),
+        if (offers.isNotEmpty)
           // Flexible: on small phones (or with longer French/Arabic headers) the list shrinks and scrolls
           // instead of overflowing the sheet.
           Flexible(
@@ -296,7 +308,7 @@ class SearchingPanel extends StatelessWidget {
                       bid: b,
                       progress: c.bidProgress(b),
                       busy: c.busy,
-                      onAccept: () => c.acceptOffer(b),
+                      onAccept: () => acceptWithConfirm(context, c, b),
                       onDecline: () => c.declineOffer(b),
                     ),
                   if (c.hiddenOffers > 0)
@@ -314,6 +326,29 @@ class SearchingPanel extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Accepts [bid], asking first when the driver is far away (D85).
+Future<void> acceptWithConfirm(BuildContext context, RideController c, Bid bid) async {
+  if (!c.needsLongEtaConfirm(bid)) {
+    await c.acceptOffer(bid);
+    return;
+  }
+  final rs = RiderStrings.of(context);
+  final name = bid.driver?.firstName ?? '';
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (d) => AlertDialog(
+      icon: const Icon(Icons.schedule, color: BrandColors.accent),
+      title: Text(rs.longEtaTitle((bid.effectiveEtaS / 60).ceil())),
+      content: Text(rs.longEtaBody(name)),
+      actions: [
+        TextButton(key: const ValueKey('long_eta_keep_looking'), onPressed: () => Navigator.pop(d, false), child: Text(rs.keepLooking)),
+        FilledButton(key: const ValueKey('long_eta_accept'), onPressed: () => Navigator.pop(d, true), child: Text(rs.acceptAnyway)),
+      ],
+    ),
+  );
+  if (ok == true) await c.acceptOffer(bid, longEtaConfirmed: true);
 }
 
 /// "No driver found": try again with the same fare or raise it.
@@ -343,6 +378,16 @@ class ExpiredPanel extends StatelessWidget {
           ErrorBanner(riderErrorText(context, c.error!)),
         ],
         gap16,
+        if (c.renotify != null) ...[
+          PrimaryButton(
+            key: const ValueKey('expired_ask_again'),
+            label: '${rs.askAgain(c.renotify!.drivers)} (${l.priceDh(price)})',
+            icon: Icons.notifications_active_outlined,
+            busy: c.busy,
+            onPressed: c.askDriversAgain,
+          ),
+          gap8,
+        ],
         PrimaryButton(
           key: const ValueKey('expired_raise'),
           label: '${rs.raiseAndRetry} (${l.priceDh(raised)})',
