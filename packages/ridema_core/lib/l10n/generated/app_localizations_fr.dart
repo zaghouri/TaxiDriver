@@ -2218,4 +2218,56 @@ class AppLocalizationsFr extends AppLocalizations {
   String receiptWaitingFee(int minutes) {
     return 'Frais d’attente ($minutes min)';
   }
+
+  @override
+  String get emergencyContactsTitle => 'Contacts d’urgence';
+
+  @override
+  String emergencyContactsInfo(int max) {
+    return 'Si vous appuyez sur SOS pendant une course, nous envoyons à ces personnes un lien pour suivre votre trajet en direct. Jusqu’à $max contacts.';
+  }
+
+  @override
+  String get emergencyContactsEmpty =>
+      'Aucun contact d’urgence pour l’instant.';
+
+  @override
+  String get emergencyContactAdd => 'Ajouter un contact';
+
+  @override
+  String get emergencyContactName => 'Nom';
+
+  @override
+  String get emergencyContactPhone => 'Numéro de téléphone';
+
+  @override
+  String get emergencyContactRemove => 'Retirer';
+
+  @override
+  String get sosContactsTitle => 'Vos contacts d’urgence';
+
+  @override
+  String get sosContactSending => 'Envoi de votre trajet en direct…';
+
+  @override
+  String get sosContactSent => 'Lien du trajet envoyé';
+
+  @override
+  String get sosContactNotSent =>
+      'Pas encore joint. Notre équipe a votre alerte.';
+
+  @override
+  String get errEmergencyContactsLimit =>
+      'Vous pouvez enregistrer jusqu’à 5 contacts d’urgence.';
+
+  @override
+  String get errEmergencyContactExists =>
+      'Ce numéro est déjà dans vos contacts d’urgence.';
+
+  @override
+  String get errEmergencyContactSelf =>
+      'Ajoutez quelqu’un d’autre, pas votre propre numéro.';
+
+  @override
+  String get errContactNotFound => 'Ce contact n’existe plus.';
 }

@@ -321,7 +321,9 @@ export async function adminRoutes(app: FastifyInstance, ctx: AppContext) {
     return many(
       db,
       `SELECT s.id, s.ride_id, s.user_id, u.full_name, u.phone, u.role, s.service, s.status, s.note, ST_Y(s.location::geometry) AS lat, ST_X(s.location::geometry) AS lng,
-              s.created_at, s.acknowledged_at, s.resolved_at
+              s.created_at, s.acknowledged_at, s.resolved_at,
+              COALESCE((SELECT json_agg(json_build_object('name', n.name, 'phone', n.phone, 'status', n.status, 'error', n.error) ORDER BY n.position)
+                        FROM sos_contact_notifications n WHERE n.sos_id = s.id), '[]') AS contacts
        FROM sos_alerts s JOIN users u ON u.id = s.user_id WHERE ($1::text IS NULL OR s.status = $1) ORDER BY s.created_at DESC LIMIT 200`,
       [q.status ?? null],
     );

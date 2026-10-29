@@ -1,11 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AppContext } from '../context.js';
-import { one, withTx } from '../db/pool.js';
+import { many, one, withTx } from '../db/pool.js';
 import { randomToken } from '../lib/crypto.js';
 import { conflict, notFound } from '../lib/errors.js';
 import { latLng, moroccanPhone, normalizeMoroccanPhone, parse, uuid } from '../lib/validation.js';
-import { enqueue } from '../core/outbox.js';
+import { enqueue, enqueueMany } from '../core/outbox.js';
 import { addEvent } from './rides/service.js';
 import { getRide, personCard, vehicleCard } from './rides/views.js';
 
@@ -56,7 +56,22 @@ export async function safetyRoutes(app: FastifyInstance, ctx: AppContext) {
       );
       await tx.query('UPDATE rides SET flagged = true WHERE id = $1', [r.id]);
       await addEvent(tx, r.id, 'sos', { id: req.user!.id, role: req.user!.role }, { service: b.service, lat: b.lat, lng: b.lng, sos_id: row!.id });
-      const data = { id: row!.id, ride_id: r.id, user_id: req.user!.id, role: req.user!.role, service: b.service, lat: b.lat, lng: b.lng, created_at: row!.created_at };
+      // Saved emergency contacts get the live trip link (D71): reuse the user's share link for this ride, or make one.
+      const contacts = await many<{ name: string; phone: string }>(tx, 'SELECT name, phone FROM emergency_contacts WHERE user_id = $1 ORDER BY created_at', [req.user!.id]);
+      if (contacts.length) {
+        const share = await one(tx, 'SELECT 1 FROM trip_shares WHERE ride_id = $1 AND created_by = $2', [r.id, req.user!.id]);
+        if (share) await tx.query(`UPDATE trip_shares SET expires_at = NULL WHERE ride_id = $1 AND created_by = $2`, [r.id, req.user!.id]);
+        else await tx.query('INSERT INTO trip_shares (ride_id, created_by, token, contacts) VALUES ($1,$2,$3,$4)', [r.id, req.user!.id, randomToken(18), JSON.stringify(contacts)]);
+        const ns = await many<{ id: string }>(
+          tx,
+          `INSERT INTO sos_contact_notifications (sos_id, position, name, phone)
+           SELECT $1, c.pos, c.name, c.phone FROM unnest($2::text[], $3::text[]) WITH ORDINALITY AS c(name, phone, pos) RETURNING id`,
+          [row!.id, contacts.map((c) => c.name), contacts.map((c) => c.phone)],
+        );
+        await enqueueMany(tx, ns.map((n) => ({ topic: 'emergency_contact' as const, payload: { notification_id: n.id } })));
+        await addEvent(tx, r.id, 'sos_contacts', { role: 'system' }, { sos_id: row!.id, contacts: contacts.length });
+      }
+      const data = { id: row!.id, ride_id: r.id, user_id: req.user!.id, role: req.user!.role, service: b.service, lat: b.lat, lng: b.lng, created_at: row!.created_at, contacts: contacts.length };
       await enqueue(tx, { topic: 'realtime', payload: { target: { admins: true }, event: 'sos:new', data } });
       if (company?.support_email) {
         await enqueue(tx, { topic: 'email', payload: { to: company.support_email, subject: `SOS ${b.service} — ride ${r.id.slice(0, 8)}`, text: `SOS from ${req.user!.role} at ${b.lat},${b.lng}. Open the admin panel: ${ctx.cfg.publicBaseUrl}/admin/#/sos/${row!.id}` } });
@@ -65,7 +80,17 @@ export async function safetyRoutes(app: FastifyInstance, ctx: AppContext) {
     });
     // Also emit right away: an SOS must not wait for the dispatcher tick.
     ctx.realtime.emit({ admins: true }, 'sos:new', sos);
-    return reply.status(201).send({ sos_id: sos.id, call: numbers[b.service] });
+    return reply.status(201).send({ sos_id: sos.id, call: numbers[b.service], contacts: await sosContacts(sos.id) });
+  });
+
+  /** Who was told about this SOS and how far it got (D71). */
+  const sosContacts = (sosId: string) =>
+    many(db, 'SELECT name, phone, status, sent_at FROM sos_contact_notifications WHERE sos_id = $1 ORDER BY position', [sosId]);
+
+  app.get('/v1/sos/:id', { config: { auth: 'user' } }, async (req) => {
+    const s = await one<{ id: string; status: string }>(db, 'SELECT id, status FROM sos_alerts WHERE id = $1 AND user_id = $2', [parse(uuid, (req.params as any).id), req.user!.id]);
+    if (!s) throw notFound('SOS_NOT_FOUND');
+    return { id: s.id, status: s.status, contacts: await sosContacts(s.id) };
   });
 
   app.post('/v1/sos/:id/location', { config: { auth: 'user', idempotent: false } }, async (req) => {

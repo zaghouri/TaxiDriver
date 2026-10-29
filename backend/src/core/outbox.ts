@@ -1,14 +1,16 @@
 import pg from 'pg';
 import type { Db, Queryable } from '../db/pool.js';
-import { many, withTx } from '../db/pool.js';
+import { many, one, withTx } from '../db/pool.js';
 import type { Realtime, Target } from './realtime.js';
 import type { PushProvider } from '../providers/push.js';
 import type { EmailProvider } from '../providers/email.js';
+import type { OtpChannel } from '../providers/otp.js';
 import { msg, type Locale, type MsgKey } from '../i18n.js';
 import type { Logger } from '../logger.js';
 
 export type OutboxMessage =
   | { topic: 'realtime'; payload: { target: Target; event: string; data: unknown } }
+  | { topic: 'emergency_contact'; payload: { notification_id: string } }
   | { topic: 'push'; payload: { user_ids: string[]; title: MsgKey; body: MsgKey; vars?: Record<string, string | number>; data?: Record<string, string>; channel?: string; tag?: string } }
   | { topic: 'email'; payload: { to: string; subject: string; text: string } };
 
@@ -36,7 +38,7 @@ export class OutboxDispatcher {
   private stopped = false;
 
   constructor(
-    private deps: { db: Db; databaseUrl: string; realtime: Realtime; push: PushProvider; email: EmailProvider; log: Logger },
+    private deps: { db: Db; databaseUrl: string; realtime: Realtime; push: PushProvider; email: EmailProvider; log: Logger; otp?: OtpChannel; publicBaseUrl?: string },
   ) {}
 
   /** Delivers up to `limit` pending messages. Safe to run on several instances (SKIP LOCKED). */
@@ -80,6 +82,25 @@ export class OutboxDispatcher {
     }
     if (topic === 'email') {
       await this.deps.email.send({ to: p.to, subject: p.subject, text: p.text });
+      return;
+    }
+    if (topic === 'emergency_contact') {
+      // SOS alert to one saved emergency contact (D71); the row keeps the status for the app and the admin view.
+      const n = await one<{ id: string; phone: string; from_name: string; token: string | null; locale: Locale }>(
+        tx,
+        `SELECT n.id, n.phone, split_part(u.full_name, ' ', 1) AS from_name, u.locale,
+           (SELECT token FROM trip_shares t WHERE t.ride_id = s.ride_id AND t.created_by = s.user_id ORDER BY t.created_at DESC LIMIT 1) AS token
+         FROM sos_contact_notifications n JOIN sos_alerts s ON s.id = n.sos_id JOIN users u ON u.id = s.user_id WHERE n.id = $1`,
+        [p.notification_id],
+      );
+      if (!n || !this.deps.otp) return;
+      try {
+        const status = await this.deps.otp.sendEmergency(n.phone, { from: n.from_name, url: `${this.deps.publicBaseUrl ?? ''}/s/${n.token ?? ''}` }, n.locale);
+        await tx.query(`UPDATE sos_contact_notifications SET status = $2, channel = $3, error = NULL, sent_at = now() WHERE id = $1`, [n.id, status, this.deps.otp.name]);
+      } catch (e) {
+        await tx.query(`UPDATE sos_contact_notifications SET status = 'failed', channel = $2, error = $3 WHERE id = $1`, [n.id, this.deps.otp.name, String((e as Error).message).slice(0, 300)]);
+        throw e;
+      }
       return;
     }
     if (topic === 'push') {

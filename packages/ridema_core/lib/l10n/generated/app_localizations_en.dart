@@ -2187,4 +2187,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String receiptWaitingFee(int minutes) {
     return 'Waiting fee ($minutes min)';
   }
+
+  @override
+  String get emergencyContactsTitle => 'Emergency contacts';
+
+  @override
+  String emergencyContactsInfo(int max) {
+    return 'If you press SOS during a ride, we send these people a link to follow your trip live. Up to $max contacts.';
+  }
+
+  @override
+  String get emergencyContactsEmpty => 'No emergency contact yet.';
+
+  @override
+  String get emergencyContactAdd => 'Add a contact';
+
+  @override
+  String get emergencyContactName => 'Name';
+
+  @override
+  String get emergencyContactPhone => 'Phone number';
+
+  @override
+  String get emergencyContactRemove => 'Remove';
+
+  @override
+  String get sosContactsTitle => 'Your emergency contacts';
+
+  @override
+  String get sosContactSending => 'Sending your live trip…';
+
+  @override
+  String get sosContactSent => 'Live trip link sent';
+
+  @override
+  String get sosContactNotSent => 'Not reached yet. Our team has your alert.';
+
+  @override
+  String get errEmergencyContactsLimit =>
+      'You can save up to 5 emergency contacts.';
+
+  @override
+  String get errEmergencyContactExists =>
+      'This number is already in your emergency contacts.';
+
+  @override
+  String get errEmergencyContactSelf =>
+      'Add someone else, not your own number.';
+
+  @override
+  String get errContactNotFound => 'This contact no longer exists.';
 }

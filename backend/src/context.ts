@@ -61,7 +61,7 @@ export function createContext(cfg: Config, o: ContextOverrides = {}): AppContext
   const otp =
     o.otp ??
     (cfg.OTP_CHANNEL === 'whatsapp' && cfg.WHATSAPP_ACCESS_TOKEN
-      ? new WhatsAppOtpChannel({ phoneNumberId: cfg.WHATSAPP_PHONE_NUMBER_ID, token: cfg.WHATSAPP_ACCESS_TOKEN, template: cfg.WHATSAPP_OTP_TEMPLATE, apiVersion: cfg.WHATSAPP_API_VERSION })
+      ? new WhatsAppOtpChannel({ phoneNumberId: cfg.WHATSAPP_PHONE_NUMBER_ID, token: cfg.WHATSAPP_ACCESS_TOKEN, template: cfg.WHATSAPP_OTP_TEMPLATE, apiVersion: cfg.WHATSAPP_API_VERSION, sosTemplate: cfg.WHATSAPP_SOS_TEMPLATE, log })
       : new LogOtpChannel(log));
   const push = o.push ?? (cfg.PUSH_PROVIDER === 'fcm' && cfg.FIREBASE_SERVICE_ACCOUNT_FILE ? new FcmPushProvider(cfg.FIREBASE_SERVICE_ACCOUNT_FILE) : new LogPushProvider(log));
   const router = o.router ?? (cfg.ROUTER_PROVIDER === 'osrm' ? new OsrmRouter(cfg.OSRM_URL) : new HaversineRouter());
@@ -83,7 +83,7 @@ export function createContext(cfg: Config, o: ContextOverrides = {}): AppContext
     scheduler: o.scheduler ?? new BullScheduler(redis, prefix),
     geo: o.geo ?? new DriverGeoIndex(redis, prefix),
     realtime,
-    outbox: o.outbox ?? new OutboxDispatcher({ db, databaseUrl: cfg.DATABASE_URL, realtime, push, email, log }),
+    outbox: o.outbox ?? new OutboxDispatcher({ db, databaseUrl: cfg.DATABASE_URL, realtime, push, email, log, otp, publicBaseUrl: cfg.publicBaseUrl }),
     email,
     otp,
     sms: o.sms ?? new DisabledSmsChannel(),

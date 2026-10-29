@@ -274,15 +274,52 @@ class TurnCredentials {
 
 /// `POST /v1/rides/:id/sos`.
 class SosResult {
-  const SosResult({required this.sosId, required this.call});
+  const SosResult({required this.sosId, required this.call, this.contacts = const []});
   final String sosId;
 
   /// Number to dial (19 / 177 / 15).
   final String call;
 
+  /// Saved emergency contacts being told (D71).
+  final List<SosContactStatus> contacts;
+
   factory SosResult.fromJson(Object? json) {
     final j = asJson(json);
-    return SosResult(sosId: asStringOr(j['sos_id']), call: asStringOr(j['call']));
+    return SosResult(
+      sosId: asStringOr(j['sos_id']),
+      call: asStringOr(j['call']),
+      contacts: asJsonList(j['contacts']).map(SosContactStatus.fromJson).toList(),
+    );
+  }
+}
+
+/// A saved emergency contact (`/v1/me/emergency-contacts`, D71).
+class EmergencyContact {
+  const EmergencyContact({required this.id, required this.name, required this.phone});
+  final String id;
+  final String name;
+  final String phone;
+
+  factory EmergencyContact.fromJson(Object? json) {
+    final j = asJson(json);
+    return EmergencyContact(id: asStringOr(j['id']), name: asStringOr(j['name']), phone: asStringOr(j['phone']));
+  }
+}
+
+/// How far the SOS alert to one emergency contact got: queued / sent / logged (not delivered: no WhatsApp
+/// template yet) / failed.
+class SosContactStatus {
+  const SosContactStatus({required this.name, required this.phone, required this.status});
+  final String name;
+  final String phone;
+  final String status;
+
+  bool get pending => status == 'queued';
+  bool get delivered => status == 'sent';
+
+  factory SosContactStatus.fromJson(Object? json) {
+    final j = asJson(json);
+    return SosContactStatus(name: asStringOr(j['name']), phone: asStringOr(j['phone']), status: asStringOr(j['status'], 'queued'));
   }
 }
 

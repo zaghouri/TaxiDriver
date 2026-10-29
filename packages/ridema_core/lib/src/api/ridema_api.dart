@@ -177,6 +177,19 @@ class RideMaApi {
   Future<SosResult> sos(String rideId, {required String service, required double lat, required double lng}) async =>
       SosResult.fromJson(await client.post('/v1/rides/$rideId/sos', data: {'service': service, 'lat': lat, 'lng': lng}));
 
+  /// Status of each emergency contact told about this SOS (D71).
+  Future<List<SosContactStatus>> sosContacts(String sosId) async =>
+      asJsonList(asJson(await client.get('/v1/sos/$sosId'))['contacts']).map(SosContactStatus.fromJson).toList();
+
+  /// Saved emergency contacts (D71).
+  Future<List<EmergencyContact>> emergencyContacts() async =>
+      asJsonList(asJson(await client.get('/v1/me/emergency-contacts'))['items']).map(EmergencyContact.fromJson).toList();
+
+  Future<EmergencyContact> addEmergencyContact(String name, String phone) async =>
+      EmergencyContact.fromJson(await client.post('/v1/me/emergency-contacts', data: {'name': name, 'phone': phone}));
+
+  Future<void> deleteEmergencyContact(String id) => client.delete('/v1/me/emergency-contacts/$id');
+
   /// No Idempotency-Key (exempt). Send every ~10 s while the SOS screen is open.
   Future<void> sosLocation(String sosId, {required double lat, required double lng}) =>
       client.post('/v1/sos/$sosId/location', data: {'lat': lat, 'lng': lng});

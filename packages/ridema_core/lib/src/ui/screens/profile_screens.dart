@@ -15,6 +15,7 @@ import '../../l10n/l10n.dart';
 import '../../models/user.dart';
 import '../widgets/common.dart';
 import 'boot_screens.dart';
+import 'emergency_contacts_screen.dart';
 import 'legal_screens.dart';
 import 'phone_screen.dart';
 import 'trips_screens.dart';
@@ -118,6 +119,13 @@ class ProfileScreen extends StatelessWidget {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => push(const TripHistoryScreen()),
                     ),
+                  ListTile(
+                    key: const ValueKey('profile_emergency_contacts'),
+                    leading: const Icon(Icons.contact_emergency_outlined),
+                    title: Text(l.emergencyContactsTitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => push(const EmergencyContactsScreen()),
+                  ),
                   ...extraTiles,
                   const Divider(),
                   ListTile(

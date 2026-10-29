@@ -276,6 +276,12 @@ export const DICT: Record<string, [string, string]> = {
   event_log: ['Journal des événements', 'Event log'],
   bids: ['Offres', 'Bids'],
   ratings: ['Notes', 'Ratings'],
+  // SOS alerts to saved emergency contacts (D71)
+  sos_contacts: ["Contacts d'urgence prévenus", 'Emergency contacts told'],
+  sosc_queued: ['en cours', 'sending'],
+  sosc_sent: ['envoyé (WhatsApp)', 'sent (WhatsApp)'],
+  sosc_logged: ['non envoyé : modèle WhatsApp manquant (journal)', 'not sent: WhatsApp template missing (logged)'],
+  sosc_failed: ['échec', 'failed'],
   // Paid waiting (D70)
   waiting_fee: ["Frais d'attente", 'Waiting fee'],
   total: ['Total', 'Total'],
