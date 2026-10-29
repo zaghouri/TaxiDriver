@@ -9,8 +9,8 @@ import { useDialog } from '../ui/dialog';
 import { useLoad, useRun } from '../ui/hooks';
 import MapView, { type MapMarker } from '../ui/MapView';
 
-const STATUSES = ['', 'searching', 'accepted', 'arrived', 'in_progress', 'completed', 'cancelled', 'expired'];
-const ACTIVE = ['searching', 'accepted', 'arrived', 'in_progress'];
+const STATUSES = ['', 'searching', 'queued', 'accepted', 'arrived', 'in_progress', 'completed', 'cancelled', 'expired'];
+const ACTIVE = ['searching', 'queued', 'accepted', 'arrived', 'in_progress'];
 
 export function RidesList() {
   const t = useT();
