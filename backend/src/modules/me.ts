@@ -34,6 +34,7 @@ export async function deleteAccount(ctx: AppContext, userId: string, by: 'self' 
     await tx.query('DELETE FROM trip_shares WHERE created_by = $1', [userId]);
     await tx.query('DELETE FROM emergency_contacts WHERE user_id = $1', [userId]);
     await tx.query('DELETE FROM id_checks WHERE user_id = $1', [userId]);
+    await tx.query('DELETE FROM saved_places WHERE user_id = $1', [userId]);
     await tx.query('UPDATE ratings SET comment = NULL WHERE rater_id = $1', [userId]);
     await tx.query('UPDATE data_requests SET details = NULL WHERE user_id = $1', [userId]);
     await tx.query('UPDATE rides SET rider_comment = NULL, pickup_address = NULL, dropoff_address = NULL WHERE rider_id = $1', [userId]);
@@ -64,6 +65,7 @@ export async function exportData(ctx: AppContext, userId: string) {
     rides: await q(`SELECT id, status, pickup_address, dropoff_address, ST_AsGeoJSON(pickup)::json AS pickup, ST_AsGeoJSON(dropoff)::json AS dropoff,
       distance_m, offered_price, final_price, requested_at, completed_at, cancelled_at, cancel_reason
       FROM rides WHERE rider_id = $1 OR driver_id = $1 ORDER BY requested_at DESC`),
+    saved_places: await q('SELECT kind, lat, lng, address, updated_at FROM saved_places WHERE user_id = $1 ORDER BY kind'),
     ratings_given: await q('SELECT ride_id, stars, reasons, comment, created_at FROM ratings WHERE rater_id = $1'),
     ratings_received: await q('SELECT ride_id, stars, reasons, created_at FROM ratings WHERE ratee_id = $1'),
     driver: await one(ctx.db, 'SELECT driver_type, status, cin_last4, licence_issued_on, created_at FROM drivers WHERE user_id = $1', [userId]),

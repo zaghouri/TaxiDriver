@@ -99,10 +99,6 @@ export async function attachSocketServer(ctx: AppContext, server: HttpServer, op
     const userId = claims.sub;
     socket.join(roomOf({ user: userId }));
     if (claims.role === 'admin') socket.join('admins');
-    if (claims.role === 'driver') {
-      const d = await one<{ city_id: string }>(ctx.db, 'SELECT city_id FROM drivers WHERE user_id = $1', [userId]);
-      if (d?.city_id) socket.join(roomOf({ cityDrivers: d.city_id }));
-    }
     // Clients must re-fetch GET /v1/rides/active on every (re)connect; this is the hint.
     socket.emit('session:ready', { user_id: userId, role: claims.role, server_time: new Date().toISOString() });
 
@@ -163,6 +159,13 @@ export async function attachSocketServer(ctx: AppContext, server: HttpServer, op
           ack?.({ ok: false, error: (e as Error).message });
         }
       });
+    }
+
+    // Only after every handler is registered: an event the app sends right after connecting (a call invite, a
+    // location) must not arrive while this handler is still awaiting the database.
+    if (claims.role === 'driver') {
+      const d = await one<{ city_id: string }>(ctx.db, 'SELECT city_id FROM drivers WHERE user_id = $1', [userId]);
+      if (d?.city_id) socket.join(roomOf({ cityDrivers: d.city_id }));
     }
 
     // A call that started ringing while this app was closed or offline (D73): ring now if it is still pending.

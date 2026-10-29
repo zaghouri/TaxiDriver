@@ -348,6 +348,25 @@ class GeoPlace {
   }
 }
 
+/// `GET /v1/me/places` (riders, D81): Home / Work shortcuts and recent addresses from the rider's own rides.
+class SavedPlaces {
+  const SavedPlaces({this.home, this.work, this.recent = const []});
+  final Place? home;
+  final Place? work;
+  final List<Place> recent;
+
+  static const empty = SavedPlaces();
+
+  /// [kind] is `home` or `work`.
+  Place? of(String kind) => kind == 'home' ? home : (kind == 'work' ? work : null);
+
+  factory SavedPlaces.fromJson(Object? json) {
+    final j = asJson(json);
+    Place? p(Object? v) => v is Map ? Place.fromJson(v) : null;
+    return SavedPlaces(home: p(j['home']), work: p(j['work']), recent: asJsonList(j['recent']).map(Place.fromJson).toList());
+  }
+}
+
 /// `GET /v1/geo/reverse`: address of a GPS point (street from the road graph, nearest landmark, city).
 class ReverseGeocode {
   const ReverseGeocode({this.label, this.street, this.landmark, this.city});
