@@ -258,8 +258,9 @@ class RideMaApi {
     return (ride: Ride.fromJson(j['ride']), created: j['created'] == true, askedAgain: asInt(j['asked_again']) ?? 0);
   }
 
-  Future<Ride> acceptBid(String rideId, String bidId) async =>
-      Ride.fromJson(await client.post('/v1/rides/$rideId/bids/$bidId/accept'));
+  /// [longEtaConfirmed]: the rider confirmed a far driver (D85), kept in the trip log.
+  Future<Ride> acceptBid(String rideId, String bidId, {bool longEtaConfirmed = false}) async => Ride.fromJson(await client
+      .post('/v1/rides/$rideId/bids/$bidId/accept', data: longEtaConfirmed ? {'long_eta_confirmed': true} : null));
 
   Future<void> declineBid(String rideId, String bidId) => client.post('/v1/rides/$rideId/bids/$bidId/decline');
 

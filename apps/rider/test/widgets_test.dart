@@ -258,6 +258,52 @@ void main() {
     });
   });
 
+  group('Far driver confirm (D85)', () {
+    testWidgets('a far offer asks first, and is accepted only after the confirmation', (tester) async {
+      await _setPhone(tester);
+      final h = Harness();
+      await h.searching();
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'searching'), 'long_eta_confirm_s': 600}));
+      h.rt.bidNew.add(mkBid('far', etaS: 300, promisedEtaS: 900, name: 'Youssef'));
+      await tester.pumpWidget(wrapApp(
+        Scaffold(body: Align(alignment: Alignment.bottomCenter, child: SearchingPanel(onCancel: () {}, onRaise: () {}))),
+        controller: h.c,
+      ));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('offer_accept')));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('This driver is about 15 min away'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('long_eta_keep_looking')));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(h.api.calls.where((c) => c.startsWith('accept:')), isEmpty);
+      await tester.tap(find.byKey(const ValueKey('offer_accept')));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.tap(find.byKey(const ValueKey('long_eta_accept')));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(h.api.calls, contains('accept:far:long'));
+      h.c.dispose();
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    test('threshold from the city; 0 turns it off; a near offer needs nothing', () async {
+      final h = Harness();
+      addTearDown(h.c.dispose);
+      await h.searching();
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'searching'), 'long_eta_confirm_s': 480}));
+      expect(h.c.needsLongEtaConfirm(mkBid('a', etaS: 470)), isFalse);
+      expect(h.c.needsLongEtaConfirm(mkBid('b', etaS: 480)), isTrue);
+      expect(h.c.needsLongEtaConfirm(mkBid('c', etaS: 200, promisedEtaS: 600)), isTrue);
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'searching'), 'long_eta_confirm_s': 0}));
+      expect(h.c.needsLongEtaConfirm(mkBid('d', etaS: 3000)), isFalse);
+      for (final lang in ['ar', 'fr', 'en']) {
+        final s = RiderStrings(lang);
+        for (final t in [s.longEtaTitle(12), s.longEtaBody('Sara'), s.longEtaBody(''), s.acceptAnyway, s.keepLooking]) {
+          expect(t, isNotEmpty);
+        }
+      }
+    });
+  });
+
   group('Change pickup point (D61)', () {
     testWidgets('the button shows only while the pickup can still move', (tester) async {
       await _setPhone(tester);

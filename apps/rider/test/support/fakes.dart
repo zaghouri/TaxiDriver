@@ -219,8 +219,8 @@ class FakeRideApi implements RiderRideApi {
   }
 
   @override
-  Future<Ride> acceptBid(String rideId, String bidId) {
-    calls.add('accept:$bidId');
+  Future<Ride> acceptBid(String rideId, String bidId, {bool longEtaConfirmed = false}) {
+    calls.add(longEtaConfirmed ? 'accept:$bidId:long' : 'accept:$bidId');
     return onAccept(rideId, bidId);
   }
 

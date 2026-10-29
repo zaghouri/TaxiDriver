@@ -120,6 +120,12 @@ export async function vehicleCard(q: Queryable, vehicleId: string | null, driver
   return withPlate ? v : { make: v.make, model: v.model, year: v.year, colour: v.colour };
 }
 
+/** Arrival time from which the rider confirms an offer (D85): `cancel_rules.long_eta_confirm_min`, default 10 min, 0 = off. */
+export function longEtaS(rules: Record<string, any> | null | undefined): number {
+  const m = rules?.long_eta_confirm_min;
+  return typeof m === 'number' && Number.isFinite(m) && m >= 0 ? Math.round(m * 60) : 600;
+}
+
 /** What a participant (or admin) sees about a ride. The pickup PIN goes to the rider only. */
 export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; role: string }) {
   const isRider = viewer.id === r.rider_id;
@@ -193,6 +199,11 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
   }
   if ((isRider || isAdmin) && r.status === 'searching') {
     view.search = { wave: r.search_wave, radius_m: r.search_radius_m, drivers_notified: r.drivers_notified };
+  }
+  if (isRider && r.status === 'searching') {
+    // Offers arriving later than this ask the rider to confirm before accepting (D85); 0 = never.
+    const c = await one<{ cancel_rules: Record<string, any> }>(q, 'SELECT cancel_rules FROM cities WHERE id = $1', [r.city_id]);
+    view.long_eta_confirm_s = longEtaS(c?.cancel_rules);
   }
   if (isAdmin) {
     view.flagged = r.flagged;

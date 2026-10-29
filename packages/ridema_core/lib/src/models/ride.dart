@@ -194,6 +194,7 @@ class Ride {
     this.canCancelFree,
     this.search,
     this.canEditPickup,
+    this.longEtaConfirmS,
     this.pickupEditedAt,
     this.pickupDueAt,
     this.etaPromised = false,
@@ -243,6 +244,9 @@ class Ride {
 
   /// Rider only: the pickup point can still be moved (once, before arrival — D61).
   final bool? canEditPickup;
+
+  /// Rider only, while searching (D85): offers arriving in this many seconds or more ask for a confirmation; 0 = never.
+  final int? longEtaConfirmS;
 
   /// Set once the rider moved the pickup point.
   final DateTime? pickupEditedAt;
@@ -310,6 +314,7 @@ class Ride {
       canCancelFree: j['can_cancel_free'] is bool ? j['can_cancel_free'] as bool : null,
       search: j['search'] is Map ? RideSearch.fromJson(j['search']) : null,
       canEditPickup: j['can_edit_pickup'] is bool ? j['can_edit_pickup'] as bool : null,
+      longEtaConfirmS: asInt(j['long_eta_confirm_s']),
       pickupEditedAt: asDate(j['pickup_edited_at']),
       pickupDueAt: asDate(j['pickup_due_at']),
       etaPromised: j['eta_promised'] == true,
@@ -431,6 +436,9 @@ class Bid {
   bool get isCounter => kind == 'counter';
   int get etaMinutes => (etaS / 60).ceil();
   int? get promisedEtaMinutes => promisedEtaS == null ? null : (promisedEtaS! / 60).ceil();
+
+  /// When the driver will really be there: the later of the estimate and the promise (as in the ranking, D66).
+  int get effectiveEtaS => promisedEtaS != null && promisedEtaS! > etaS ? promisedEtaS! : etaS;
 
   factory Bid.fromJson(Object? json) {
     final j = asJson(json);

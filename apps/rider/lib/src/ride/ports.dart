@@ -20,7 +20,7 @@ abstract class RiderRideApi {
   Future<({List<Bid> offers, int total})> offers(String rideId);
   Future<Ride> raiseOffer(String rideId, int offeredPrice);
   Future<Ride> editPickup(String rideId, Place pickup);
-  Future<Ride> acceptBid(String rideId, String bidId);
+  Future<Ride> acceptBid(String rideId, String bidId, {bool longEtaConfirmed = false});
   Future<void> declineBid(String rideId, String bidId);
   Future<({Ride ride, bool created, int askedAgain})> renotify(String rideId);
 
@@ -59,7 +59,8 @@ class CoreRiderRideApi implements RiderRideApi {
   @override
   Future<Ride> editPickup(String rideId, Place pickup) => api.editPickup(rideId, pickup);
   @override
-  Future<Ride> acceptBid(String rideId, String bidId) => api.acceptBid(rideId, bidId);
+  Future<Ride> acceptBid(String rideId, String bidId, {bool longEtaConfirmed = false}) =>
+      api.acceptBid(rideId, bidId, longEtaConfirmed: longEtaConfirmed);
   @override
   Future<void> declineBid(String rideId, String bidId) => api.declineBid(rideId, bidId);
   @override
