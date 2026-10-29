@@ -45,7 +45,10 @@ describe('Live map', () => {
 });
 
 describe('SOS', () => {
-  const sos = { id: SOS_ID, ride_id: RIDE_ID, user_id: 'u', full_name: 'Salma Benali', phone: '+212600000002', role: 'rider', service: 'police', status: 'open', note: null, lat: 33.89, lng: -5.54, created_at: '2026-10-21T10:00:00Z' };
+  const sos = {
+    id: SOS_ID, ride_id: RIDE_ID, user_id: 'u', full_name: 'Salma Benali', phone: '+212600000002', role: 'rider', service: 'police', status: 'open', note: null, lat: 33.89, lng: -5.54, created_at: '2026-10-21T10:00:00Z',
+    contacts: [{ name: 'Maman', phone: '+212611223344', status: 'logged' }],
+  };
   const render = (routes: Record<string, unknown> = {}) => {
     const m = mockApi({ 'GET /v1/admin/sos': [sos], ...routes });
     return { m, ...renderPage(<SosPage />, { route: `/sos/${SOS_ID}`, path: '/sos/:id' }) };
@@ -75,6 +78,7 @@ describe('SOS', () => {
     act(() => bus.emit('sos:location', { id: SOS_ID, ride_id: RIDE_ID, lat: 33.8999, lng: -5.5555, at: 'now' }));
     expect(screen.getByTestId(`marker-sos-${SOS_ID}`)).toHaveTextContent('33.8999,-5.5555');
     expect(screen.getByTestId('sos-pos')).toHaveTextContent('33.89990, -5.55550');
+    expect(screen.getByTestId('sos-contacts')).toHaveTextContent('Maman · +212611223344 · non envoyé : modèle WhatsApp manquant (journal)');
   });
 
   it('adds new alerts from sos:new to the live list', async () => {

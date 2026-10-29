@@ -22,6 +22,8 @@ class DriverRideCard extends StatelessWidget {
     this.onCarMismatch,
     this.onEditPickup,
     this.onFindNewDriver,
+    this.onMessage,
+    this.unreadMessages = 0,
     this.cancelFree = true,
   });
 
@@ -40,6 +42,10 @@ class DriverRideCard extends StatelessWidget {
 
   /// Shown only while the driver is late (D67): free cancel + the same request again.
   final VoidCallback? onFindNewDriver;
+
+  /// Opens the ride chat (D72); [unreadMessages] shows as a badge.
+  final VoidCallback? onMessage;
+  final int unreadMessages;
   final bool cancelFree;
 
   @override
@@ -116,6 +122,17 @@ class DriverRideCard extends StatelessWidget {
           children: [
             Expanded(child: _ActionButton(keyName: 'ride_call', icon: Icons.call, label: l.callButton, onTap: onCall)),
             const SizedBox(width: 8),
+            if (onMessage != null) ...[
+              Expanded(
+                child: Badge(
+                  key: const ValueKey('ride_chat_badge'),
+                  isLabelVisible: unreadMessages > 0,
+                  label: Text('$unreadMessages'),
+                  child: _ActionButton(keyName: 'ride_chat', icon: Icons.chat_bubble_outline, label: l.messageButton, onTap: onMessage),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
             Expanded(child: _ActionButton(keyName: 'ride_share', icon: Icons.share_location, label: l.shareTrip, onTap: onShare)),
             const SizedBox(width: 8),
             Expanded(
@@ -335,7 +352,20 @@ Future<void> showCarMismatch(BuildContext context, RideController c) async {
 
 /// Panel while a driver is assigned (reads [RideController]).
 class ActiveRidePanel extends StatelessWidget {
-  const ActiveRidePanel({super.key, required this.onCall, required this.onShare, required this.onSos, this.onEditPickup, this.onFindNewDriver});
+  const ActiveRidePanel({
+    super.key,
+    required this.onCall,
+    required this.onShare,
+    required this.onSos,
+    this.onEditPickup,
+    this.onFindNewDriver,
+    this.onMessage,
+    this.unreadMessages = 0,
+  });
+
+  /// Ride chat (D72).
+  final VoidCallback? onMessage;
+  final int unreadMessages;
 
   /// Opens the address search to move the pickup point (D61).
   final VoidCallback? onEditPickup;
@@ -369,6 +399,8 @@ class ActiveRidePanel extends StatelessWidget {
           onCarMismatch: c.busy ? null : () => showCarMismatch(context, c),
           onEditPickup: c.canEditPickup && !c.busy ? onEditPickup : null,
           onFindNewDriver: c.driverLate && !c.busy ? onFindNewDriver : null,
+          onMessage: onMessage,
+          unreadMessages: unreadMessages,
           onCancel: c.busy || !c.canCancel
               ? null
               : () async {

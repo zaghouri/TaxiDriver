@@ -8,6 +8,7 @@ import { roomOf, type Realtime, type Target } from '../core/realtime.js';
 import { verifyAccess, type AccessClaims } from '../http/tokens.js';
 import { latLng } from '../lib/validation.js';
 import { recordDriverLocation } from './location.js';
+import { chatInput, sendMessage } from './chat.js';
 
 export class SocketRealtime implements Realtime {
   constructor(private io: Server) {}
@@ -92,6 +93,18 @@ export async function attachSocketServer(ctx: AppContext, server: HttpServer, op
         ack?.({ ok: true, ...(await recordDriverLocation(ctx, userId, p.data)) });
       } catch (e: any) {
         ack?.({ ok: false, error: e.code ?? 'ERROR', message: e.message });
+      }
+    });
+
+    // Ride chat (D72): same rules as POST /v1/rides/:id/messages; the ack carries the stored message.
+    socket.on('chat:send', async (raw: any, ack?: (r: unknown) => void) => {
+      try {
+        const rideId = z.string().uuid().parse(raw?.ride_id);
+        const input = chatInput.safeParse(raw);
+        if (!input.success) return ack?.({ ok: false, error: 'VALIDATION_ERROR' });
+        ack?.({ ok: true, message: await sendMessage(ctx, userId, rideId, input.data) });
+      } catch (e: any) {
+        ack?.({ ok: false, error: e.code ?? (e instanceof z.ZodError ? 'VALIDATION_ERROR' : 'ERROR'), message: e.message });
       }
     });
 

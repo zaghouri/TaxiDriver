@@ -2220,6 +2220,122 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get emergencyContactsTitle => 'Contacts d’urgence';
+
+  @override
+  String emergencyContactsInfo(int max) {
+    return 'Si vous appuyez sur SOS pendant une course, nous envoyons à ces personnes un lien pour suivre votre trajet en direct. Jusqu’à $max contacts.';
+  }
+
+  @override
+  String get emergencyContactsEmpty =>
+      'Aucun contact d’urgence pour l’instant.';
+
+  @override
+  String get emergencyContactAdd => 'Ajouter un contact';
+
+  @override
+  String get emergencyContactName => 'Nom';
+
+  @override
+  String get emergencyContactPhone => 'Numéro de téléphone';
+
+  @override
+  String get emergencyContactRemove => 'Retirer';
+
+  @override
+  String get sosContactsTitle => 'Vos contacts d’urgence';
+
+  @override
+  String get sosContactSending => 'Envoi de votre trajet en direct…';
+
+  @override
+  String get sosContactSent => 'Lien du trajet envoyé';
+
+  @override
+  String get sosContactNotSent =>
+      'Pas encore joint. Notre équipe a votre alerte.';
+
+  @override
+  String get errEmergencyContactsLimit =>
+      'Vous pouvez enregistrer jusqu’à 5 contacts d’urgence.';
+
+  @override
+  String get errEmergencyContactExists =>
+      'Ce numéro est déjà dans vos contacts d’urgence.';
+
+  @override
+  String get errEmergencyContactSelf =>
+      'Ajoutez quelqu’un d’autre, pas votre propre numéro.';
+
+  @override
+  String get errContactNotFound => 'Ce contact n’existe plus.';
+
+  @override
+  String get chatTitle => 'Messages';
+
+  @override
+  String get chatHint => 'Écrire un message';
+
+  @override
+  String get chatSend => 'Envoyer';
+
+  @override
+  String get chatEmpty =>
+      'Aucun message. Touchez une réponse rapide ou écrivez ci-dessous.';
+
+  @override
+  String get chatClosed => 'Messages fermés : cette course est terminée.';
+
+  @override
+  String get chatFailed => 'Non envoyé. Touchez pour réessayer.';
+
+  @override
+  String get chatPrivacy =>
+      'Les messages sont gardés avec la course. Notre équipe ne les lit qu’en cas de problème. Ne partagez jamais votre numéro.';
+
+  @override
+  String get messageButton => 'Message';
+
+  @override
+  String chatNewFrom(String name) {
+    return 'Nouveau message de $name';
+  }
+
+  @override
+  String get chatOpen => 'Ouvrir';
+
+  @override
+  String get chatQuickComing => 'J’arrive';
+
+  @override
+  String get chatQuickAtPickup => 'Je suis au point de départ';
+
+  @override
+  String get chatQuickWaitPlease => 'Attendez 2 minutes, s’il vous plaît';
+
+  @override
+  String get chatQuickWhereAreYou => 'Où êtes-vous ?';
+
+  @override
+  String get chatQuickHere => 'Je suis là';
+
+  @override
+  String get chatQuickOnMyWay => 'Je suis en route';
+
+  @override
+  String get chatQuickTraffic =>
+      'Bloqué dans la circulation, encore quelques minutes';
+
+  @override
+  String get chatQuickCantFindYou =>
+      'Je ne vous trouve pas. Où êtes-vous exactement ?';
+
+  @override
+  String get errChatClosed =>
+      'Les messages sont ouverts seulement pendant la course.';
+
+  @override
   String get errOnAnotherRide =>
       'Vous êtes en course. Terminez-la avant de faire une nouvelle offre.';
 }

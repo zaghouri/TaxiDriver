@@ -1565,6 +1565,70 @@
       }
     }
   },
+  "emergencyContactsTitle": "Emergency contacts",
+  "emergencyContactsInfo": "If you press SOS during a ride, we send these people a link to follow your trip live. Up to {max} contacts.",
+  "@emergencyContactsInfo": {
+    "description": "Saved emergency contacts screen (D71).",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "emergencyContactsEmpty": "No emergency contact yet.",
+  "emergencyContactAdd": "Add a contact",
+  "emergencyContactName": "Name",
+  "emergencyContactPhone": "Phone number",
+  "emergencyContactRemove": "Remove",
+  "sosContactsTitle": "Your emergency contacts",
+  "sosContactSending": "Sending your live trip…",
+  "sosContactSent": "Live trip link sent",
+  "sosContactNotSent": "Not reached yet. Our team has your alert.",
+  "errEmergencyContactsLimit": "You can save up to 5 emergency contacts.",
+  "@errEmergencyContactsLimit": {
+    "description": "Error text for API code EMERGENCY_CONTACTS_LIMIT"
+  },
+  "errEmergencyContactExists": "This number is already in your emergency contacts.",
+  "@errEmergencyContactExists": {
+    "description": "Error text for API code EMERGENCY_CONTACT_EXISTS"
+  },
+  "errEmergencyContactSelf": "Add someone else, not your own number.",
+  "@errEmergencyContactSelf": {
+    "description": "Error text for API code EMERGENCY_CONTACT_SELF"
+  },
+  "errContactNotFound": "This contact no longer exists.",
+  "@errContactNotFound": {
+    "description": "Error text for API code CONTACT_NOT_FOUND"
+  },
+  "chatTitle": "Messages",
+  "chatHint": "Write a message",
+  "chatSend": "Send",
+  "chatEmpty": "No messages yet. Tap a quick reply or write below.",
+  "chatClosed": "Messages are closed: this ride is over.",
+  "chatFailed": "Not sent. Tap to try again.",
+  "chatPrivacy": "Messages are kept with the trip. Our team reads them only if there is a problem. Never share your phone number.",
+  "messageButton": "Message",
+  "chatNewFrom": "New message from {name}",
+  "@chatNewFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chatOpen": "Open",
+  "chatQuickComing": "I’m coming",
+  "chatQuickAtPickup": "I’m at the pickup point",
+  "chatQuickWaitPlease": "Please wait 2 minutes",
+  "chatQuickWhereAreYou": "Where are you?",
+  "chatQuickHere": "I’m here",
+  "chatQuickOnMyWay": "On my way",
+  "chatQuickTraffic": "Stuck in traffic, a few more minutes",
+  "chatQuickCantFindYou": "I can’t find you. Where exactly are you?",
+  "errChatClosed": "Messages are open only during the ride.",
+  "@errChatClosed": {
+    "description": "Error text for API code CHAT_CLOSED"
+  },
   "errOnAnotherRide": "You are on a ride. Finish it before making a new offer.",
   "@errOnAnotherRide": {
     "description": "Error text for API code ON_ANOTHER_RIDE"

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:geolocator/geolocator.dart';
@@ -65,6 +67,7 @@ class Harness {
   final FakeLocationSource loc;
   final FakeLocationPlatform locationPlatform;
   final TestClock clock;
+  final FakeChatTransport chat = FakeChatTransport();
 
   static Future<Harness> create({TestClock? clock}) async {
     SharedPreferences.setMockInitialValues({'ridema.locale': 'fr', 'ridema.driver.battery_guide_shown': true});
@@ -121,6 +124,7 @@ class Harness {
         providers: [
           if (readiness != null) Provider<ReadinessChecks>.value(value: readiness),
           Provider<CoreServices>.value(value: services),
+          Provider<ChatTransport>.value(value: chat),
           ChangeNotifierProvider<AuthController>.value(value: services.auth),
           ChangeNotifierProvider<LocaleController>.value(value: services.locale),
           ChangeNotifierProvider<BootController>.value(value: services.boot),
@@ -144,3 +148,25 @@ Widget localized(Widget child, {String locale = 'fr'}) => MaterialApp(
       ],
       home: child,
     );
+
+/// Ride chat without a network (D72).
+class FakeChatTransport implements ChatTransport {
+  final incomingCtrl = StreamController<ChatMessage>.broadcast();
+  final sent = <String>[];
+
+  @override
+  Stream<ChatMessage> get incoming => incomingCtrl.stream;
+
+  @override
+  Future<List<ChatMessage>> history(String rideId) async => const [];
+
+  @override
+  Future<ChatMessage?> sendLive(String rideId, {String? text, String? quick, required String clientId}) async {
+    sent.add(text ?? quick!);
+    return ChatMessage(id: 'm${sent.length}', rideId: rideId, fromRole: 'driver', text: text, quick: quick, clientId: clientId, createdAt: DateTime.now());
+  }
+
+  @override
+  Future<ChatMessage> sendRest(String rideId, {String? text, String? quick, required String clientId}) async =>
+      (await sendLive(rideId, text: text, quick: quick, clientId: clientId))!;
+}

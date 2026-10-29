@@ -6,7 +6,7 @@ Things that need the owner (keys, accounts, hardware). Everything listed here is
 |---|---|---|---|
 | B1 | `.env` was not provided (no SERVER_IP, no SSH, no keys) | Nothing deployed; all integrations run in mock mode | Copy `.env.example` → `.env`, fill it, run `scripts/deploy.sh` (see RUNBOOK.md) |
 | B2 | SMTP credentials | Emails (verification codes, reset, reminders) are printed to the API log (`EMAIL_PROVIDER=log`) | Set `SMTP_*`, `EMAIL_PROVIDER=smtp` |
-| B3 | WhatsApp Cloud API (`WHATSAPP_*`) + an approved authentication template | Phone codes printed to the API log (`OTP_CHANNEL=log`) | Create the Meta app, register the number, get template `WHATSAPP_OTP_TEMPLATE` approved in ar/fr/en |
+| B3 | WhatsApp Cloud API (`WHATSAPP_*`) + an approved authentication template | Phone codes printed to the API log (`OTP_CHANNEL=log`) | Create the Meta app, register the number, get template `WHATSAPP_OTP_TEMPLATE` approved in ar/fr/en; also a utility template for SOS alerts to emergency contacts (`WHATSAPP_SOS_TEMPLATE`, body: first name + live trip link, D71) — until then those alerts are only logged |
 | B4 | Firebase config files (`google-services.json`, `GoogleService-Info.plist`, service-account JSON) | Push notifications logged only; Remote Config falls back to compiled default URL; Crashlytics off | Create Firebase project with both app ids, drop files where RUNBOOK says |
 | B5 | Google Maps / Places keys | Map widgets show a placeholder message; address search falls back to the backend `/v1/geo/search` stub (Nominatim-free, local list of Meknes places); the GPS pickup address comes from `/v1/geo/reverse` (OSRM street names + landmarks, D56) | Set keys; restrict them to package name + SHA-1 |
 | B6 | `SENTRY_DSN` | Errors only in logs | Set DSN |

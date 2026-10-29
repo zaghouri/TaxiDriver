@@ -2189,6 +2189,116 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get emergencyContactsTitle => 'Emergency contacts';
+
+  @override
+  String emergencyContactsInfo(int max) {
+    return 'If you press SOS during a ride, we send these people a link to follow your trip live. Up to $max contacts.';
+  }
+
+  @override
+  String get emergencyContactsEmpty => 'No emergency contact yet.';
+
+  @override
+  String get emergencyContactAdd => 'Add a contact';
+
+  @override
+  String get emergencyContactName => 'Name';
+
+  @override
+  String get emergencyContactPhone => 'Phone number';
+
+  @override
+  String get emergencyContactRemove => 'Remove';
+
+  @override
+  String get sosContactsTitle => 'Your emergency contacts';
+
+  @override
+  String get sosContactSending => 'Sending your live trip…';
+
+  @override
+  String get sosContactSent => 'Live trip link sent';
+
+  @override
+  String get sosContactNotSent => 'Not reached yet. Our team has your alert.';
+
+  @override
+  String get errEmergencyContactsLimit =>
+      'You can save up to 5 emergency contacts.';
+
+  @override
+  String get errEmergencyContactExists =>
+      'This number is already in your emergency contacts.';
+
+  @override
+  String get errEmergencyContactSelf =>
+      'Add someone else, not your own number.';
+
+  @override
+  String get errContactNotFound => 'This contact no longer exists.';
+
+  @override
+  String get chatTitle => 'Messages';
+
+  @override
+  String get chatHint => 'Write a message';
+
+  @override
+  String get chatSend => 'Send';
+
+  @override
+  String get chatEmpty => 'No messages yet. Tap a quick reply or write below.';
+
+  @override
+  String get chatClosed => 'Messages are closed: this ride is over.';
+
+  @override
+  String get chatFailed => 'Not sent. Tap to try again.';
+
+  @override
+  String get chatPrivacy =>
+      'Messages are kept with the trip. Our team reads them only if there is a problem. Never share your phone number.';
+
+  @override
+  String get messageButton => 'Message';
+
+  @override
+  String chatNewFrom(String name) {
+    return 'New message from $name';
+  }
+
+  @override
+  String get chatOpen => 'Open';
+
+  @override
+  String get chatQuickComing => 'I’m coming';
+
+  @override
+  String get chatQuickAtPickup => 'I’m at the pickup point';
+
+  @override
+  String get chatQuickWaitPlease => 'Please wait 2 minutes';
+
+  @override
+  String get chatQuickWhereAreYou => 'Where are you?';
+
+  @override
+  String get chatQuickHere => 'I’m here';
+
+  @override
+  String get chatQuickOnMyWay => 'On my way';
+
+  @override
+  String get chatQuickTraffic => 'Stuck in traffic, a few more minutes';
+
+  @override
+  String get chatQuickCantFindYou => 'I can’t find you. Where exactly are you?';
+
+  @override
+  String get errChatClosed => 'Messages are open only during the ride.';
+
+  @override
   String get errOnAnotherRide =>
       'You are on a ride. Finish it before making a new offer.';
 }

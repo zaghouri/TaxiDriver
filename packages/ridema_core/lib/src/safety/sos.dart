@@ -48,6 +48,10 @@ class SosController extends ChangeNotifier {
   String? get service => _service;
   String? get sosId => _sosId;
 
+  /// Saved emergency contacts being told (D71); refreshed with each location ping until none is pending.
+  List<SosContactStatus> get contacts => _contacts;
+  List<SosContactStatus> _contacts = const [];
+
   /// [service]: police / gendarmerie / ambulance.
   Future<void> trigger(String service) async {
     _service = service;
@@ -67,6 +71,7 @@ class SosController extends ChangeNotifier {
       if (p == null) return false;
       final r = await api.sos(rideId, service: service, lat: p.lat, lng: p.lng);
       _sosId = r.sosId;
+      _contacts = r.contacts;
       return true;
     } catch (e) {
       debugPrint('SOS alert failed: $e');
@@ -88,6 +93,14 @@ class SosController extends ChangeNotifier {
       if (p != null && !_disposed) await api.sosLocation(id, lat: p.lat, lng: p.lng);
     } catch (_) {
       // Keep trying on the next tick.
+    }
+    if (_contacts.any((c) => c.pending) && !_disposed) {
+      try {
+        final fresh = await api.sosContacts(id);
+        if (_disposed) return;
+        _contacts = fresh;
+        notifyListeners();
+      } catch (_) {}
     }
   }
 
@@ -196,7 +209,8 @@ class _SosSheetState extends State<SosSheet> {
           ),
         );
 
-    return Padding(
+    return SingleChildScrollView(
+      child: Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -216,8 +230,25 @@ class _SosSheetState extends State<SosSheet> {
             gap8,
             Text(l.sosSharingLocation, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700)),
           ],
+          if (c.state == SosState.sent && c.contacts.isNotEmpty) ...[
+            gap16,
+            Text(l.sosContactsTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
+            for (final x in c.contacts)
+              ListTile(
+                key: ValueKey('sos_contact_${x.phone}'),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  x.delivered ? Icons.check_circle : x.pending ? Icons.schedule : Icons.info_outline,
+                  color: x.delivered ? BrandColors.success : null,
+                ),
+                title: Text(x.name),
+                subtitle: Text(x.delivered ? l.sosContactSent : x.pending ? l.sosContactSending : l.sosContactNotSent),
+              ),
+          ],
           if (c.state == SosState.failed) ...[gap8, ErrorBanner(l.sosAlertFailed)],
         ],
+      ),
       ),
     );
   }

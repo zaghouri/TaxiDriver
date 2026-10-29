@@ -276,6 +276,22 @@ export const DICT: Record<string, [string, string]> = {
   event_log: ['Journal des événements', 'Event log'],
   bids: ['Offres', 'Bids'],
   ratings: ['Notes', 'Ratings'],
+  // Ride chat (D72): quick replies are stored as keys
+  messages: ['Messages', 'Messages'],
+  qr_coming: ["J'arrive", "I'm coming"],
+  qr_at_pickup: ['Je suis au point de départ', "I'm at the pickup point"],
+  qr_wait_please: ['Attendez 2 minutes, s’il vous plaît', 'Please wait 2 minutes'],
+  qr_where_are_you: ['Où êtes-vous ?', 'Where are you?'],
+  qr_here: ['Je suis là', "I'm here"],
+  qr_on_my_way: ['Je suis en route', 'On my way'],
+  qr_traffic: ['Bloqué dans la circulation', 'Stuck in traffic'],
+  qr_cant_find_you: ['Je ne vous trouve pas', "I can't find you"],
+  // SOS alerts to saved emergency contacts (D71)
+  sos_contacts: ["Contacts d'urgence prévenus", 'Emergency contacts told'],
+  sosc_queued: ['en cours', 'sending'],
+  sosc_sent: ['envoyé (WhatsApp)', 'sent (WhatsApp)'],
+  sosc_logged: ['non envoyé : modèle WhatsApp manquant (journal)', 'not sent: WhatsApp template missing (logged)'],
+  sosc_failed: ['échec', 'failed'],
   // Paid waiting (D70)
   waiting_fee: ["Frais d'attente", 'Waiting fee'],
   total: ['Total', 'Total'],

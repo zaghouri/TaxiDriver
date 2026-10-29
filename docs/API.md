@@ -52,6 +52,9 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | POST | `/v1/me/2fa/email/enable` | `{password}` | `{enabled:true, method:"email"}` |
 | POST | `/v1/me/2fa/disable` | `{password}` | `{enabled:false}` |
 | POST | `/v1/me/devices` | `{device_id, platform, app_version, fcm_token?, rooted?, mock_location?}` | `{ok:true}` — call after login and when the FCM token changes |
+| GET | `/v1/me/emergency-contacts` | | `{items:[{id, name, phone, created_at}], max:5}` — saved emergency contacts (D71) |
+| POST | `/v1/me/emergency-contacts` | `{name, phone}` (`06…`/`+2126…` normalised, or `+<8–15 digits>`) | `201 {id, name, phone, created_at}`. Errors `EMERGENCY_CONTACTS_LIMIT` (5), `EMERGENCY_CONTACT_EXISTS`, `EMERGENCY_CONTACT_SELF` |
+| DELETE | `/v1/me/emergency-contacts/:id` | | `{deleted:true}` (`404 CONTACT_NOT_FOUND`) |
 | GET | `/v1/me/consents` | | `[{kind, version, locale, accepted, created_at}]` |
 | GET | `/v1/me/data-export` | | JSON file with all personal data |
 | POST | `/v1/me/data-requests` | `{kind:"access"\|"correction"\|"deletion", details}` | `201 {id, kind, details, status, created_at}` |
@@ -79,12 +82,17 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | POST | `/v1/rides/:id/cancel` | `{reason}` reasons: changed_mind, driver_too_far, driver_asked, wrong_pickup, rider_no_show, car_mismatch, safety, driver_late, other | rider: `{ride, cancels_recent, warning:boolean}`; driver: `{ride, penalty:boolean, blocked_until}`. Errors `CANNOT_CANCEL`, `NO_SHOW_TOO_EARLY`, `DRIVER_NOT_LATE` (rider `driver_late` is only accepted while `driver_late` is true; it is free, never counted for the rider, and adds a `late` penalty point to the driver, D67). A rider cancel with `driver_asked` after acceptance flags the ride and opens a `dispute` report (`off_app_suspected`, D58) |
 | POST | `/v1/rides/:id/rating` | `{stars 1-5, comment?, reasons?: string[] (≤5)}` | `{rated:true}`. `422 RATING_REASON_INVALID` (details `invalid`, `allowed`) when a reason does not fit the stars or the person rated (D64). Reasons when rating a **driver**: 4–5 ★ `safe_driving`, `polite`, `clean_car`, `knew_the_way`, `on_time`; 1–3 ★ `unsafe_driving`, `rude`, `dirty_car`, `wrong_route`, `late`, `asked_more_money`, `car_mismatch`. Rating a **rider**: 4–5 ★ `polite`, `on_time`, `exact_pickup`, `respectful`; 1–3 ★ `late`, `rude`, `wrong_pickup`, `messy`, `payment_problem` |
 | GET | `/v1/rides/:id/receipt` | | `{receipt_number, ride_id, date, from, to, distance_km, duration_min, fare (agreed price), waiting_fee, waiting_min, price (total paid = fare + waiting_fee, D70), currency:"DH", payment_method:"cash", commission:0, driver:{first_name, vehicle}, rider:{first_name}, company:{name, rc, ice, address}, note}` |
+| GET | `/v1/rides/:id/messages` | | `{items: Message[]}` — ride chat history (rider and driver of the ride, admins), D72 |
+| POST | `/v1/rides/:id/messages` | `{text (1–500)}` or `{quick}`, plus optional `client_id` (uuid; a resend with the same id returns the first copy) | `201 Message` — fallback when the socket is down. `409 CHAT_CLOSED` unless the ride is accepted / arrived / in progress; `404 RIDE_NOT_FOUND` for anyone but the two parties; 20 messages / min |
 | POST | `/v1/rides/:id/share` | `{contacts:[{name, phone}] (≤5)}` | `201/200 {url, token, contacts}` |
-| POST | `/v1/rides/:id/sos` | `{service:"police"\|"gendarmerie"\|"ambulance", lat, lng}` | `201 {sos_id, call:"19"\|"177"\|"15"}` → app opens the dialer with `call` |
+| POST | `/v1/rides/:id/sos` | `{service:"police"\|"gendarmerie"\|"ambulance", lat, lng}` | `201 {sos_id, call:"19"\|"177"\|"15", contacts:[{name, phone, status}]}` → app opens the dialer with `call`. Each saved emergency contact gets the live trip-share link through the WhatsApp channel (the SOS template named in `.env`; until it exists the alert is only logged, status `logged`) — D71 |
+| GET | `/v1/sos/:id` | | own SOS only: `{id, status, contacts:[{name, phone, status:"queued"\|"sent"\|"logged"\|"failed", sent_at}]}` |
 | POST | `/v1/sos/:id/location` | `{lat, lng}` | keep sending every ~10 s while the SOS screen is open |
 | POST | `/v1/rides/:id/reports` | `{kind:"car_mismatch"\|"dispute"\|"safety"\|"lost_item"\|"other", details?}` | `201 {id, kind, status, can_cancel_free}` |
 
 `Ride = {id, status:"searching"|"accepted"|"arrived"|"in_progress"|"completed"|"cancelled"|"expired", city_id, pickup:{lat,lng,address}, dropoff:{...}, distance_m, duration_s, suggested_price, offered_price, final_price, waiting_fee, total_price (final_price + waiting_fee: what the rider pays, D70), waiting_s?, waiting_rules? (while arrived, when the city charges for waiting: {free_s, per_min, max}), currency, payment_method:"cash", comment, requested_at, expires_at, accepted_at, arrived_at, started_at, completed_at, cancelled_at, cancelled_by, cancel_reason, pickup_pin? (rider only, accepted/arrived), driver?: {id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour, plate}, checks:{identity, car}}, rider: {id, first_name, rating, rating_count, trips}, my_rating, can_cancel_free? (rider), search? (rider/admin while searching): {wave, radius_m, drivers_notified}, can_edit_pickup? (rider), pickup_edited_at?, pickup_due_at?, eta_promised?, driver_late?, driver_late_at? (D67: true once the driver is `cancel_rules.driver_late_after_s`, default 300 s, past `pickup_due_at` without arriving; pushed live), arrived_late_s? (from acceptance: when the driver is due at the pickup — the promised ETA, else the route estimate — and, after arrival, how many seconds late they were, D66) — the request reaches drivers in waves of growing radius (D60)}`
+
+`Message = {id, ride_id, from_role:"rider"|"driver", text|null, quick|null, client_id, created_at}`. Quick replies are keys shown in the reader's language: rider `coming`, `at_pickup`, `wait_please`, `where_are_you`; driver `here`, `on_my_way`, `traffic`, `cant_find_you` (D72).
 
 `Bid = {id, ride_id, kind:"accept"|"counter", price, currency, eta_s, promised_eta_s (null when the driver promised nothing), distance_m, status, created_at, expires_at, driver:{id, first_name, rating, rating_count, trips, vehicle:{make, model, year, colour}, checks:{identity, car}}}`
 
@@ -134,11 +142,13 @@ Server → client events:
 - `session:revoked` → `{reason}` → logout
 - `admin:message` (drivers) → `{message}`
 - `call:invite|call:accept|call:reject|call:offer|call:answer|call:ice|call:end` → relayed payload + `from_role`
+- `chat:message` (rider and driver of the ride) → `Message` (D72)
 - Admin room only: `sos:new`, `sos:location`, `sos:update`, `abuse:new`, `report:new`, `driver:submitted`, `driver:auto_suspended`, `data_request:new`, `deletion_request:new`, `id_check:new`, `subscription:new`, `ride:update` (summary `{id, status, city_id, driver_id, rider_id, flagged}`), `driver:location` (with `driver_id`).
 
 Client → server (use emitWithAck; ack is `{ok:true,...}` or `{ok:false, error}`):
 - `driver:location` `{lat, lng, heading?, speed?, accuracy?, mocked?, recorded_at?}`
 - `call:*` `{ride_id, ...webrtc payload (sdp / candidate)}`
+- `chat:send` `{ride_id, text | quick, client_id}` → ack `{ok:true, message}` or `{ok:false, error}` (same rules as `POST /v1/rides/:id/messages`)
 - `reauth` `<new access token>` after a refresh.
 
 Rider ride pushes (driver arrived, driver late, trip started, trip completed, cancelled by the driver) carry the Android notification tag `ride-<ride id>` so each one replaces the previous one; the rider app's ongoing live notification uses the same tag (D69).
@@ -150,8 +160,8 @@ Trip-share watchers connect with `auth: {share: <token>}` (no login).
 `GET documents?status=&driver_id=&expiring_within_days=` · `GET documents/:id/file` (binary, logged) · `GET documents/:id/access-log` · `POST documents/:id/approve{expires_on?}|reject{reason}` · `PATCH documents/:id {expires_on}` ·
 `GET id-checks?status=` · `GET id-checks/:id/file` · `POST id-checks/:id/pass|fail` ·
 `GET live` → `{drivers:[{id, full_name, city_id, driver_type, location:{lat,lng,heading,speed,at}|null}], rides:[{id, status, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng, offered_price, final_price, flagged, ...}], sos:[{id, ride_id, service, status, lat, lng, created_at}]}` ·
-`GET rides?status=&q=&flagged=&limit=` · `GET rides/:id` → `{ride, events, route, bids, reports, sos, ratings:[{rater_id, ratee_id, stars, comment, reasons, created_at}]}` · `POST rides/:id/cancel{reason}` ·
-`GET reports?status=` · `POST reports/:id/resolve{resolution}` · `GET sos?status=` · `POST sos/:id/acknowledge` · `POST sos/:id/resolve{note}` ·
+`GET rides?status=&q=&flagged=&limit=` · `GET rides/:id` → `{ride, events, route, bids, reports, sos, messages: Message[], ratings:[{rater_id, ratee_id, stars, comment, reasons, created_at}]}` · `POST rides/:id/cancel{reason}` ·
+`GET reports?status=` · `POST reports/:id/resolve{resolution}` · `GET sos?status=` (each with `contacts:[{name, phone, status, error}]`, D71) · `POST sos/:id/acknowledge` · `POST sos/:id/resolve{note}` ·
 `GET cities` · `POST cities` · `PATCH cities/:id` (`cancel_rules` also holds ride rules such as `search_waves`, `arrive_max_distance_m`, `pickup_edit_max_m`, `driver_late_after_s` (0 = off), `driver_points_per_late`, `waiting_fee_enabled` (default false), `free_wait_s` (180), `waiting_fee_per_min` (1), `waiting_fee_max` (20); fields: slug, name_ar/fr/en, lat, lng, radius_km, base_fare, per_km, per_min, min_fare, min_offer_ratio, max_counter_ratio, bid_timeout_s, request_timeout_s, offers_shown, search_radius_km, enabled_driver_types, cancel_rules{}, car_rules{}, active) ·
 `GET flags` · `PUT flags/:key {enabled, city_id?}` · `GET settings` → `{company, app_versions, apk, retention_days, document_reminder_days, subscription, emergency_numbers}` · `PUT settings/:key {value}` ·
 `GET subscriptions?status=` · `POST subscriptions/:id/mark-paid|cancel` ·
