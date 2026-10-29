@@ -2,6 +2,7 @@ import type { Queryable } from '../../db/pool.js';
 import { many, one } from '../../db/pool.js';
 import { effectiveRating, firstName } from '../users.js';
 import { waitingRules } from './waiting.js';
+import { speedRules } from './speed-rules.js';
 
 export const ACTIVE_STATUSES = ['accepted', 'arrived', 'in_progress'] as const;
 export type RideStatus = 'searching' | 'accepted' | 'arrived' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
@@ -175,6 +176,12 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
     const c = await one<{ cancel_rules: Record<string, any> }>(q, 'SELECT cancel_rules FROM cities WHERE id = $1', [r.city_id]);
     const rules = c ? waitingRules(c.cancel_rules) : null;
     if (rules) view.waiting_rules = rules;
+  }
+  if (isDriver && r.status === 'in_progress') {
+    // Gentle in-app warning while driving (D83); the same rules flag the ride for admins afterwards.
+    const c = await one<{ cancel_rules: Record<string, any> }>(q, 'SELECT cancel_rules FROM cities WHERE id = $1', [r.city_id]);
+    const rules = speedRules(c?.cancel_rules);
+    if (rules.limit_kmh > 0) view.speed_rules = rules;
   }
   if (r.driver_late_at) view.driver_late_at = r.driver_late_at;
   if (isRider || isDriver || isAdmin) view.driver_late = r.status === 'accepted' && !!r.driver_late_at;

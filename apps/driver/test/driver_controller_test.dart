@@ -353,6 +353,38 @@ void main() {
       expect(c.tracking, isTrue, reason: 'location keeps streaming during a ride');
     });
 
+    test('slow-down warning after 30 s above the city threshold during the trip (D83)', () async {
+      await online();
+      api.active = ActiveRide(
+        ride: Ride.fromJson({
+          ...rideJson('r5', 'in_progress'),
+          'speed_rules': {'limit_kmh': 60, 'margin_kmh': 20, 'min_s': 30},
+        }),
+      );
+      await c.refreshActive();
+      var lat = 33.8935;
+      void drive(double kmh) {
+        clock.advance(const Duration(seconds: 5));
+        lat += 0.0005;
+        loc.stream.add(fix(lat: lat, at: clock.now, speed: kmh / 3.6));
+      }
+
+      for (var i = 0; i < 6; i++) {
+        drive(95);
+      }
+      await settle();
+      expect(c.speedWarning, isFalse, reason: '25 s is not long enough');
+      drive(95);
+      drive(95);
+      await settle();
+      expect(c.speedWarning, isTrue);
+      drive(78); // just under the threshold: stays on (hysteresis)
+      expect(c.speedWarning, isTrue);
+      drive(70);
+      await settle();
+      expect(c.speedWarning, isFalse);
+    });
+
     test('resume after the ride ended in the background shows trip complete', () async {
       api.active = ActiveRide(ride: makeRide('r2', 'in_progress'));
       await c.refreshActive();

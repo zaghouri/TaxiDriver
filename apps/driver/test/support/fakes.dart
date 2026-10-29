@@ -286,8 +286,8 @@ class FakeForeground implements ForegroundControl {
   void beat() => beats++;
 }
 
-DriverPosition fix({double lat = 33.8935, double lng = -5.5473, bool mocked = false, DateTime? at}) =>
-    DriverPosition(lat: lat, lng: lng, timestamp: at ?? DateTime.utc(2026, 10, 26, 10), accuracy: 5, mocked: mocked);
+DriverPosition fix({double lat = 33.8935, double lng = -5.5473, bool mocked = false, DateTime? at, double? speed}) =>
+    DriverPosition(lat: lat, lng: lng, timestamp: at ?? DateTime.utc(2026, 10, 26, 10), accuracy: 5, mocked: mocked, speed: speed);
 
 /// Lets queued microtasks / async continuations run.
 Future<void> settle() async {

@@ -36,6 +36,7 @@ class DriverStrings {
   String etaChoiceMin(int min) => _f('etaChoiceMin', {'min': min});
   String etaPromisedTo(String time) => _f('etaPromisedTo', {'time': time});
   String get youAreLate => _t('youAreLate');
+  String get slowDown => _t('slowDown');
   // Request feed: hide / report, alert distance (D68).
   String get requestMore => _t('requestMore');
   String get hideRequest => _t('hideRequest');
@@ -271,6 +272,7 @@ class DriverStrings {
       'etaChoiceMin': '{min} min',
       'etaPromisedTo': 'You promised to be there by {time}',
       'youAreLate': 'You are late for the pickup. The rider can now cancel for free.',
+      'slowDown': 'You are driving fast. Please slow down: your rider’s safety comes first.',
       'requestMore': 'More actions',
       'hideRequest': 'Hide this request',
       'reportRequest': 'Report this request',
@@ -383,6 +385,7 @@ class DriverStrings {
       'etaChoiceMin': '{min} min',
       'etaPromisedTo': 'Vous avez promis d’être là à {time}',
       'youAreLate': 'Vous êtes en retard au départ. Le passager peut maintenant annuler gratuitement.',
+      'slowDown': 'Vous roulez vite. Ralentissez s’il vous plaît : la sécurité du passager passe d’abord.',
       'requestMore': 'Plus d’actions',
       'hideRequest': 'Masquer cette demande',
       'reportRequest': 'Signaler cette demande',
@@ -495,6 +498,7 @@ class DriverStrings {
       'etaChoiceMin': '{min} د',
       'etaPromisedTo': 'وعدت بالوصول قبل {time}',
       'youAreLate': 'أنت متأخر عن نقطة الانطلاق. يمكن للراكب الآن الإلغاء مجانًا.',
+      'slowDown': 'أنت تسير بسرعة. خفّف السرعة من فضلك: سلامة الراكب أولًا.',
       'requestMore': 'إجراءات أخرى',
       'hideRequest': 'إخفاء هذا الطلب',
       'reportRequest': 'الإبلاغ عن هذا الطلب',

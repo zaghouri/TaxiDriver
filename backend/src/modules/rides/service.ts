@@ -611,6 +611,8 @@ export async function completeTrip(ctx: AppContext, driverId: string, rideId: st
   ]);
   await ctx.geo.setAvailable(driverId, r2.city_id, true);
   await ctx.db.query(`UPDATE trip_shares SET expires_at = now() + interval '1 hour' WHERE ride_id = $1`, [rideId]);
+  // Speeding check on the recorded route (D83); the sweeper catches a lost job.
+  await ctx.scheduler.schedule('ride-speeding', { rideId }, 5000, `ride-speeding-${rideId}`);
   return rideView(ctx.db, r2, { id: driverId, role: 'driver' });
 }
 

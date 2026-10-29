@@ -20,6 +20,8 @@ export async function runRetention(ctx: AppContext): Promise<Record<string, numb
   const days = (k: string, d: number) => r[k] ?? d;
 
   await exec('route_points', `DELETE FROM ride_route_points WHERE recorded_at < now() - make_interval(days => $1)`, [days('route_points', 365)]);
+  // Speeding summaries hold positions from the route: same retention as the route points (D83).
+  await exec('ride_speeding', `DELETE FROM ride_speeding WHERE checked_at < now() - make_interval(days => $1)`, [days('route_points', 365)]);
   await exec('verification_codes', `DELETE FROM verification_codes WHERE created_at < now() - make_interval(days => $1)`, [days('verification_codes', 7)]);
   await exec('refresh_tokens', `DELETE FROM refresh_tokens WHERE (expires_at < now() OR revoked_at IS NOT NULL) AND created_at < now() - make_interval(days => $1)`, [days('refresh_tokens_expired', 30)]);
   await exec('idempotency_keys', `DELETE FROM idempotency_keys WHERE created_at < now() - make_interval(days => $1)`, [days('idempotency_keys', 2)]);

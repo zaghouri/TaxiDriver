@@ -39,6 +39,7 @@ export async function deleteAccount(ctx: AppContext, userId: string, by: 'self' 
     await tx.query('UPDATE data_requests SET details = NULL WHERE user_id = $1', [userId]);
     await tx.query('UPDATE rides SET rider_comment = NULL, pickup_address = NULL, dropoff_address = NULL WHERE rider_id = $1', [userId]);
     await tx.query('DELETE FROM ride_route_points WHERE ride_id IN (SELECT id FROM rides WHERE rider_id = $1 OR driver_id = $1)', [userId]);
+    await tx.query('DELETE FROM ride_speeding WHERE driver_id = $1', [userId]);
     if (u.role === 'driver') {
       await tx.query('DELETE FROM documents WHERE driver_id = $1', [userId]);
       await tx.query(`UPDATE vehicles SET plate = 'DELETED', active = false WHERE driver_id = $1`, [userId]);
@@ -71,6 +72,7 @@ export async function exportData(ctx: AppContext, userId: string) {
     driver: await one(ctx.db, 'SELECT driver_type, status, cin_last4, licence_issued_on, max_pickup_m, daily_goal, created_at FROM drivers WHERE user_id = $1', [userId]),
     vehicles: await q('SELECT make, model, year, colour, plate, created_at FROM vehicles WHERE driver_id = $1'),
     documents: await q('SELECT type, status, expires_on, created_at FROM documents WHERE driver_id = $1'),
+    speeding_checks: await q('SELECT ride_id, limit_kmh, threshold_kmh, flagged, max_kmh, episodes, checked_at FROM ride_speeding WHERE driver_id = $1 ORDER BY checked_at DESC'),
     sos_alerts: await q('SELECT ride_id, service, status, created_at FROM sos_alerts WHERE user_id = $1'),
     messages_sent: await q('SELECT ride_id, body, quick, created_at FROM ride_messages WHERE sender_id = $1 ORDER BY created_at'),
     emergency_contacts: await q('SELECT name, phone, created_at FROM emergency_contacts WHERE user_id = $1'),

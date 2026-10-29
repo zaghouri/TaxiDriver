@@ -33,6 +33,7 @@ Each line names where it lives and how it was verified.
 - [x] Off-app warning in the rider cancel flow; "driver asked me to cancel" flags the ride + report (D58) — `rides.test.ts`, rider widget test
 - [x] Pickup PIN; plate/model/colour before pickup; "car doesn't match" report — `rides.test.ts › full ride lifecycle` (PIN rider-only, wrong PIN refused), reports + free cancel (`admin.test.ts`)
 - [x] Destination shown to driver before accepting; rider rating visible to drivers — `ride:request` payload; `rides.test.ts › sends the request only to eligible nearby drivers, with destination and rider rating`
+- [x] Speeding flag for admins + gentle driver warning (D83): above `speed_limit_kmh` + `speeding_margin_kmh` for `speeding_min_s` (60 + 20 km/h for 30 s by default) on the recorded route → ride flagged, `speeding` event, Speed card in the ride view; summaries follow the route-point retention — `speeding.test.ts`, admin `rides.test.tsx`, driver `speed_watch_test.dart`. Real GPS speeds to check on a phone (PHONE_TEST)
 - [x] Full trip log (state changes + route points) — append-only `ride_events`, `ride_route_points`; `rides.test.ts`, simulator invariants
 
 ## Security and fraud
