@@ -446,6 +446,7 @@ class RideController extends ChangeNotifier {
       );
       _bids.clear();
       _offersTotal = 0;
+      _askedAgain = null;
       _driversNotified = res.driversNotified;
       _applyRide(res.ride, offers: const [], force: true);
       return true;
@@ -515,6 +516,8 @@ class RideController extends ChangeNotifier {
       if (_offersTotal > 0) _offersTotal--;
       _notify();
     }
+    // An offer that ran out makes "ask again" possible (D84): the ride view says for how many drivers.
+    if (u.status == 'expired' || u.status == 'outdated') unawaited(sync());
     // Queued offers move up: fetch the new top N.
     unawaited(refreshOffers());
   }
@@ -610,6 +613,40 @@ class RideController extends ChangeNotifier {
     final max = maxFare;
     if (max != null && next > max) next = max;
     return next;
+  }
+
+  // ------------------------------------------------------- ask again (D84)
+
+  /// Drivers whose offers ran out can be asked again (while searching, or just after "No driver found").
+  RenotifyInfo? get renotify {
+    final info = _ride?.renotify;
+    if (info == null || info.left <= 0) return null;
+    return _phase == RiderPhase.searching || _phase == RiderPhase.expired ? info : null;
+  }
+
+  /// How many drivers the last "ask again" reached on the current request (null = not used).
+  int? get askedAgain => _askedAgain;
+  int? _askedAgain;
+
+  /// One tap: pings the drivers who offered. On an expired request the server sends the same request again.
+  Future<bool> askDriversAgain() async {
+    final r = _ride;
+    if (r == null || renotify == null) return false;
+    return _act(() async {
+      final res = await api.renotify(r.id);
+      if (res.created) {
+        _bids.clear();
+        _offersTotal = 0;
+        _applyRide(res.ride, offers: const [], force: true);
+      } else {
+        _applyRide(res.ride);
+      }
+      _askedAgain = res.askedAgain;
+      return true;
+    }, onError: (e) async {
+      if (e.code == 'RIDE_NOT_SEARCHING' || e.code == 'NO_DRIVERS_TO_ASK' || e.code == 'RIDE_ALREADY_ACTIVE') await sync();
+      return false;
+    });
   }
 
   // ------------------------------------------------------------ expired flow

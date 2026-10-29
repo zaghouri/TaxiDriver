@@ -252,6 +252,12 @@ class RideMaApi {
         if (pickup.address != null && pickup.address!.trim().isNotEmpty) 'address': pickup.address!.trim(),
       }));
 
+  /// Ask the drivers whose offers ran out again (D84). On an expired request this sends a new one ([created]).
+  Future<({Ride ride, bool created, int askedAgain})> renotify(String rideId) async {
+    final j = asJson(await client.post('/v1/rides/$rideId/renotify'));
+    return (ride: Ride.fromJson(j['ride']), created: j['created'] == true, askedAgain: asInt(j['asked_again']) ?? 0);
+  }
+
   Future<Ride> acceptBid(String rideId, String bidId) async =>
       Ride.fromJson(await client.post('/v1/rides/$rideId/bids/$bidId/accept'));
 

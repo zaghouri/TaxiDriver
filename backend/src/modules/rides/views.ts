@@ -3,6 +3,7 @@ import { many, one } from '../../db/pool.js';
 import { effectiveRating, firstName } from '../users.js';
 import { waitingRules } from './waiting.js';
 import { speedRules } from './speed-rules.js';
+import { renotifyInfo } from './renotify-info.js';
 
 export const ACTIVE_STATUSES = ['accepted', 'arrived', 'in_progress'] as const;
 export type RideStatus = 'searching' | 'accepted' | 'arrived' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
@@ -185,6 +186,11 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
   }
   if (r.driver_late_at) view.driver_late_at = r.driver_late_at;
   if (isRider || isDriver || isAdmin) view.driver_late = r.status === 'accepted' && !!r.driver_late_at;
+  // "Ask these drivers again" (D84): only while it can be used.
+  if (isRider && (r.status === 'searching' || r.status === 'expired')) {
+    const info = await renotifyInfo(q, r);
+    if (info) view.renotify = info;
+  }
   if ((isRider || isAdmin) && r.status === 'searching') {
     view.search = { wave: r.search_wave, radius_m: r.search_radius_m, drivers_notified: r.drivers_notified };
   }

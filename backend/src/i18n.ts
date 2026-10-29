@@ -33,6 +33,8 @@ const t = {
   },
   push_new_request_title: { en: 'New ride request', fr: 'Nouvelle demande', ar: 'طلب رحلة جديد' },
   push_new_request_body: { en: '{price} DH · {distance} km', fr: '{price} DH · {distance} km', ar: '{price} درهم · {distance} كلم' },
+  push_asked_again_title: { en: 'A rider is asking you again', fr: 'Un passager vous redemande', ar: 'راكب يطلبك من جديد' },
+  push_asked_again_body: { en: 'You offered on this trip: {price} DH · {distance} km', fr: 'Vous aviez fait une offre : {price} DH · {distance} km', ar: 'سبق أن قدّمت عرضًا: {price} درهم · {distance} كلم' },
   push_new_offer_title: { en: 'New offer', fr: 'Nouvelle offre', ar: 'عرض جديد' },
   push_new_offer_body: { en: '{name} offers {price} DH', fr: '{name} propose {price} DH', ar: '{name} يقترح {price} درهم' },
   push_accepted_title: { en: 'You got the ride!', fr: 'Course acceptée !', ar: 'تم قبولك للرحلة!' },
