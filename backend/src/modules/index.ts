@@ -5,6 +5,7 @@ import { geoRoutes } from './geo.js';
 import { meRoutes } from './me.js';
 import { savedPlaceRoutes } from './saved-places.js';
 import { driverRoutes } from './drivers.js';
+import { driverPreviewRoutes } from './driver-preview.js';
 import { rideRoutes } from './rides/routes.js';
 import { chatRoutes } from './chat.js';
 import { safetyRoutes } from './safety.js';
@@ -18,6 +19,7 @@ export async function registerModules(app: FastifyInstance, ctx: AppContext) {
   await meRoutes(app, ctx);
   await savedPlaceRoutes(app, ctx);
   await driverRoutes(app, ctx);
+  await driverPreviewRoutes(app, ctx);
   await rideRoutes(app, ctx);
   await safetyRoutes(app, ctx);
   await chatRoutes(app, ctx);

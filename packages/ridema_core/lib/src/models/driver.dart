@@ -332,3 +332,28 @@ class DriverEarnings {
     );
   }
 }
+
+/// One open request in the preview for drivers under review (D86): area level only, nothing about the rider.
+class RequestPreview {
+  const RequestPreview({required this.pickupArea, required this.dropoffArea, required this.tripKm, required this.offeredPrice, this.minutesAgo = 0, this.awayKm});
+  final String pickupArea;
+  final String dropoffArea;
+  final double tripKm;
+  final int offeredPrice;
+  final int minutesAgo;
+
+  /// Rounded to 0.5 km; null when the app sent no position.
+  final double? awayKm;
+
+  factory RequestPreview.fromJson(Object? json) {
+    final j = asJson(json);
+    return RequestPreview(
+      pickupArea: asStringOr(j['pickup_area']),
+      dropoffArea: asStringOr(j['dropoff_area']),
+      tripKm: asDouble(j['trip_km']) ?? 0,
+      offeredPrice: asInt(j['offered_price']) ?? 0,
+      minutesAgo: asInt(j['minutes_ago']) ?? 0,
+      awayKm: asDouble(j['away_km']),
+    );
+  }
+}

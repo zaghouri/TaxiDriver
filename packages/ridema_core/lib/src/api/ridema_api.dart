@@ -381,6 +381,12 @@ class RideMaApi {
 
   Future<Ride> completeTrip(String rideId) async => Ride.fromJson(await client.post('/v1/rides/$rideId/complete'));
 
+  /// Read-only preview of open requests while the application is under review (D86).
+  Future<List<RequestPreview>> driverPreview({double? lat, double? lng}) async => asJsonList(asJson(await client
+          .get('/v1/driver/preview', query: {if (lat != null && lng != null) ...{'lat': lat, 'lng': lng}}))['items'])
+      .map(RequestPreview.fromJson)
+      .toList();
+
   Future<Json> earnings({int days = 7}) async => asJson(await client.get('/v1/driver/earnings', query: {'days': days}));
 
   /// Typed income (D82); [month] is `YYYY-MM` (default: this month).

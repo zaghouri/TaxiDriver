@@ -110,6 +110,19 @@ class DriverStrings {
   String get goalRemove => _t('goalRemove');
   String get goalHint => _t('goalHint');
   String get goalInvalid => _t('goalInvalid');
+  // Preview while under review, first-ride tips (D86).
+  String get previewTitle => _t('previewTitle');
+  String get previewHint => _t('previewHint');
+  String get previewEmpty => _t('previewEmpty');
+  String previewTrip(String km) => _f('previewTrip', {'km': km});
+  String previewAway(String km) => _f('previewAway', {'km': km});
+  String previewAgo(int min) => min < 1 ? _t('previewNow') : _f('previewAgo', {'min': min});
+  String get firstRideBanner => _t('firstRideBanner');
+  String get firstRideTitle => _t('firstRideTitle');
+  String get firstRideIntro => _t('firstRideIntro');
+  String get firstRideDone => _t('firstRideDone');
+  String firstRideTip(String id) => _t('tip_$id');
+  String firstRideTipBody(String id) => _t('tip_${id}_body');
   String get refresh => _t('refresh');
   String get deviceCheckTitle => _t('deviceCheckTitle');
   String get serviceReopen => _t('serviceReopen');
@@ -241,6 +254,27 @@ class DriverStrings {
       'goalRemove': 'Remove goal',
       'goalHint': 'How much do you want to collect each day? (DH)',
       'goalInvalid': 'Enter an amount between 10 and 5000 DH.',
+      'previewTitle': 'Requests right now',
+      'previewHint': 'A preview while we check your documents: areas only, no rider details. You can make offers once your account is approved.',
+      'previewEmpty': 'No open request in your city at the moment.',
+      'previewTrip': '{km} km trip',
+      'previewAway': 'about {km} km from you',
+      'previewAgo': '{min} min ago',
+      'previewNow': 'just now',
+      'firstRideBanner': 'You are approved! 5 tips for your first ride',
+      'firstRideTitle': 'Your first ride',
+      'firstRideIntro': 'Tick each one when you are ready.',
+      'firstRideDone': 'Got it',
+      'tip_ready': 'Run the “Ready to drive” check',
+      'tip_ready_body': 'Fix anything in red so requests reach you, even with the screen off.',
+      'tip_online': 'Go online where riders are',
+      'tip_online_body': 'Train stations, the medina gates and big shops get many requests.',
+      'tip_offer': 'Answer quickly',
+      'tip_offer_body': 'Accept the rider’s fare or send a counter-offer. The rider sees your offer for about a minute.',
+      'tip_pin': 'Ask for the PIN before you start',
+      'tip_pin_body': 'The rider tells you a 4-digit code. It confirms you picked up the right person.',
+      'tip_cash': 'Collect cash, then rate the rider',
+      'tip_cash_body': 'The app shows the total to collect, waiting fee included. RideMA takes 0 % commission.',
       'refresh': 'Refresh',
       'deviceCheckTitle': 'Phone check',
       'serviceReopen': 'Open RideMA to stay online.',
@@ -354,6 +388,27 @@ class DriverStrings {
       'goalRemove': 'Supprimer l’objectif',
       'goalHint': 'Combien voulez-vous encaisser par jour ? (DH)',
       'goalInvalid': 'Entrez un montant entre 10 et 5000 DH.',
+      'previewTitle': 'Demandes en ce moment',
+      'previewHint': 'Un aperçu pendant que nous vérifions vos documents : quartiers seulement, aucune donnée du passager. Vous pourrez faire des offres une fois votre compte validé.',
+      'previewEmpty': 'Aucune demande ouverte dans votre ville pour le moment.',
+      'previewTrip': 'course de {km} km',
+      'previewAway': 'à environ {km} km de vous',
+      'previewAgo': 'il y a {min} min',
+      'previewNow': 'à l’instant',
+      'firstRideBanner': 'Compte validé ! 5 conseils pour votre première course',
+      'firstRideTitle': 'Votre première course',
+      'firstRideIntro': 'Cochez chaque point quand vous êtes prêt.',
+      'firstRideDone': 'C’est compris',
+      'tip_ready': 'Faites la vérification « Prêt à rouler »',
+      'tip_ready_body': 'Corrigez ce qui est en rouge pour recevoir les demandes, même écran éteint.',
+      'tip_online': 'Passez en ligne là où sont les passagers',
+      'tip_online_body': 'Les gares, les portes de la médina et les grands magasins reçoivent beaucoup de demandes.',
+      'tip_offer': 'Répondez vite',
+      'tip_offer_body': 'Acceptez le prix du passager ou faites une contre-offre. Le passager voit votre offre pendant environ une minute.',
+      'tip_pin': 'Demandez le code PIN avant de démarrer',
+      'tip_pin_body': 'Le passager vous donne un code à 4 chiffres. Il confirme que c’est la bonne personne.',
+      'tip_cash': 'Encaissez en espèces, puis notez le passager',
+      'tip_cash_body': 'L’application affiche le total à encaisser, frais d’attente compris. RideMA prend 0 % de commission.',
       'refresh': 'Actualiser',
       'deviceCheckTitle': 'Vérification du téléphone',
       'serviceReopen': 'Ouvrez RideMA pour rester en ligne.',
@@ -467,6 +522,27 @@ class DriverStrings {
       'goalRemove': 'حذف الهدف',
       'goalHint': 'كم تريد أن تحصّل كل يوم؟ (درهم)',
       'goalInvalid': 'أدخل مبلغًا بين 10 و5000 درهم.',
+      'previewTitle': 'الطلبات الآن',
+      'previewHint': 'معاينة أثناء التحقق من وثائقك: الأحياء فقط، دون أي معلومات عن الراكب. يمكنك تقديم العروض بعد قبول حسابك.',
+      'previewEmpty': 'لا يوجد طلب مفتوح في مدينتك حاليًا.',
+      'previewTrip': 'رحلة {km} كلم',
+      'previewAway': 'على بعد {km} كلم منك تقريبًا',
+      'previewAgo': 'منذ {min} د',
+      'previewNow': 'الآن',
+      'firstRideBanner': 'تم قبول حسابك! 5 نصائح لرحلتك الأولى',
+      'firstRideTitle': 'رحلتك الأولى',
+      'firstRideIntro': 'ضع علامة على كل نقطة عندما تكون جاهزًا.',
+      'firstRideDone': 'فهمت',
+      'tip_ready': 'قم بفحص «جاهز للقيادة»',
+      'tip_ready_body': 'أصلح كل ما هو باللون الأحمر حتى تصلك الطلبات، حتى والشاشة مطفأة.',
+      'tip_online': 'اتصل حيث يوجد الركاب',
+      'tip_online_body': 'محطات القطار وأبواب المدينة القديمة والمتاجر الكبرى تتلقى طلبات كثيرة.',
+      'tip_offer': 'أجب بسرعة',
+      'tip_offer_body': 'اقبل ثمن الراكب أو قدّم عرضًا مضادًا. يرى الراكب عرضك لمدة دقيقة تقريبًا.',
+      'tip_pin': 'اطلب الرمز قبل الانطلاق',
+      'tip_pin_body': 'يعطيك الراكب رمزًا من 4 أرقام. يؤكد أن الراكب الذي معك هو الشخص الصحيح.',
+      'tip_cash': 'استلم الثمن نقدًا ثم قيّم الراكب',
+      'tip_cash_body': 'يعرض التطبيق المبلغ الإجمالي، بما فيه رسوم الانتظار. عمولة RideMA هي 0 %.',
       'refresh': 'تحديث',
       'deviceCheckTitle': 'فحص الهاتف',
       'serviceReopen': 'افتح RideMA لتبقى متصلًا.',
