@@ -10,6 +10,7 @@ import '../l10n/driver_strings.dart';
 import 'documents_screen.dart';
 import 'home/home_screen.dart';
 import 'onboarding/onboarding_screen.dart';
+import 'onboarding/request_preview.dart';
 
 /// Signed-in root: phone verification → onboarding / under review / home by
 /// driver status. Starts the DriverController (active ride restore + socket
@@ -148,6 +149,8 @@ class UnderReviewScreen extends StatelessWidget {
           gap16,
           SecondaryButton(label: context.ds.refresh, icon: Icons.refresh, onPressed: pc.load),
           if (pc.profile != null) DocumentList(profile: pc.profile!, onChanged: pc.load),
+          gap16,
+          const RequestPreviewSection(),
         ]),
       ),
     );

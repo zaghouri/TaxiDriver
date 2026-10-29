@@ -15,6 +15,7 @@ import '../../platform/readiness.dart';
 import '../device_check_screen.dart';
 import '../documents_screen.dart';
 import '../earnings_screen.dart';
+import '../onboarding/first_ride_tips.dart';
 import '../readiness_screen.dart';
 import '../request_detail_screen.dart';
 import '../ride/active_ride_view.dart';
@@ -302,6 +303,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
+  Future<void> _openFirstRideTips() async {
+    await Navigator.of(context).push(MaterialPageRoute<bool>(builder: (_) => FirstRideTipsScreen(prefs: _s.prefs)));
+    if (mounted) setState(() {});
+  }
+
   Future<void> _maybeBatteryGuide() async {
     final prefs = _s.prefs;
     if (prefs.getBool(HomeScreen.batteryGuideShownKey) ?? false) return;
@@ -339,6 +345,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       // Notifications and the location service already have their own banner / card.
       if (_readiness.difference({ReadinessItem.notifications, ReadinessItem.locationService}).isNotEmpty)
         ReadinessBanner(count: _readiness.length, onTap: _openReadiness),
+      // Just approved (D86): tips until the driver closes them.
+      if (active == null && !FirstRideTips.done(_s.prefs)) FirstRideTipsBanner(onTap: _openFirstRideTips),
     ];
 
     return CallHost(
