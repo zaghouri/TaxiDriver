@@ -203,6 +203,7 @@ class Ride {
     this.waitingS,
     this.waitingRules,
     this.speedRules,
+    this.renotify,
   });
 
   final String id;
@@ -268,6 +269,8 @@ class Ride {
 
   /// Driver only, during the trip (D83): when to show the "slow down" warning.
   final SpeedRules? speedRules;
+  /// Rider only (D84): "ask the drivers who offered again" is available.
+  final RenotifyInfo? renotify;
 
   /// Agreed price once accepted, else the current offer.
   int get fare => finalPrice ?? offeredPrice;
@@ -316,6 +319,7 @@ class Ride {
       waitingS: asInt(j['waiting_s']),
       waitingRules: j['waiting_rules'] is Map ? WaitingRules.fromJson(j['waiting_rules']) : null,
       speedRules: j['speed_rules'] is Map ? SpeedRules.fromJson(j['speed_rules']) : null,
+      renotify: j['renotify'] is Map ? RenotifyInfo.fromJson(j['renotify']) : null,
     );
   }
 }
@@ -332,6 +336,19 @@ class SpeedRules {
   factory SpeedRules.fromJson(Object? json) {
     final j = asJson(json);
     return SpeedRules(limitKmh: asInt(j['limit_kmh']) ?? 60, marginKmh: asInt(j['margin_kmh']) ?? 20, minS: asInt(j['min_s']) ?? 30);
+  }
+}
+
+/// `Ride.renotify` (D84): [drivers] whose offers ran out can be asked again, [left] times more, in [waitS] seconds.
+class RenotifyInfo {
+  const RenotifyInfo({required this.drivers, required this.left, this.waitS = 0});
+  final int drivers;
+  final int left;
+  final int waitS;
+
+  factory RenotifyInfo.fromJson(Object? json) {
+    final j = asJson(json);
+    return RenotifyInfo(drivers: asInt(j['drivers']) ?? 0, left: asInt(j['left']) ?? 0, waitS: asInt(j['wait_s']) ?? 0);
   }
 }
 

@@ -22,6 +22,7 @@ abstract class RiderRideApi {
   Future<Ride> editPickup(String rideId, Place pickup);
   Future<Ride> acceptBid(String rideId, String bidId);
   Future<void> declineBid(String rideId, String bidId);
+  Future<({Ride ride, bool created, int askedAgain})> renotify(String rideId);
 
   /// `{ride, cancels_recent, warning}`.
   Future<Map<String, dynamic>> cancelRide(String rideId, CancelReason reason);
@@ -61,6 +62,8 @@ class CoreRiderRideApi implements RiderRideApi {
   Future<Ride> acceptBid(String rideId, String bidId) => api.acceptBid(rideId, bidId);
   @override
   Future<void> declineBid(String rideId, String bidId) => api.declineBid(rideId, bidId);
+  @override
+  Future<({Ride ride, bool created, int askedAgain})> renotify(String rideId) => api.renotify(rideId);
   @override
   Future<Map<String, dynamic>> cancelRide(String rideId, CancelReason reason) => api.cancelRide(rideId, reason);
   @override

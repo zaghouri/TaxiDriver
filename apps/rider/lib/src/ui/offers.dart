@@ -280,8 +280,20 @@ class SearchingPanel extends StatelessWidget {
                 ),
               ],
             ),
-          )
-        else
+          ),
+        if (offers.isEmpty && c.renotify != null)
+          SecondaryButton(
+            key: const ValueKey('ask_again'),
+            label: rs.askAgain(c.renotify!.drivers),
+            icon: Icons.notifications_active_outlined,
+            onPressed: c.busy ? null : c.askDriversAgain,
+          ),
+        if (offers.isEmpty && c.askedAgain != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(rs.askedAgainResult(c.askedAgain!), key: const ValueKey('asked_again'), textAlign: TextAlign.center),
+          ),
+        if (offers.isNotEmpty)
           // Flexible: on small phones (or with longer French/Arabic headers) the list shrinks and scrolls
           // instead of overflowing the sheet.
           Flexible(
@@ -343,6 +355,16 @@ class ExpiredPanel extends StatelessWidget {
           ErrorBanner(riderErrorText(context, c.error!)),
         ],
         gap16,
+        if (c.renotify != null) ...[
+          PrimaryButton(
+            key: const ValueKey('expired_ask_again'),
+            label: '${rs.askAgain(c.renotify!.drivers)} (${l.priceDh(price)})',
+            icon: Icons.notifications_active_outlined,
+            busy: c.busy,
+            onPressed: c.askDriversAgain,
+          ),
+          gap8,
+        ],
         PrimaryButton(
           key: const ValueKey('expired_raise'),
           label: '${rs.raiseAndRetry} (${l.priceDh(raised)})',

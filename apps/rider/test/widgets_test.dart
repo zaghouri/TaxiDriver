@@ -235,6 +235,29 @@ void main() {
     });
   });
 
+  group('Ask the drivers again (D84)', () {
+    testWidgets('No driver found offers one tap to ask the drivers who offered', (tester) async {
+      await _setPhone(tester);
+      final h = Harness();
+      addTearDown(h.c.dispose);
+      await h.searching();
+      h.rt.rideUpdate.add(Ride.fromJson({...rideJson(status: 'expired'), 'renotify': {'drivers': 2, 'left': 3}}));
+      h.api.onRenotify = (id) async => (ride: mkRide(id: 'ride-2'), created: true, askedAgain: 2);
+      await tester.pumpWidget(wrapApp(const Scaffold(body: ExpiredPanel()), controller: h.c));
+      await tester.pump();
+      expect(find.textContaining('Ask the 2 drivers who offered again'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('expired_ask_again')));
+      await tester.pump();
+      expect(h.api.calls, contains('renotify:ride-1'));
+      expect(h.c.phase, RiderPhase.searching);
+      // Nobody offered: the button is not there.
+      h.rt.rideUpdate.add(mkRide(id: 'ride-2', status: 'expired'));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('expired_ask_again')), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    });
+  });
+
   group('Change pickup point (D61)', () {
     testWidgets('the button shows only while the pickup can still move', (tester) async {
       await _setPhone(tester);

@@ -157,6 +157,8 @@ class FakeRideApi implements RiderRideApi {
   Future<Ride> Function(String id, String bidId) onAccept =
       (id, _) async => mkRide(id: id, status: 'accepted', pin: '4821', withDriver: true, finalPrice: 30);
   Future<void> Function(String id, String bidId) onDecline = (_, _) async {};
+  Future<({Ride ride, bool created, int askedAgain})> Function(String id) onRenotify =
+      (id) async => (ride: mkRide(id: id), created: false, askedAgain: 2);
   Future<Map<String, dynamic>> Function(String id, CancelReason r) onCancel = (id, r) async =>
       {'ride': rideJson(id: id, status: 'cancelled', cancelledBy: 'rider'), 'cancels_recent': 0, 'warning': false};
   Future<void> Function(String id, int stars, String? comment) onRate = (_, _, _) async {};
@@ -226,6 +228,12 @@ class FakeRideApi implements RiderRideApi {
   Future<void> declineBid(String rideId, String bidId) {
     calls.add('decline:$bidId');
     return onDecline(rideId, bidId);
+  }
+
+  @override
+  Future<({Ride ride, bool created, int askedAgain})> renotify(String rideId) {
+    calls.add('renotify:$rideId');
+    return onRenotify(rideId);
   }
 
   @override
