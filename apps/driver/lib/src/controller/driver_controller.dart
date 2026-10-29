@@ -655,7 +655,9 @@ class DriverController extends ChangeNotifier {
           _notify();
         case 'BID_ALREADY_ACTIVE':
           unawaited(refreshRequests());
-        case 'DRIVER_BUSY':
+        case 'DRIVER_BUSY' || 'ON_ANOTHER_RIDE':
+          _bids.remove(rideId);
+          _notify();
           unawaited(refreshActive());
       }
       throw DriverFailure.from(e);

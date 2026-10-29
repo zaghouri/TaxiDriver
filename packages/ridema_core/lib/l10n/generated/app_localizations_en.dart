@@ -2187,4 +2187,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String receiptWaitingFee(int minutes) {
     return 'Waiting fee ($minutes min)';
   }
+
+  @override
+  String get errOnAnotherRide =>
+      'You are on a ride. Finish it before making a new offer.';
 }

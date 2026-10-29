@@ -3903,6 +3903,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting fee ({minutes} min)'**
   String receiptWaitingFee(int minutes);
+
+  /// Error text for API code ON_ANOTHER_RIDE
+  ///
+  /// In en, this message translates to:
+  /// **'You are on a ride. Finish it before making a new offer.'**
+  String get errOnAnotherRide;
 }
 
 class _AppLocalizationsDelegate

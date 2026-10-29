@@ -258,6 +258,8 @@ export async function driverRoutes(app: FastifyInstance, ctx: AppContext) {
     const city = await ctx.settings.city(d!.city_id);
     const loc = await ctx.geo.get(id);
     if (!loc) return { items: [] };
+    // On a ride: nothing to bid on (placeBid refuses with ON_ANOTHER_RIDE).
+    if (await one(db, `SELECT 1 FROM rides WHERE driver_id = $1 AND status IN ('accepted','arrived','in_progress')`, [id])) return { items: [] };
     const rows = await many<{ id: string; dist: number }>(
       db,
       `SELECT r.id, ST_Distance(r.pickup, ST_SetSRID(ST_MakePoint($3,$4),4326)::geography) AS dist FROM rides r

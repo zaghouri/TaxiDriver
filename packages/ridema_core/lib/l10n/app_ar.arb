@@ -633,5 +633,6 @@
   "waitFeeSoFar": "رسوم الانتظار: {amount} درهم حتى الآن ({perMin} درهم/د، بحد أقصى {max} درهم)",
   "waitRulesInfo": "{free} د انتظار مجاني، ثم {perMin} درهم للدقيقة (بحد أقصى {max} درهم)، تُضاف إلى السعر نقدًا.",
   "receiptFare": "السعر المتفق عليه",
-  "receiptWaitingFee": "رسوم الانتظار ({minutes} د)"
+  "receiptWaitingFee": "رسوم الانتظار ({minutes} د)",
+  "errOnAnotherRide": "أنت في رحلة الآن. أنهِها قبل تقديم عرض جديد."
 }

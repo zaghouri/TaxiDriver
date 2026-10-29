@@ -2218,4 +2218,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String receiptWaitingFee(int minutes) {
     return 'Frais d’attente ($minutes min)';
   }
+
+  @override
+  String get errOnAnotherRide =>
+      'Vous êtes en course. Terminez-la avant de faire une nouvelle offre.';
 }

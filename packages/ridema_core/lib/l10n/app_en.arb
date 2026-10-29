@@ -1564,5 +1564,9 @@
         "type": "int"
       }
     }
+  },
+  "errOnAnotherRide": "You are on a ride. Finish it before making a new offer.",
+  "@errOnAnotherRide": {
+    "description": "Error text for API code ON_ANOTHER_RIDE"
   }
 }

@@ -48,6 +48,7 @@ String? apiErrorTextForCode(AppLocalizations l, String code) => switch (code) {
       'BID_NOT_AVAILABLE' => l.errBidNotAvailable,
       'RIDE_NOT_SEARCHING' => l.errRideNotSearching,
       'DRIVER_BUSY' => l.errDriverBusy,
+      'ON_ANOTHER_RIDE' => l.errOnAnotherRide,
       'CANNOT_CANCEL' => l.errCannotCancel,
       'NO_SHOW_TOO_EARLY' => l.errNoShowTooEarly,
       'RIDE_NOT_ACTIVE' => l.errRideNotActive,

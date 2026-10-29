@@ -633,5 +633,6 @@
   "waitFeeSoFar": "Frais d’attente : {amount} DH pour l’instant ({perMin} DH/min, max {max} DH)",
   "waitRulesInfo": "{free} min d’attente gratuite, puis {perMin} DH par minute (max {max} DH), ajoutés au prix en espèces.",
   "receiptFare": "Prix convenu",
-  "receiptWaitingFee": "Frais d’attente ({minutes} min)"
+  "receiptWaitingFee": "Frais d’attente ({minutes} min)",
+  "errOnAnotherRide": "Vous êtes en course. Terminez-la avant de faire une nouvelle offre."
 }

@@ -2161,4 +2161,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String receiptWaitingFee(int minutes) {
     return 'رسوم الانتظار ($minutes د)';
   }
+
+  @override
+  String get errOnAnotherRide => 'أنت في رحلة الآن. أنهِها قبل تقديم عرض جديد.';
 }

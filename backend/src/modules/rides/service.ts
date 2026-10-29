@@ -438,6 +438,11 @@ export async function placeBid(ctx: AppContext, driverId: string, rideId: string
       // FOR SHARE: many drivers can bid at once; acceptance (FOR UPDATE) waits for in-flight bids, so no bid is left active on a taken ride.
       const r = (await one<RideRow>(tx, `SELECT ${RIDE_COLUMNS} FROM rides r WHERE r.id = $1 FOR SHARE`, [rideId]))!;
       if (r.status !== 'searching' || new Date(r.expires_at) <= new Date()) throw conflict('RIDE_NOT_SEARCHING', 'This request is no longer open.');
+      // A driver on a ride makes no new offers (REA P3 #20). KEY SHARE waits for an acceptance in flight (it holds the
+      // driver row FOR UPDATE, lock order ride → driver as there), so a bid can't slip in next to a fresh acceptance.
+      await tx.query('SELECT 1 FROM drivers WHERE user_id = $1 FOR KEY SHARE', [driverId]);
+      const busy = await one(tx, `SELECT 1 FROM rides WHERE driver_id = $1 AND status IN ('accepted','arrived','in_progress')`, [driverId]);
+      if (busy) throw conflict('ON_ANOTHER_RIDE', 'Finish your current ride before making a new offer.');
       const prior = await many<{ status: string }>(tx, 'SELECT status FROM bids WHERE ride_id = $1 AND driver_id = $2', [rideId, driverId]);
       if (prior.some((p) => p.status === 'declined')) throw conflict('BID_DECLINED_BEFORE', 'The rider declined your offer for this ride.');
       if (prior.length >= (rules.max_bids_per_driver ?? 3)) throw conflict('TOO_MANY_BIDS', 'You already made the maximum number of offers on this ride.');
