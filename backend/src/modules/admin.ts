@@ -274,6 +274,8 @@ export async function adminRoutes(app: FastifyInstance, ctx: AppContext) {
       ride: await rideView(db, r, { id: req.user!.id, role: 'admin' }),
       events: await many(db, 'SELECT id, type, actor_id, actor_role, data, created_at FROM ride_events WHERE ride_id = $1 ORDER BY id', [rideId]),
       route: await many(db, `SELECT ST_Y(location::geometry) AS lat, ST_X(location::geometry) AS lng, speed, heading, accuracy, mocked, recorded_at FROM ride_route_points WHERE ride_id = $1 ORDER BY recorded_at`, [rideId]),
+      // Speeding check after the trip (D83); null until checked.
+      speeding: await one(db, 'SELECT limit_kmh, threshold_kmh, min_s, flagged, max_kmh, points, episodes, checked_at FROM ride_speeding WHERE ride_id = $1', [rideId]),
       bids: await many(db, 'SELECT id, driver_id, kind, price, eta_s, status, created_at, expires_at FROM bids WHERE ride_id = $1 ORDER BY created_at', [rideId]),
       reports: await many(db, 'SELECT * FROM reports WHERE ride_id = $1 ORDER BY created_at', [rideId]),
       sos: await many(db, 'SELECT id, service, status, user_id, created_at, note FROM sos_alerts WHERE ride_id = $1', [rideId]),

@@ -202,6 +202,7 @@ class Ride {
     this.waitingFee = 0,
     this.waitingS,
     this.waitingRules,
+    this.speedRules,
   });
 
   final String id;
@@ -265,6 +266,9 @@ class Ride {
   /// While arrived, when the city charges for waiting (D70).
   final WaitingRules? waitingRules;
 
+  /// Driver only, during the trip (D83): when to show the "slow down" warning.
+  final SpeedRules? speedRules;
+
   /// Agreed price once accepted, else the current offer.
   int get fare => finalPrice ?? offeredPrice;
 
@@ -311,7 +315,23 @@ class Ride {
       waitingFee: asIntOr(j['waiting_fee']),
       waitingS: asInt(j['waiting_s']),
       waitingRules: j['waiting_rules'] is Map ? WaitingRules.fromJson(j['waiting_rules']) : null,
+      speedRules: j['speed_rules'] is Map ? SpeedRules.fromJson(j['speed_rules']) : null,
     );
+  }
+}
+
+/// City speeding rule (D83): above [limitKmh] + [marginKmh] for [minS] seconds.
+class SpeedRules {
+  const SpeedRules({required this.limitKmh, required this.marginKmh, required this.minS});
+  final int limitKmh;
+  final int marginKmh;
+  final int minS;
+
+  int get thresholdKmh => limitKmh + marginKmh;
+
+  factory SpeedRules.fromJson(Object? json) {
+    final j = asJson(json);
+    return SpeedRules(limitKmh: asInt(j['limit_kmh']) ?? 60, marginKmh: asInt(j['margin_kmh']) ?? 20, minS: asInt(j['min_s']) ?? 30);
   }
 }
 

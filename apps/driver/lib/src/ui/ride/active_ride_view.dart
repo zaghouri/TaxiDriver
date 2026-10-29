@@ -262,6 +262,10 @@ class _ActiveRideViewState extends State<ActiveRideView> {
           ),
         ],
       _ => [
+          if (c.speedWarning) ...[
+            InfoBox(ds.slowDown, icon: Icons.speed, color: BrandColors.accent, key: const ValueKey('speed_warning')),
+            gap8,
+          ],
           PrimaryButton(key: const ValueKey('complete_button'), label: l.completeTrip, busy: _busy, onPressed: () => _run(_c.completeTrip)),
         ],
     };

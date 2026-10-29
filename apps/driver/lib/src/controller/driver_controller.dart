@@ -6,6 +6,7 @@ import 'package:ridema_core/ridema_core.dart'
 
 import 'location_throttle.dart';
 import 'ports.dart';
+import 'speed_watch.dart';
 
 /// What the driver is doing right now.
 enum DriverPhase { offline, online, toPickup, arrived, onTrip }
@@ -205,6 +206,11 @@ class DriverController extends ChangeNotifier {
   DriverPosition? get position => _position;
   Ride? get activeRide => _active;
 
+  final SpeedWatch _speed = SpeedWatch();
+
+  /// Show "slow down" on the trip panel (D83).
+  bool get speedWarning => _speed.warning;
+
   /// Completed ride waiting for "collect cash" + rating.
   Ride? get finishedRide => _finished;
   bool get tracking => _posSub != null;
@@ -399,7 +405,12 @@ class DriverController extends ChangeNotifier {
       unawaited(_forceOffline('MOCK_LOCATION'));
       return;
     }
-    if (!throttle.shouldSend(p, now)) return;
+    final trip = _active?.status == RideStatus.inProgress ? _active : null;
+    final speedChanged = _speed.update(trip?.speedRules, p.speed, p.timestamp);
+    if (!throttle.shouldSend(p, now)) {
+      if (speedChanged) _notify();
+      return;
+    }
     _notify();
     unawaited(sendPosition(p));
   }
@@ -531,6 +542,7 @@ class DriverController extends ChangeNotifier {
 
   void _setActive(Ride r) {
     final prev = _active;
+    if (prev?.id != r.id || r.status != RideStatus.inProgress) _speed.reset();
     final wasNew = prev == null;
     final hadBid = _bids.containsKey(r.id);
     final pickupMoved = prev != null && prev.id == r.id && (prev.pickup.lat != r.pickup.lat || prev.pickup.lng != r.pickup.lng);

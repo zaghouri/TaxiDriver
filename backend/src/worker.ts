@@ -4,6 +4,7 @@ import { loadConfig } from './config.js';
 import { createContext, closeContext } from './context.js';
 import { TIMEOUT_QUEUE } from './core/scheduler.js';
 import { expireBid, expireRide, markDriverLate, remindFreeWait, runSearchWave, sweepTimeouts } from './modules/rides/service.js';
+import { checkRideSpeeding, sweepSpeeding } from './modules/rides/speeding.js';
 import { runDocumentExpiry, runRetention, runStaleDrivers, runSubscriptionExpiry } from './jobs/maintenance.js';
 
 const MAINT_QUEUE = 'ridema-maintenance';
@@ -25,6 +26,7 @@ export async function startWorker() {
       if (job.name === 'ride-wave') return runSearchWave(ctx, job.data.rideId, Number(job.data.wave));
       if (job.name === 'ride-late') return markDriverLate(ctx, job.data.rideId);
       if (job.name === 'wait-reminder') return remindFreeWait(ctx, job.data.rideId);
+      if (job.name === 'ride-speeding') return checkRideSpeeding(ctx, job.data.rideId);
     },
     { connection, prefix, concurrency: 20 },
   );
@@ -39,7 +41,7 @@ export async function startWorker() {
     MAINT_QUEUE,
     async (job) => {
       switch (job.name) {
-        case 'sweep': return sweepTimeouts(ctx);
+        case 'sweep': return { ...(await sweepTimeouts(ctx)), speeding: await sweepSpeeding(ctx) };
         case 'stale-drivers': return runStaleDrivers(ctx);
         case 'doc-expiry': return runDocumentExpiry(ctx);
         case 'subscriptions': return runSubscriptionExpiry(ctx);
