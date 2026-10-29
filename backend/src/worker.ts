@@ -5,6 +5,7 @@ import { createContext, closeContext } from './context.js';
 import { TIMEOUT_QUEUE } from './core/scheduler.js';
 import { expireBid, expireRide, markDriverLate, remindFreeWait, runSearchWave, sweepTimeouts } from './modules/rides/service.js';
 import { checkRideSpeeding, sweepSpeeding } from './modules/rides/speeding.js';
+import { expireQueued } from './modules/rides/chain.js';
 import { runDocumentExpiry, runRetention, runStaleDrivers, runSubscriptionExpiry } from './jobs/maintenance.js';
 
 const MAINT_QUEUE = 'ridema-maintenance';
@@ -27,6 +28,7 @@ export async function startWorker() {
       if (job.name === 'ride-late') return markDriverLate(ctx, job.data.rideId);
       if (job.name === 'wait-reminder') return remindFreeWait(ctx, job.data.rideId);
       if (job.name === 'ride-speeding') return checkRideSpeeding(ctx, job.data.rideId);
+      if (job.name === 'ride-queue-timeout') return expireQueued(ctx, job.data.rideId);
     },
     { connection, prefix, concurrency: 20 },
   );

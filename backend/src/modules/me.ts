@@ -13,7 +13,7 @@ import { sniffMime } from './drivers.js';
  * so the other party's history, receipts and dispute records remain valid.
  */
 export async function deleteAccount(ctx: AppContext, userId: string, by: 'self' | 'admin') {
-  const active = await one(ctx.db, `SELECT 1 FROM rides WHERE (rider_id = $1 OR driver_id = $1) AND status IN ('searching','accepted','arrived','in_progress')`, [userId]);
+  const active = await one(ctx.db, `SELECT 1 FROM rides WHERE (rider_id = $1 OR driver_id = $1) AND status IN ('searching','queued','accepted','arrived','in_progress')`, [userId]);
   if (active) throw conflict('ACTIVE_RIDE', 'Finish or cancel your current ride first.');
   const files = await withTx(ctx.db, async (tx) => {
     const u = await getUser(tx, userId);

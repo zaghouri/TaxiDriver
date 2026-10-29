@@ -10,7 +10,8 @@ import { CITY_COLUMNS } from '../core/settings.js';
 import { documentProblems, driverView } from './drivers.js';
 import { messagesFor } from './chat.js';
 import { deleteAccount } from './me.js';
-import { addEvent, notifyRideUpdate } from './rides/service.js';
+import { addEvent, afterPromotion, notifyRideUpdate } from './rides/service.js';
+import { promoteQueued } from './rides/chain.js';
 import { getRide, rideView } from './rides/views.js';
 import { activateSubscription } from './subscriptions.js';
 import { getUser, meView } from './users.js';
@@ -290,16 +291,22 @@ export async function adminRoutes(app: FastifyInstance, ctx: AppContext) {
     const r2 = await withTx(db, async (tx) => {
       const r = await getRide(tx, rideId, true);
       if (!r) throw notFound('RIDE_NOT_FOUND');
-      if (!['searching', 'accepted', 'arrived', 'in_progress'].includes(r.status)) throw conflict('INVALID_STATE', `Ride is ${r.status}.`);
+      if (!['searching', 'queued', 'accepted', 'arrived', 'in_progress'].includes(r.status)) throw conflict('INVALID_STATE', `Ride is ${r.status}.`);
+      // Same lock order as acceptance (ride → driver) so a request queued behind this trip is promoted below (D88).
+      if (r.driver_id && r.status === 'in_progress') await tx.query('SELECT 1 FROM drivers WHERE user_id = $1 FOR UPDATE', [r.driver_id]);
       await tx.query(`UPDATE rides SET status = 'cancelled', cancelled_by = 'admin', cancel_reason = 'other', cancelled_at = now(), updated_at = now() WHERE id = $1`, [rideId]);
       await tx.query(`UPDATE bids SET status = 'expired' WHERE ride_id = $1 AND status = 'active'`, [rideId]);
       await addEvent(tx, rideId, 'cancelled', { id: req.user!.id, role: 'admin' }, { from: r.status, note: b.reason });
       await audit(tx, req, 'ride.cancel', 'ride', rideId, { status: r.status }, { status: 'cancelled', reason: b.reason });
       const out = (await getRide(tx, rideId))!;
       await notifyRideUpdate(tx, out);
+      const next = out.driver_id && r.status === 'in_progress' ? await promoteQueued(ctx, tx, out.driver_id, { lat: out.dropoff_lat, lng: out.dropoff_lng }) : null;
+      return { out, next, from: r.status };
+    }).then(async ({ out, next, from }) => {
+      if (next) await afterPromotion(ctx, next);
+      else if (out.driver_id && from !== 'queued') await ctx.geo.setAvailable(out.driver_id, out.city_id, true);
       return out;
     });
-    if (r2.driver_id) await ctx.geo.setAvailable(r2.driver_id, r2.city_id, true);
     return rideView(db, r2, { id: req.user!.id, role: 'admin' });
   });
 

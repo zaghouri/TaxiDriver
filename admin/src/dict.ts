@@ -112,6 +112,7 @@ export const DICT: Record<string, [string, string]> = {
   st_replaced: ['Remplacé', 'Replaced'],
   st_deleted: ['Supprimé', 'Deleted'],
   st_searching: ['Recherche', 'Searching'],
+  st_queued: ['En file (après la course en cours)', 'Queued (after the current trip)'],
   st_accepted: ['Acceptée', 'Accepted'],
   st_arrived: ['Chauffeur arrivé', 'Driver arrived'],
   st_in_progress: ['En cours', 'In progress'],

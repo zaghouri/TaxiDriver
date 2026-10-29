@@ -9,6 +9,7 @@ import { haversineM } from '../lib/geo.js';
 import { enqueue } from '../core/outbox.js';
 import { abuseAlert } from '../core/abuse.js';
 import { addEvent, driverProblem } from './rides/service.js';
+import { chainSlot } from './rides/chain.js';
 import { requestView, getRide } from './rides/views.js';
 import { recordDriverLocation } from './location.js';
 
@@ -257,10 +258,15 @@ export async function driverRoutes(app: FastifyInstance, ctx: AppContext) {
     if (problem) throw forbidden(problem.code, problem.message);
     const d = await one<{ city_id: string }>(db, 'SELECT city_id FROM drivers WHERE user_id = $1', [id]);
     const city = await ctx.settings.city(d!.city_id);
-    const loc = await ctx.geo.get(id);
+    let loc = await ctx.geo.get(id);
     if (!loc) return { items: [] };
-    // On a ride: nothing to bid on (placeBid refuses with ON_ANOTHER_RIDE).
-    if (await one(db, `SELECT 1 FROM rides WHERE driver_id = $1 AND status IN ('accepted','arrived','in_progress')`, [id])) return { items: [] };
+    // On a ride: nothing to bid on (placeBid refuses with ON_ANOTHER_RIDE), except near the end of a trip when the
+    // city allows chained requests (D88): then requests around that trip's destination.
+    if (await one(db, `SELECT 1 FROM rides WHERE driver_id = $1 AND status IN ('accepted','arrived','in_progress')`, [id])) {
+      const slot = await chainSlot(ctx, db, id);
+      if (!slot) return { items: [] };
+      loc = { ...loc, ...slot.from };
+    }
     const rows = await many<{ id: string; dist: number }>(
       db,
       `SELECT r.id, ST_Distance(r.pickup, ST_SetSRID(ST_MakePoint($3,$4),4326)::geography) AS dist FROM rides r
