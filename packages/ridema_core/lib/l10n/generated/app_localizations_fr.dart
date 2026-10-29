@@ -2336,6 +2336,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les messages sont ouverts seulement pendant la course.';
 
   @override
+  String get callRingFromDriver => 'Votre chauffeur vous appelle dans RideMA';
+
+  @override
+  String get callRingFromRider => 'Votre passager vous appelle dans RideMA';
+
+  @override
   String get errOnAnotherRide =>
       'Vous êtes en course. Terminez-la avant de faire une nouvelle offre.';
 }

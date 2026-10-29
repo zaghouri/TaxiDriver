@@ -6,4 +6,6 @@
     <string name="channel_ride_updates_desc">Driver arrived, ride cancelled and other changes.</string>
     <string name="channel_offers">Offers</string>
     <string name="channel_offers_desc">New offers from drivers.</string>
+    <string name="channel_calls">Calls</string>
+    <string name="channel_calls_desc">Incoming calls from your rider or driver in RideMA.</string>
 </resources>

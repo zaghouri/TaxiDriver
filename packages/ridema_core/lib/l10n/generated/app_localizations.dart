@@ -4108,6 +4108,18 @@ abstract class AppLocalizations {
   /// **'Messages are open only during the ride.'**
   String get errChatClosed;
 
+  /// No description provided for @callRingFromDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Your driver is calling you in RideMA'**
+  String get callRingFromDriver;
+
+  /// No description provided for @callRingFromRider.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rider is calling you in RideMA'**
+  String get callRingFromRider;
+
   /// Error text for API code ON_ANOTHER_RIDE
   ///
   /// In en, this message translates to:

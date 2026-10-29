@@ -6,4 +6,6 @@
     <string name="channel_ride_updates_desc">Chauffeur arrivé, course annulée et autres changements.</string>
     <string name="channel_offers">Offres</string>
     <string name="channel_offers_desc">Nouvelles offres des chauffeurs.</string>
+    <string name="channel_calls">Appels</string>
+    <string name="channel_calls_desc">Appels entrants de votre passager ou chauffeur dans RideMA.</string>
 </resources>

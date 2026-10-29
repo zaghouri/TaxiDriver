@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:provider/provider.dart';
@@ -260,6 +262,8 @@ class CallController extends ChangeNotifier {
   Future<void> _onSignal(CallSignal s) async {
     switch (s.event) {
       case 'call:invite':
+        // The server replays a ringing invite after a reconnect (D73): the same call is not a second call.
+        if (inCall && s.rideId == _rideId && (_state == CallState.incoming || _state == CallState.connecting || _state == CallState.active)) return;
         if (inCall) {
           // Busy: decline the second call.
           await realtime.sendCall('call:reject', s.rideId);
@@ -496,20 +500,88 @@ class _CallScreenState extends State<CallScreen> {
   }
 }
 
+/// Rings an incoming call through the system while the app is not in front (D73).
+abstract class CallAlert {
+  Future<void> ring(String rideId, {required String title, required String body});
+  Future<void> cancel(String rideId);
+}
+
+/// Android: `ma.ridema/call_alert` (CallAlert.kt: full-screen call notification, show over the lock screen).
+/// Elsewhere nothing; errors are ignored (the in-app call screen still opens).
+class ChannelCallAlert implements CallAlert {
+  const ChannelCallAlert();
+  static const _channel = MethodChannel('ma.ridema/call_alert');
+  bool get _android => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  @override
+  Future<void> ring(String rideId, {required String title, required String body}) async {
+    if (!_android) return;
+    try {
+      await _channel.invokeMethod<bool>('ring', {'rideId': rideId, 'title': title, 'body': body});
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> cancel(String rideId) async {
+    if (!_android) return;
+    try {
+      await _channel.invokeMethod<bool>('cancel', {'rideId': rideId});
+    } catch (_) {}
+  }
+}
+
 /// Wrap the signed-in home with this: it opens [CallScreen] when an
 /// incoming `call:invite` arrives. Provide a [CallController] above it
 /// (e.g. `ChangeNotifierProvider(create: (c) => CallController(...))`).
+/// While the app is in the background or the phone is locked it also rings
+/// through [alert] (D73).
 class CallHost extends StatefulWidget {
-  const CallHost({super.key, required this.child});
+  const CallHost({super.key, required this.child, this.alert = const ChannelCallAlert()});
   final Widget child;
+  final CallAlert alert;
 
   @override
   State<CallHost> createState() => _CallHostState();
 }
 
-class _CallHostState extends State<CallHost> {
+class _CallHostState extends State<CallHost> with WidgetsBindingObserver {
   CallController? _c;
   bool _showing = false;
+
+  /// Ride whose call is ringing through the system notification.
+  String? _ringing;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _stopRinging();
+    } else {
+      _ringIfNeeded();
+    }
+  }
+
+  bool get _inFront => WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+
+  void _ringIfNeeded() {
+    final c = _c;
+    if (c == null || c.state != CallState.incoming || _inFront || !mounted || c.rideId == null || _ringing == c.rideId) return;
+    final l = context.l10n;
+    _ringing = c.rideId;
+    unawaited(widget.alert.ring(c.rideId!, title: l.callIncoming, body: c.peerRole == 'driver' ? l.callRingFromDriver : l.callRingFromRider));
+  }
+
+  void _stopRinging() {
+    final id = _ringing;
+    if (id == null) return;
+    _ringing = null;
+    unawaited(widget.alert.cancel(id));
+  }
 
   @override
   void didChangeDependencies() {
@@ -523,7 +595,13 @@ class _CallHostState extends State<CallHost> {
 
   void _changed() {
     final c = _c;
-    if (c == null || _showing || c.state != CallState.incoming || !mounted) return;
+    if (c == null) return;
+    if (c.state == CallState.incoming) {
+      _ringIfNeeded();
+    } else {
+      _stopRinging();
+    }
+    if (_showing || c.state != CallState.incoming || !mounted) return;
     _showing = true;
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => CallScreen(controller: c), fullscreenDialog: true))
@@ -532,6 +610,8 @@ class _CallHostState extends State<CallHost> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopRinging();
     _c?.removeListener(_changed);
     super.dispose();
   }

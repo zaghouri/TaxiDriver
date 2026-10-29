@@ -7,4 +7,6 @@
     <string name="channel_ride_updates_desc">قبول عرضك، إلغاء الزبون للرحلة وتغييرات أخرى.</string>
     <string name="channel_offers">عروض وأخبار</string>
     <string name="channel_offers_desc">رسائل من RideMA.</string>
+    <string name="channel_calls">المكالمات</string>
+    <string name="channel_calls_desc">المكالمات الواردة من راكبك أو سائقك عبر RideMA.</string>
 </resources>

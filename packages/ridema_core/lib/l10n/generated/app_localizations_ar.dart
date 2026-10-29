@@ -2273,5 +2273,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errChatClosed => 'الرسائل متاحة فقط أثناء الرحلة.';
 
   @override
+  String get callRingFromDriver => 'سائقك يتصل بك عبر RideMA';
+
+  @override
+  String get callRingFromRider => 'راكبك يتصل بك عبر RideMA';
+
+  @override
   String get errOnAnotherRide => 'أنت في رحلة الآن. أنهِها قبل تقديم عرض جديد.';
 }

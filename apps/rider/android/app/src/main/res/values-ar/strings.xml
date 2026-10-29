@@ -6,4 +6,6 @@
     <string name="channel_ride_updates_desc">وصول السائق وإلغاء الرحلة وتغييرات أخرى.</string>
     <string name="channel_offers">العروض</string>
     <string name="channel_offers_desc">عروض جديدة من السائقين.</string>
+    <string name="channel_calls">المكالمات</string>
+    <string name="channel_calls_desc">المكالمات الواردة من راكبك أو سائقك عبر RideMA.</string>
 </resources>

@@ -2299,6 +2299,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errChatClosed => 'Messages are open only during the ride.';
 
   @override
+  String get callRingFromDriver => 'Your driver is calling you in RideMA';
+
+  @override
+  String get callRingFromRider => 'Your rider is calling you in RideMA';
+
+  @override
   String get errOnAnotherRide =>
       'You are on a ride. Finish it before making a new offer.';
 }
