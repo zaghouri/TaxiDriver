@@ -188,6 +188,27 @@ class RiderStrings {
         'ar': 'الخريطة غير متوفرة في هذه النسخة',
       });
 
+  // Saved places (REA P3 #23, D81).
+  String get placeHome => _t({'en': 'Home', 'fr': 'Domicile', 'ar': 'المنزل'});
+  String get placeWork => _t({'en': 'Work', 'fr': 'Travail', 'ar': 'العمل'});
+  String get addHome => _t({
+        'en': 'Add your home address',
+        'fr': 'Ajouter l’adresse de votre domicile',
+        'ar': 'أضف عنوان منزلك',
+      });
+  String get addWork => _t({
+        'en': 'Add your work address',
+        'fr': 'Ajouter l’adresse de votre travail',
+        'ar': 'أضف عنوان عملك',
+      });
+  String get setHomeTitle => _t({'en': 'Home address', 'fr': 'Adresse du domicile', 'ar': 'عنوان المنزل'});
+  String get setWorkTitle => _t({'en': 'Work address', 'fr': 'Adresse du travail', 'ar': 'عنوان العمل'});
+  String get recentPlaces => _t({'en': 'Recent', 'fr': 'Récents', 'ar': 'الأخيرة'});
+  String get changePlace => _t({'en': 'Change address', 'fr': 'Changer l’adresse', 'ar': 'تغيير العنوان'});
+  String get removePlace => _t({'en': 'Remove', 'fr': 'Supprimer', 'ar': 'حذف'});
+  String get placeSaved => _t({'en': 'Address saved.', 'fr': 'Adresse enregistrée.', 'ar': 'تم حفظ العنوان.'});
+  String get placeRemoved => _t({'en': 'Address removed.', 'fr': 'Adresse supprimée.', 'ar': 'تم حذف العنوان.'});
+
   String get noAddressFound => _t({
         'en': 'No address found. Try another spelling.',
         'fr': 'Aucune adresse trouvée. Essayez une autre orthographe.',

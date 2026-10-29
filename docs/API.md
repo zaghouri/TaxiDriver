@@ -57,6 +57,9 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | DELETE | `/v1/me/emergency-contacts/:id` | | `{deleted:true}` (`404 CONTACT_NOT_FOUND`) |
 | GET | `/v1/me/consents` | | `[{kind, version, locale, accepted, created_at}]` |
 | GET | `/v1/me/data-export` | | JSON file with all personal data |
+| GET | `/v1/me/places` | | Riders only (D81): `{home: SavedPlace\|null, work: SavedPlace\|null, recent: Place[]}`; `SavedPlace = {lat, lng, address, updated_at}`. `recent` = up to 5 pickups/destinations from the rider's own requests of the last 90 days, newest first, without "GPS point" addresses and without places within 150 m of Home, Work or a newer entry |
+| PUT | `/v1/me/places/:kind` | `kind` = `home` \| `work`; `{lat, lng, address}` (address 1–300 chars) | Same shape as GET. Replaces the place of that kind |
+| DELETE | `/v1/me/places/:kind` | | Same shape as GET |
 | POST | `/v1/me/data-requests` | `{kind:"access"\|"correction"\|"deletion", details}` | `201 {id, kind, details, status, created_at}` |
 | GET | `/v1/me/data-requests` | | list (with `response` once handled) |
 | DELETE | `/v1/me` | `{password}` | `{deleted:true}` (`ACTIVE_RIDE` if a ride is ongoing) |

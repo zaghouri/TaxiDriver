@@ -39,6 +39,15 @@ class RideMaApi {
   Future<List<GeoPlace>> geoSearch(String q) async =>
       asJsonList(asJson(await client.get('/v1/geo/search', query: {'q': q}))['items']).map(GeoPlace.fromJson).toList();
 
+  /// Rider Home / Work and recent places (D81).
+  Future<SavedPlaces> savedPlaces() async => SavedPlaces.fromJson(await client.get('/v1/me/places'));
+
+  /// [kind] is `home` or `work`.
+  Future<SavedPlaces> setSavedPlace(String kind, Place p) async => SavedPlaces.fromJson(
+      await client.put('/v1/me/places/$kind', data: {'lat': p.lat, 'lng': p.lng, 'address': (p.address ?? '').trim()}));
+
+  Future<SavedPlaces> removeSavedPlace(String kind) async => SavedPlaces.fromJson(await client.delete('/v1/me/places/$kind'));
+
   /// [locale] is `ar`, `fr` or `en`; otherwise the server uses Accept-Language.
   Future<ReverseGeocode> geoReverse(double lat, double lng, {String? locale}) async => ReverseGeocode.fromJson(await client.get(
         '/v1/geo/reverse',

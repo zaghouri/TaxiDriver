@@ -6,6 +6,7 @@ import 'package:ridema_core/ridema_core.dart';
 
 import '../env.dart';
 import '../geo/places.dart';
+import '../geo/saved_places.dart';
 import '../l10n/rider_strings.dart';
 import '../platform/ride_notification.dart';
 import '../ride/ports.dart';
@@ -38,6 +39,7 @@ class _RiderHomeState extends State<RiderHome> {
   late final PlacesService _places = RiderEnv.placesKey.isEmpty
       ? BackendPlacesService(_s.api)
       : GooglePlacesService(apiKey: RiderEnv.placesKey, fallback: BackendPlacesService(_s.api));
+  late final SavedPlacesStore _saved = ApiSavedPlacesStore(_s.api);
 
   @override
   void initState() {
@@ -62,6 +64,7 @@ class _RiderHomeState extends State<RiderHome> {
           ChangeNotifierProvider<RideController>.value(value: _ride),
           ChangeNotifierProvider<CallController>.value(value: _call),
           Provider<PlacesService>.value(value: _places),
+          Provider<SavedPlacesStore>.value(value: _saved),
         ],
         child: const CallHost(child: RiderHomeView()),
       );
@@ -416,6 +419,7 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
         places: context.read<PlacesService>(),
         title: pickup ? rs.choosePickup : rs.chooseDestination,
         near: _me ?? _c.pickup?.latLng,
+        saved: context.read<SavedPlacesStore>(),
         onUseMyLocation: pickup && _locAccess == LocationAccess.granted
             ? () async {
                 final pos = await CoreRiderLocation(_s.location).current();
