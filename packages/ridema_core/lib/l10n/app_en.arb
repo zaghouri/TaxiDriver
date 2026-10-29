@@ -1630,5 +1630,9 @@
     "description": "Error text for API code CHAT_CLOSED"
   },
   "callRingFromDriver": "Your driver is calling you in RideMA",
-  "callRingFromRider": "Your rider is calling you in RideMA"
+  "callRingFromRider": "Your rider is calling you in RideMA",
+  "errOnAnotherRide": "You are on a ride. Finish it before making a new offer.",
+  "@errOnAnotherRide": {
+    "description": "Error text for API code ON_ANOTHER_RIDE"
+  }
 }

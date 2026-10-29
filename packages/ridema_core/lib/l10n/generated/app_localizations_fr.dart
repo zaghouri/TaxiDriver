@@ -2340,4 +2340,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get callRingFromRider => 'Votre passager vous appelle dans RideMA';
+
+  @override
+  String get errOnAnotherRide =>
+      'Vous êtes en course. Terminez-la avant de faire une nouvelle offre.';
 }

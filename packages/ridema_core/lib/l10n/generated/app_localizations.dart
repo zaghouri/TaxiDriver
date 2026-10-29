@@ -4119,6 +4119,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your rider is calling you in RideMA'**
   String get callRingFromRider;
+
+  /// Error text for API code ON_ANOTHER_RIDE
+  ///
+  /// In en, this message translates to:
+  /// **'You are on a ride. Finish it before making a new offer.'**
+  String get errOnAnotherRide;
 }
 
 class _AppLocalizationsDelegate
