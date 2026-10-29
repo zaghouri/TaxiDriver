@@ -522,12 +522,18 @@ class RideController extends ChangeNotifier {
     unawaited(refreshOffers());
   }
 
+  /// The offer's driver is far (city setting, D85): ask the rider before accepting.
+  bool needsLongEtaConfirm(Bid bid) {
+    final limit = _ride?.longEtaConfirmS ?? 600;
+    return limit > 0 && bid.effectiveEtaS >= limit;
+  }
+
   /// Accepts an offer. On 409 the offer list is refreshed (or the whole ride).
-  Future<bool> acceptOffer(Bid bid) async {
+  Future<bool> acceptOffer(Bid bid, {bool longEtaConfirmed = false}) async {
     final r = _ride;
     if (r == null || _phase != RiderPhase.searching) return false;
     return _act(() async {
-      final updated = await api.acceptBid(r.id, bid.id);
+      final updated = await api.acceptBid(r.id, bid.id, longEtaConfirmed: longEtaConfirmed);
       _acceptedEtaS = bid.etaS;
       _applyRide(updated, force: true);
       return true;

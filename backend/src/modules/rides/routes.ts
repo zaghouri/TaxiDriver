@@ -61,7 +61,9 @@ export async function rideRoutes(app: FastifyInstance, ctx: AppContext) {
 
   app.post('/v1/rides/:id/bids/:bidId/accept', { config: { auth: 'rider' } }, async (req) => {
     const p = req.params as any;
-    return svc.acceptBid(ctx, req.user!.id, parse(uuid, p.id), parse(uuid, p.bidId));
+    // The rider confirmed a far driver (D85): kept in the trip log.
+    const b = parse(z.object({ long_eta_confirmed: z.boolean().optional() }).optional(), req.body ?? undefined);
+    return svc.acceptBid(ctx, req.user!.id, parse(uuid, p.id), parse(uuid, p.bidId), { longEtaConfirmed: b?.long_eta_confirmed === true });
   });
 
   app.post('/v1/rides/:id/bids/:bidId/decline', { config: { auth: 'rider' } }, async (req) => {

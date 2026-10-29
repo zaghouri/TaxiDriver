@@ -308,7 +308,7 @@ class SearchingPanel extends StatelessWidget {
                       bid: b,
                       progress: c.bidProgress(b),
                       busy: c.busy,
-                      onAccept: () => c.acceptOffer(b),
+                      onAccept: () => acceptWithConfirm(context, c, b),
                       onDecline: () => c.declineOffer(b),
                     ),
                   if (c.hiddenOffers > 0)
@@ -326,6 +326,29 @@ class SearchingPanel extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Accepts [bid], asking first when the driver is far away (D85).
+Future<void> acceptWithConfirm(BuildContext context, RideController c, Bid bid) async {
+  if (!c.needsLongEtaConfirm(bid)) {
+    await c.acceptOffer(bid);
+    return;
+  }
+  final rs = RiderStrings.of(context);
+  final name = bid.driver?.firstName ?? '';
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (d) => AlertDialog(
+      icon: const Icon(Icons.schedule, color: BrandColors.accent),
+      title: Text(rs.longEtaTitle((bid.effectiveEtaS / 60).ceil())),
+      content: Text(rs.longEtaBody(name)),
+      actions: [
+        TextButton(key: const ValueKey('long_eta_keep_looking'), onPressed: () => Navigator.pop(d, false), child: Text(rs.keepLooking)),
+        FilledButton(key: const ValueKey('long_eta_accept'), onPressed: () => Navigator.pop(d, true), child: Text(rs.acceptAnyway)),
+      ],
+    ),
+  );
+  if (ok == true) await c.acceptOffer(bid, longEtaConfirmed: true);
 }
 
 /// "No driver found": try again with the same fare or raise it.

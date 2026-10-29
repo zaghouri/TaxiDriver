@@ -268,7 +268,7 @@ export async function raiseOffer(ctx: AppContext, riderId: string, rideId: strin
   });
 }
 
-export async function acceptBid(ctx: AppContext, riderId: string, rideId: string, bidId: string) {
+export async function acceptBid(ctx: AppContext, riderId: string, rideId: string, bidId: string, opts: { longEtaConfirmed?: boolean } = {}) {
   try {
     const res = await withTx(ctx.db, async (tx) => {
       const r = await loadOwnRide(tx, rideId, riderId, 'rider');
@@ -305,6 +305,7 @@ export async function acceptBid(ctx: AppContext, riderId: string, rideId: string
       );
       await addEvent(tx, rideId, 'accepted', { id: riderId, role: 'rider' }, {
         bid_id: bid.id, driver_id: bid.driver_id, price: bid.price, kind: bid.kind, eta_s: bid.eta_s, promised_eta_s: bid.promised_eta_s,
+        ...(opts.longEtaConfirmed ? { long_eta_confirmed: true } : {}),
       });
       const r2 = (await getRide(tx, rideId))!;
       const extra: OutboxMessage[] = [

@@ -352,6 +352,20 @@ class RiderStrings {
           'ar': n == 1 ? 'طلبنا من جديد من سائق واحد.' : 'طلبنا من جديد من $n سائقين.',
         });
 
+  // Far driver confirm (REA P3 #22, D85).
+  String longEtaTitle(int min) => _t({
+        'en': 'This driver is about $min min away',
+        'fr': 'Ce chauffeur est à environ $min min',
+        'ar': 'هذا السائق على بعد $min د تقريبًا',
+      });
+  String longEtaBody(String name) => _t({
+        'en': '${name.isEmpty ? 'The driver' : name} will take a while to reach you. Accept anyway, or keep looking for a closer driver?',
+        'fr': '${name.isEmpty ? 'Le chauffeur' : name} mettra un moment à arriver. Accepter quand même, ou chercher un chauffeur plus proche ?',
+        'ar': 'سيستغرق ${name.isEmpty ? 'السائق' : name} بعض الوقت للوصول إليك. هل تقبل رغم ذلك، أم تواصل البحث عن سائق أقرب؟',
+      });
+  String get acceptAnyway => _t({'en': 'Accept anyway', 'fr': 'Accepter quand même', 'ar': 'قبول رغم ذلك'});
+  String get keepLooking => _t({'en': 'Keep looking', 'fr': 'Continuer à chercher', 'ar': 'مواصلة البحث'});
+
   String? errorForCode(String code) => switch (code) {
         'RETRY' || 'CONFLICT' || 'INVALID_STATE' => _t({
             'en': 'Something changed in the meantime. Please try again.',
