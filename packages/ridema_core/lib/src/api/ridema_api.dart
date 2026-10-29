@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../models/app_models.dart';
+import '../models/chat.dart';
 import '../models/driver.dart';
 import '../models/json.dart';
 import '../models/ride.dart';
@@ -176,6 +177,14 @@ class RideMaApi {
   /// [service]: police / gendarmerie / ambulance.
   Future<SosResult> sos(String rideId, {required String service, required double lat, required double lng}) async =>
       SosResult.fromJson(await client.post('/v1/rides/$rideId/sos', data: {'service': service, 'lat': lat, 'lng': lng}));
+
+  /// Ride chat history (D72).
+  Future<List<ChatMessage>> rideMessages(String rideId) async =>
+      asJsonList(asJson(await client.get('/v1/rides/$rideId/messages'))['items']).map(ChatMessage.fromJson).toList();
+
+  /// REST fallback for a chat message when the socket is down; [clientId] makes a retry safe.
+  Future<ChatMessage> sendRideMessage(String rideId, {String? text, String? quick, required String clientId}) async =>
+      ChatMessage.fromJson(await client.post('/v1/rides/$rideId/messages', data: {'text': ?text, 'quick': ?quick, 'client_id': clientId}));
 
   /// Status of each emergency contact told about this SOS (D71).
   Future<List<SosContactStatus>> sosContacts(String sosId) async =>

@@ -2237,4 +2237,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errContactNotFound => 'This contact no longer exists.';
+
+  @override
+  String get chatTitle => 'Messages';
+
+  @override
+  String get chatHint => 'Write a message';
+
+  @override
+  String get chatSend => 'Send';
+
+  @override
+  String get chatEmpty => 'No messages yet. Tap a quick reply or write below.';
+
+  @override
+  String get chatClosed => 'Messages are closed: this ride is over.';
+
+  @override
+  String get chatFailed => 'Not sent. Tap to try again.';
+
+  @override
+  String get chatPrivacy =>
+      'Messages are kept with the trip. Our team reads them only if there is a problem. Never share your phone number.';
+
+  @override
+  String get messageButton => 'Message';
+
+  @override
+  String chatNewFrom(String name) {
+    return 'New message from $name';
+  }
+
+  @override
+  String get chatOpen => 'Open';
+
+  @override
+  String get chatQuickComing => 'I’m coming';
+
+  @override
+  String get chatQuickAtPickup => 'I’m at the pickup point';
+
+  @override
+  String get chatQuickWaitPlease => 'Please wait 2 minutes';
+
+  @override
+  String get chatQuickWhereAreYou => 'Where are you?';
+
+  @override
+  String get chatQuickHere => 'I’m here';
+
+  @override
+  String get chatQuickOnMyWay => 'On my way';
+
+  @override
+  String get chatQuickTraffic => 'Stuck in traffic, a few more minutes';
+
+  @override
+  String get chatQuickCantFindYou => 'I can’t find you. Where exactly are you?';
+
+  @override
+  String get errChatClosed => 'Messages are open only during the ride.';
 }

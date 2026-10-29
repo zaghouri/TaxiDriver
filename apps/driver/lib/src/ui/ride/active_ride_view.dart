@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ridema_core/ridema_core.dart';
@@ -24,6 +26,69 @@ class ActiveRideView extends StatefulWidget {
 class _ActiveRideViewState extends State<ActiveRideView> {
   bool _busy = false;
   String? _pinError;
+
+  /// Ride chat with the rider (D72).
+  ChatController? _chat;
+  StreamSubscription<ChatMessage>? _chatSub;
+  bool _chatOpen = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_chat == null) _startChat();
+  }
+
+  @override
+  void didUpdateWidget(ActiveRideView old) {
+    super.didUpdateWidget(old);
+    if (old.ride.id != widget.ride.id) {
+      _stopChat();
+      _startChat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _stopChat();
+    super.dispose();
+  }
+
+  void _startChat() {
+    final s = CoreServices.of(context);
+    // Tests provide their own transport.
+    final transport = Provider.of<ChatTransport?>(context, listen: false) ?? CoreChatTransport(s.api, s.realtime);
+    final chat = ChatController(transport: transport, rideId: widget.ride.id, myRole: 'driver')
+      ..addListener(() {
+        if (mounted) setState(() {});
+      });
+    _chatSub = chat.onMessageFromOther.listen((_) {
+      if (!mounted || _chatOpen) return;
+      final l = context.l10n;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+        content: Text(l.chatNewFrom(widget.ride.rider?.firstName ?? '')),
+        action: SnackBarAction(label: l.chatOpen, onPressed: _openChat),
+      ));
+    });
+    _chat = chat;
+    unawaited(chat.start());
+  }
+
+  void _stopChat() {
+    _chatSub?.cancel();
+    _chatSub = null;
+    _chat?.dispose();
+    _chat = null;
+  }
+
+  Future<void> _openChat() async {
+    final chat = _chat;
+    if (chat == null || _chatOpen) return;
+    _chatOpen = true;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => ChatScreen(controller: chat, peerName: widget.ride.rider?.firstName ?? ''),
+    ));
+    _chatOpen = false;
+  }
 
   DriverController get _c => context.read<DriverController>();
 
@@ -135,6 +200,13 @@ class _ActiveRideViewState extends State<ActiveRideView> {
       ),
       if (callsOn && r.status != RideStatus.inProgress)
         Expanded(child: _RoundAction(key: const ValueKey('call_button'), icon: Icons.call, label: l.callButton, onTap: _call)),
+      Expanded(
+        child: Badge(
+          isLabelVisible: (_chat?.unread ?? 0) > 0,
+          label: Text('${_chat?.unread ?? 0}'),
+          child: _RoundAction(key: const ValueKey('chat_button'), icon: Icons.chat_bubble_outline, label: l.messageButton, onTap: _openChat),
+        ),
+      ),
       Expanded(
         child: _RoundAction(
           key: const ValueKey('sos_button'),

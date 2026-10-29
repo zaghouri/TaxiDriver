@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
+import '../models/chat.dart';
 import '../models/json.dart';
 import '../models/realtime_events.dart';
 import '../models/ride.dart';
@@ -120,6 +121,7 @@ class RealtimeService {
   final _sessionRevoked = StreamController<String>.broadcast();
   final _adminMessage = StreamController<String>.broadcast();
   final _call = StreamController<CallSignal>.broadcast();
+  final _chat = StreamController<ChatMessage>.broadcast();
 
   /// Signalling events relayed between the two ride parties.
   static const callEvents = ['call:invite', 'call:accept', 'call:reject', 'call:offer', 'call:answer', 'call:ice', 'call:end'];
@@ -160,6 +162,9 @@ class RealtimeService {
 
   /// `call:*` signalling.
   Stream<CallSignal> get onCallSignal => _call.stream;
+
+  /// Ride chat messages, both directions (D72).
+  Stream<ChatMessage> get onChatMessage => _chat.stream;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -227,6 +232,7 @@ class RealtimeService {
     for (final ev in callEvents) {
       s.on(ev, (d) => _call.add(CallSignal.fromJson(ev, d)));
     }
+    s.on('chat:message', (d) => _chat.add(ChatMessage.fromJson(d)));
   }
 
   static String _errorCode(dynamic err) {
@@ -328,6 +334,10 @@ class RealtimeService {
     return _emit(event, {...payload, 'ride_id': rideId});
   }
 
+  /// One ride chat message (`chat:send`); the ack's `message` is the stored copy (D72).
+  Future<SocketAck> sendChat(String rideId, {String? text, String? quick, required String clientId}) =>
+      _emit('chat:send', {'ride_id': rideId, 'text': ?text, 'quick': ?quick, 'client_id': clientId});
+
   Future<SocketAck> _emit(String event, dynamic data) {
     final s = _socket;
     if (s == null || !s.connected) return Future.value(const SocketAck(ok: false, error: 'NOT_CONNECTED'));
@@ -342,7 +352,7 @@ class RealtimeService {
     disconnect();
     for (final c in [
       _connected, _reconnected, _sessionReady, _rideRequest, _requestUpdate, _requestClosed, _bidNew, //
-      _bidUpdate, _rideUpdate, _driverLocation, _sessionRevoked, _adminMessage, _call,
+      _bidUpdate, _rideUpdate, _driverLocation, _sessionRevoked, _adminMessage, _call, _chat,
     ]) {
       c.close();
     }

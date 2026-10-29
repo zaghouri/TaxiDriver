@@ -2210,4 +2210,65 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errContactNotFound => 'جهة الاتصال هذه لم تعد موجودة.';
+
+  @override
+  String get chatTitle => 'الرسائل';
+
+  @override
+  String get chatHint => 'اكتب رسالة';
+
+  @override
+  String get chatSend => 'إرسال';
+
+  @override
+  String get chatEmpty =>
+      'لا توجد رسائل بعد. اضغط على رد سريع أو اكتب في الأسفل.';
+
+  @override
+  String get chatClosed => 'الرسائل مغلقة: انتهت هذه الرحلة.';
+
+  @override
+  String get chatFailed => 'لم تُرسل. اضغط للمحاولة مجددًا.';
+
+  @override
+  String get chatPrivacy =>
+      'تُحفظ الرسائل مع الرحلة. لا يقرأها فريقنا إلا عند وجود مشكلة. لا تشارك رقم هاتفك أبدًا.';
+
+  @override
+  String get messageButton => 'رسالة';
+
+  @override
+  String chatNewFrom(String name) {
+    return 'رسالة جديدة من $name';
+  }
+
+  @override
+  String get chatOpen => 'فتح';
+
+  @override
+  String get chatQuickComing => 'أنا قادم';
+
+  @override
+  String get chatQuickAtPickup => 'أنا في نقطة الانطلاق';
+
+  @override
+  String get chatQuickWaitPlease => 'انتظر دقيقتين من فضلك';
+
+  @override
+  String get chatQuickWhereAreYou => 'أين أنت؟';
+
+  @override
+  String get chatQuickHere => 'أنا هنا';
+
+  @override
+  String get chatQuickOnMyWay => 'أنا في الطريق';
+
+  @override
+  String get chatQuickTraffic => 'عالق في الزحام، بضع دقائق أخرى';
+
+  @override
+  String get chatQuickCantFindYou => 'لا أجدك. أين أنت بالضبط؟';
+
+  @override
+  String get errChatClosed => 'الرسائل متاحة فقط أثناء الرحلة.';
 }

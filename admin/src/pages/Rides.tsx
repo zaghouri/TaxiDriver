@@ -214,6 +214,19 @@ export function RideDetail() {
             </tbody>
           </table>
         </Card>
+        <Card title={`${t('messages')} (${data.messages?.length ?? 0})`}>
+          <table className="tbl small" data-testid="ride-messages">
+            <tbody>
+              {(data.messages ?? []).map((m: any) => (
+                <tr key={m.id}>
+                  <td>{fmtDate(m.created_at)}</td>
+                  <td>{t(m.from_role)}</td>
+                  <td>{m.quick ? <em>{t(`qr_${m.quick}`, undefined, m.quick)}</em> : m.text}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
         <Card title={`${t('nav_reports')} (${data.reports.length})`}>
           <table className="tbl small">
             <tbody>
