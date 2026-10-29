@@ -96,6 +96,19 @@ class DriverStrings {
   String get docsAllSent => _t('docsAllSent');
   String get documentProblemsIntro => _t('documentProblemsIntro');
   String get earningsEmpty => _t('earningsEmpty');
+  // Income: month view and daily goal (D82).
+  String get earningsMonthTab => _t('earningsMonthTab');
+  String get monthPrev => _t('monthPrev');
+  String get monthNext => _t('monthNext');
+  String get goalTitle => _t('goalTitle');
+  String goalProgress(int done, int goal) => _f('goalProgress', {'done': done, 'goal': goal});
+  String goalLeft(int left) => _f('goalLeft', {'left': left});
+  String get goalReached => _t('goalReached');
+  String get goalSet => _t('goalSet');
+  String get goalEdit => _t('goalEdit');
+  String get goalRemove => _t('goalRemove');
+  String get goalHint => _t('goalHint');
+  String get goalInvalid => _t('goalInvalid');
   String get refresh => _t('refresh');
   String get deviceCheckTitle => _t('deviceCheckTitle');
   String get serviceReopen => _t('serviceReopen');
@@ -215,6 +228,18 @@ class DriverStrings {
       'docsAllSent': 'All documents are uploaded.',
       'documentProblemsIntro': 'To go online, fix these documents:',
       'earningsEmpty': 'No trips in this period yet.',
+      'earningsMonthTab': 'Month',
+      'monthPrev': 'Previous month',
+      'monthNext': 'Next month',
+      'goalTitle': 'Daily goal',
+      'goalProgress': '{done} / {goal} DH today',
+      'goalLeft': '{left} DH to go',
+      'goalReached': 'Goal reached. Well done!',
+      'goalSet': 'Set a daily goal',
+      'goalEdit': 'Change goal',
+      'goalRemove': 'Remove goal',
+      'goalHint': 'How much do you want to collect each day? (DH)',
+      'goalInvalid': 'Enter an amount between 10 and 5000 DH.',
       'refresh': 'Refresh',
       'deviceCheckTitle': 'Phone check',
       'serviceReopen': 'Open RideMA to stay online.',
@@ -315,6 +340,18 @@ class DriverStrings {
       'docsAllSent': 'Tous les documents sont envoyés.',
       'documentProblemsIntro': 'Pour passer en ligne, réglez ces documents :',
       'earningsEmpty': 'Aucune course sur cette période.',
+      'earningsMonthTab': 'Mois',
+      'monthPrev': 'Mois précédent',
+      'monthNext': 'Mois suivant',
+      'goalTitle': 'Objectif du jour',
+      'goalProgress': '{done} / {goal} DH aujourd’hui',
+      'goalLeft': 'Encore {left} DH',
+      'goalReached': 'Objectif atteint. Bravo !',
+      'goalSet': 'Fixer un objectif par jour',
+      'goalEdit': 'Modifier l’objectif',
+      'goalRemove': 'Supprimer l’objectif',
+      'goalHint': 'Combien voulez-vous encaisser par jour ? (DH)',
+      'goalInvalid': 'Entrez un montant entre 10 et 5000 DH.',
       'refresh': 'Actualiser',
       'deviceCheckTitle': 'Vérification du téléphone',
       'serviceReopen': 'Ouvrez RideMA pour rester en ligne.',
@@ -415,6 +452,18 @@ class DriverStrings {
       'docsAllSent': 'تم إرسال كل الوثائق.',
       'documentProblemsIntro': 'لتصبح متصلًا، صحّح هذه الوثائق:',
       'earningsEmpty': 'لا توجد رحلات في هذه الفترة.',
+      'earningsMonthTab': 'الشهر',
+      'monthPrev': 'الشهر السابق',
+      'monthNext': 'الشهر التالي',
+      'goalTitle': 'هدف اليوم',
+      'goalProgress': '{done} / {goal} درهم اليوم',
+      'goalLeft': 'باقي {left} درهم',
+      'goalReached': 'تم بلوغ الهدف. أحسنت!',
+      'goalSet': 'حدّد هدفًا يوميًا',
+      'goalEdit': 'تغيير الهدف',
+      'goalRemove': 'حذف الهدف',
+      'goalHint': 'كم تريد أن تحصّل كل يوم؟ (درهم)',
+      'goalInvalid': 'أدخل مبلغًا بين 10 و5000 درهم.',
       'refresh': 'تحديث',
       'deviceCheckTitle': 'فحص الهاتف',
       'serviceReopen': 'افتح RideMA لتبقى متصلًا.',

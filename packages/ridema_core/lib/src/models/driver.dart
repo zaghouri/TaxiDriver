@@ -196,6 +196,7 @@ class DriverProfile {
     this.problemCode,
     this.problemMessage,
     this.maxPickupKm,
+    this.dailyGoal,
   });
 
   final DriverStatus status;
@@ -218,6 +219,9 @@ class DriverProfile {
 
   /// Request notifications only for pickups this close (D68); null = any distance.
   final double? maxPickupKm;
+
+  /// Optional daily income goal in DH (D82); null = none.
+  final int? dailyGoal;
 
   /// Latest document of each type.
   Map<String, DriverDocument> get latestDocuments {
@@ -251,6 +255,80 @@ class DriverProfile {
       problemCode: p == null ? null : asString(p['code']),
       problemMessage: p == null ? null : asString(p['message']),
       maxPickupKm: asDouble(j['max_pickup_km']),
+      dailyGoal: asInt(j['daily_goal']),
+    );
+  }
+}
+
+/// Trips and cash of one day (`day` = `YYYY-MM-DD` in the city time zone).
+class EarningsDay {
+  const EarningsDay({required this.day, this.trips = 0, this.cash = 0});
+  final String day;
+  final int trips;
+  final int cash;
+
+  DateTime? get date => DateTime.tryParse(day);
+
+  factory EarningsDay.fromJson(Object? json) {
+    final j = asJson(json);
+    return EarningsDay(day: asStringOr(j['day']), trips: asInt(j['trips']) ?? 0, cash: asInt(j['cash']) ?? 0);
+  }
+}
+
+/// `GET /v1/driver/earnings` (D82): last N days, today, one calendar month and the daily goal.
+class DriverEarnings {
+  const DriverEarnings({
+    this.days = const [],
+    this.totalTrips = 0,
+    this.totalCash = 0,
+    this.today = const EarningsDay(day: ''),
+    this.month = '',
+    this.monthIsCurrent = true,
+    this.monthTrips = 0,
+    this.monthCash = 0,
+    this.monthDays = const [],
+    this.goal,
+    this.goalLeft = 0,
+  });
+
+  final List<EarningsDay> days;
+  final int totalTrips;
+  final int totalCash;
+  final EarningsDay today;
+
+  /// `YYYY-MM`.
+  final String month;
+  final bool monthIsCurrent;
+  final int monthTrips;
+  final int monthCash;
+  final List<EarningsDay> monthDays;
+
+  /// Daily goal in DH (null = none) and what is still missing today.
+  final int? goal;
+  final int goalLeft;
+
+  bool get goalReached => goal != null && goalLeft <= 0;
+
+  /// 0..1 progress towards the goal (0 when there is none).
+  double get goalProgress => goal == null || goal! <= 0 ? 0 : (today.cash / goal!).clamp(0, 1).toDouble();
+
+  factory DriverEarnings.fromJson(Object? json) {
+    final j = asJson(json);
+    final total = asJson(j['total']);
+    final m = asJson(j['month']);
+    final g = j['daily_goal'] is Map ? asJson(j['daily_goal']) : null;
+    return DriverEarnings(
+      days: asJsonList(j['days']).map(EarningsDay.fromJson).toList(),
+      totalTrips: asInt(total['trips']) ?? 0,
+      totalCash: asInt(total['cash']) ?? 0,
+      today: j['today'] is Map ? EarningsDay.fromJson(j['today']) : const EarningsDay(day: ''),
+      month: asStringOr(m['month']),
+      monthIsCurrent: m['current'] is bool ? m['current'] as bool : true,
+      monthTrips: asInt(m['trips']) ?? 0,
+      monthCash: asInt(m['cash']) ?? 0,
+      monthDays: asJsonList(m['days']).map(EarningsDay.fromJson).toList(),
+      goal: g == null ? null : asInt(g['amount']),
+      goalLeft: g == null ? 0 : asInt(g['left']) ?? 0,
     );
   }
 }

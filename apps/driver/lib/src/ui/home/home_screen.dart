@@ -45,6 +45,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _notificationsOff = false;
   Set<ReadinessItem> _readiness = const {};
 
+  /// Today's income for the daily goal bar (D82); null until loaded or when the call fails.
+  DriverEarnings? _earnings;
+  String? _lastFinishedId;
+
   CoreServices get _s => CoreServices.of(context);
   DriverController get _c => context.read<DriverController>();
 
@@ -56,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _checkNotifications();
       await _checkReadiness();
+      unawaited(_loadEarnings());
       if (widget.restoreOnline && mounted && !_c.online) await _restoreOnline();
     });
   }
@@ -75,8 +80,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       unawaited(context.read<DriverProfileController>().load());
       unawaited(_checkNotifications());
       unawaited(_checkReadiness());
+      unawaited(_loadEarnings());
       if (_locationBlocked || _locationServiceOff) unawaited(_recheckLocation());
     }
+  }
+
+  Future<void> _loadEarnings() async {
+    try {
+      final e = await _c.api.earnings();
+      if (mounted) setState(() => _earnings = e);
+    } catch (_) {
+      // The goal bar is optional; the rest of the home screen works without it.
+    }
+  }
+
+  Future<void> _openEarnings() async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const EarningsScreen()));
+    await _loadEarnings();
   }
 
   Future<void> _checkNotifications() async {
@@ -298,6 +318,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _configureForeground();
 
     final finished = c.finishedRide;
+    if (finished?.id != _lastFinishedId) {
+      // A trip just ended (or its summary was closed): today's total changed.
+      _lastFinishedId = finished?.id;
+      if (finished != null) WidgetsBinding.instance.addPostFrameCallback((_) => _loadEarnings());
+    }
     if (finished != null && c.activeRide == null) return TripCompleteView(ride: finished);
 
     final active = c.activeRide;
@@ -337,11 +362,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   _MapButton(
                     icon: Icons.account_balance_wallet_outlined,
                     tooltip: l.earningsTitle,
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const EarningsScreen())),
+                    onTap: _openEarnings,
                   ),
                 ]),
               ),
               ...banners,
+              if (active == null && _earnings?.goal != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: GoalCard(earnings: _earnings!, compact: true, onEdit: _openEarnings),
+                ),
               if (_locationServiceOff)
                 Padding(
                   padding: const EdgeInsets.all(8),

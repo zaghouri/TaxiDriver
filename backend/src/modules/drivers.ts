@@ -73,6 +73,7 @@ export async function driverView(ctx: AppContext, driverId: string) {
     can_go_online: !problem && docProblems.length === 0 && !!vehicle,
     problem,
     max_pickup_km: d.max_pickup_m == null ? null : d.max_pickup_m / 1000,
+    daily_goal: d.daily_goal,
   };
 }
 
@@ -332,22 +333,55 @@ export async function driverRoutes(app: FastifyInstance, ctx: AppContext) {
   });
 
   app.put('/v1/driver/preferences', { config: { auth: 'driver' } }, async (req) => {
-    const b = parse(z.object({ max_pickup_km: z.number().min(0.5).max(20).nullable() }), req.body);
-    const m = b.max_pickup_km == null ? null : Math.round(b.max_pickup_km * 1000);
-    await db.query('UPDATE drivers SET max_pickup_m = $2, updated_at = now() WHERE user_id = $1', [req.user!.id, m]);
-    return { max_pickup_km: b.max_pickup_km };
+    // Partial update: only the fields sent change.
+    const b = parse(
+      z.object({ max_pickup_km: z.number().min(0.5).max(20).nullable().optional(), daily_goal: z.number().int().min(10).max(5000).nullable().optional() }),
+      req.body,
+    );
+    const d = await one<{ max_pickup_m: number | null; daily_goal: number | null }>(
+      db,
+      `UPDATE drivers SET max_pickup_m = CASE WHEN $2 THEN $3 ELSE max_pickup_m END, daily_goal = CASE WHEN $4 THEN $5 ELSE daily_goal END, updated_at = now()
+       WHERE user_id = $1 RETURNING max_pickup_m, daily_goal`,
+      [req.user!.id, b.max_pickup_km !== undefined, b.max_pickup_km == null ? null : Math.round(b.max_pickup_km * 1000), b.daily_goal !== undefined, b.daily_goal ?? null],
+    );
+    if (!d) throw notFound('NOT_A_DRIVER');
+    return { max_pickup_km: d.max_pickup_m == null ? null : d.max_pickup_m / 1000, daily_goal: d.daily_goal };
   });
 
+  // Income (D82): last N days, today, one calendar month (`month=YYYY-MM`, default this month) and the daily goal,
+  // all in the city's time zone. Cash collected = agreed fare + waiting fee (0 % commission).
   app.get('/v1/driver/earnings', { config: { auth: 'driver' } }, async (req) => {
-    const q = parse(z.object({ days: z.coerce.number().int().min(1).max(90).default(7) }), req.query);
-    const days = await many(
-      db,
-      `SELECT (completed_at AT TIME ZONE 'Africa/Casablanca')::date::text AS day, count(*)::int AS trips, COALESCE(sum(final_price + waiting_fee),0)::int AS cash
-       FROM rides WHERE driver_id = $1 AND status = 'completed' AND completed_at > now() - make_interval(days => $2)
-       GROUP BY 1 ORDER BY 1 DESC`,
-      [req.user!.id, q.days],
+    const q = parse(
+      z.object({ days: z.coerce.number().int().min(1).max(90).default(7), month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional() }),
+      req.query,
     );
-    const total = days.reduce((s: any, d: any) => ({ trips: s.trips + d.trips, cash: s.cash + d.cash }), { trips: 0, cash: 0 });
-    return { currency: 'DH', commission: 0, days, total };
+    const id = req.user!.id;
+    const d = await one<{ city_id: string | null; daily_goal: number | null }>(db, 'SELECT city_id, daily_goal FROM drivers WHERE user_id = $1', [id]);
+    const tz = d?.city_id ? (await ctx.settings.city(d.city_id)).timezone : 'Africa/Casablanca';
+    const perDay = (where: string, params: unknown[]) =>
+      many<{ day: string; trips: number; cash: number }>(
+        db,
+        `SELECT (completed_at AT TIME ZONE $2)::date::text AS day, count(*)::int AS trips, COALESCE(sum(final_price + waiting_fee),0)::int AS cash
+         FROM rides WHERE driver_id = $1 AND status = 'completed' AND ${where}
+         GROUP BY 1 ORDER BY 1 DESC`,
+        [id, tz, ...params],
+      );
+    const sum = (rows: { trips: number; cash: number }[]) => rows.reduce((s, r) => ({ trips: s.trips + r.trips, cash: s.cash + r.cash }), { trips: 0, cash: 0 });
+    const now = (await one<{ today: string; month: string }>(db, `SELECT (now() AT TIME ZONE $1)::date::text AS today, to_char(now() AT TIME ZONE $1, 'YYYY-MM') AS month`, [tz]))!;
+    const month = q.month ?? now.month;
+    const days = await perDay('completed_at > now() - make_interval(days => $3)', [q.days]);
+    const monthDays = await perDay(`date_trunc('month', completed_at AT TIME ZONE $2) = to_date($3, 'YYYY-MM')`, [month]);
+    const today = days.find((x) => x.day === now.today) ?? { trips: 0, cash: 0 };
+    const goal = d?.daily_goal ?? null;
+    return {
+      currency: 'DH',
+      commission: 0,
+      timezone: tz,
+      days,
+      total: sum(days),
+      today: { day: now.today, trips: today.trips, cash: today.cash },
+      month: { month, current: month === now.month, ...sum(monthDays), days: monthDays },
+      daily_goal: goal == null ? null : { amount: goal, reached: today.cash >= goal, left: Math.max(0, goal - today.cash) },
+    };
   });
 }
