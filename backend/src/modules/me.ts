@@ -42,7 +42,7 @@ export async function deleteAccount(ctx: AppContext, userId: string, by: 'self' 
     if (u.role === 'driver') {
       await tx.query('DELETE FROM documents WHERE driver_id = $1', [userId]);
       await tx.query(`UPDATE vehicles SET plate = 'DELETED', active = false WHERE driver_id = $1`, [userId]);
-      await tx.query(`UPDATE drivers SET cin_last4 = NULL, licence_issued_on = NULL, online = false, status = 'rejected', status_reason = 'account deleted' WHERE user_id = $1`, [userId]);
+      await tx.query(`UPDATE drivers SET cin_last4 = NULL, licence_issued_on = NULL, daily_goal = NULL, max_pickup_m = NULL, online = false, status = 'rejected', status_reason = 'account deleted' WHERE user_id = $1`, [userId]);
       await tx.query(`UPDATE bids SET status = 'withdrawn' WHERE driver_id = $1 AND status = 'active'`, [userId]);
     }
     await tx.query(`INSERT INTO data_requests (user_id, kind, status, response, resolved_at) VALUES ($1, 'deletion', 'done', $2, now())`, [userId, `account deleted (${by})`]);
@@ -68,7 +68,7 @@ export async function exportData(ctx: AppContext, userId: string) {
     saved_places: await q('SELECT kind, lat, lng, address, updated_at FROM saved_places WHERE user_id = $1 ORDER BY kind'),
     ratings_given: await q('SELECT ride_id, stars, reasons, comment, created_at FROM ratings WHERE rater_id = $1'),
     ratings_received: await q('SELECT ride_id, stars, reasons, created_at FROM ratings WHERE ratee_id = $1'),
-    driver: await one(ctx.db, 'SELECT driver_type, status, cin_last4, licence_issued_on, created_at FROM drivers WHERE user_id = $1', [userId]),
+    driver: await one(ctx.db, 'SELECT driver_type, status, cin_last4, licence_issued_on, max_pickup_m, daily_goal, created_at FROM drivers WHERE user_id = $1', [userId]),
     vehicles: await q('SELECT make, model, year, colour, plate, created_at FROM vehicles WHERE driver_id = $1'),
     documents: await q('SELECT type, status, expires_on, created_at FROM documents WHERE driver_id = $1'),
     sos_alerts: await q('SELECT ride_id, service, status, created_at FROM sos_alerts WHERE user_id = $1'),

@@ -157,6 +157,21 @@ void main() {
       await teardown(tester, h);
     });
 
+    testWidgets('daily goal bar on home when a goal is set (D82)', (tester) async {
+      final h = await Harness.create();
+      h.api.earningsValue = DriverEarnings.fromJson({
+        'today': {'day': '2026-10-26', 'trips': 2, 'cash': 90},
+        'daily_goal': {'amount': 300, 'reached': false, 'left': 210},
+      });
+      await tester.pumpWidget(h.wrap(const HomeScreen(), locale: 'en'));
+      await tester.pump();
+      await tester.pump();
+      expect(h.api.calls, contains('earnings'));
+      expect(find.byKey(const ValueKey('goal_card')), findsOneWidget);
+      expect(find.text('90 / 300 DH today'), findsOneWidget);
+      await teardown(tester, h);
+    });
+
     testWidgets('Arabic home is RTL and shows request cards', (tester) async {
       final h = await Harness.create();
       h.api.requestList = [request('r1', price: 42, expiresAt: h.clock.now.add(const Duration(minutes: 4)))];

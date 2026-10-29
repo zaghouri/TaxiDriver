@@ -64,7 +64,7 @@ describe('request feed (D68)', () => {
     let r = await call(env, 'PUT', '/v1/driver/preferences', { max_pickup_km: 0.2 }, d);
     expect(r.statusCode).toBe(400);
     r = await call(env, 'PUT', '/v1/driver/preferences', { max_pickup_km: 0.5 }, d);
-    expect(r.json()).toEqual({ max_pickup_km: 0.5 });
+    expect(r.json()).toMatchObject({ max_pickup_km: 0.5 });
     expect((await call(env, 'GET', '/v1/driver/profile', undefined, d)).json().max_pickup_km).toBe(0.5);
     env.rt.clear();
     const { ride } = await requestRide(env, rider);

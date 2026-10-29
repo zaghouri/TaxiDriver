@@ -92,8 +92,15 @@ class FakeDriverBackend implements DriverBackend {
   int bidSeq = 0;
   DateTime bidExpiry = DateTime.utc(2026, 10, 26, 10, 1);
   ({bool rooted, bool mock})? reported;
+  DriverEarnings earningsValue = const DriverEarnings();
 
   Never _throw(Object e) => throw e;
+
+  @override
+  Future<DriverEarnings> earnings() async {
+    calls.add('earnings');
+    return earningsValue;
+  }
 
   @override
   Future<DriverProfile> profile() async {

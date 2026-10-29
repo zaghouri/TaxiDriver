@@ -376,6 +376,13 @@ class RideMaApi {
 
   Future<Json> earnings({int days = 7}) async => asJson(await client.get('/v1/driver/earnings', query: {'days': days}));
 
+  /// Typed income (D82); [month] is `YYYY-MM` (default: this month).
+  Future<DriverEarnings> driverEarnings({int days = 7, String? month}) async => DriverEarnings.fromJson(
+      await client.get('/v1/driver/earnings', query: {'days': days, 'month': ?month}));
+
+  /// Daily income goal in DH; null removes it.
+  Future<void> setDailyGoal(int? amount) => client.put('/v1/driver/preferences', data: {'daily_goal': amount});
+
   Future<Json> subscription() async => asJson(await client.get('/v1/driver/subscription'));
 
   /// [method]: cashplus / wafacash / card / wallet.
