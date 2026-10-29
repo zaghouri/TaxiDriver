@@ -22,7 +22,6 @@
 - `.env` with real keys + server → deploy (RUNBOOK §1). Until then SMTP/WhatsApp/FCM/Maps/Sentry/S3 run as logged mocks.
 - Keystore secrets in GitHub so CI signs release APKs (B8); publish them with `scripts/publish-apk.sh`.
 - Real-phone checks (PHONE_TEST.md, now incl. the "Ready to drive" checklist, the P2 steps (live notification, chat, locked-phone calls, SOS contacts) and the P3 steps (speeding with real GPS, onboarding preview, demand map, chained requests)), iOS build on a Mac (docs/IOS_BUILD.md), lawyer review of legal texts + CNDP declaration.
-- Delete the `rea-input` branch on GitHub (it still holds the inDrive APK used for the REA study).
 - WhatsApp template `WHATSAPP_SOS_TEMPLATE` for SOS contacts (B3); until approved, contacts are only logged. Play Console declaration for `USE_FULL_SCREEN_INTENT` (calls over the lock screen, Android 14+).
 - Review the P2 defaults: waiting fee (3 free min, 1 DH/min, cap 20 DH; off by default, set per city), driver late after 5 min with a penalty, promised ETA ≥ 75 % of the route estimate; privacy text for emergency contacts and chat (lawyer review).
 - Review the P3 defaults (D80–D88): speeding 60 + 20 km/h for 30 s, far-driver confirm at 10 min, demand window 45 min, re-notify 3×/request; chained requests stay **off** until the phone run in PHONE_TEST (set `cancel_rules.chain_enabled` per city). Lawyer: name saved addresses in the next privacy-text version.
