@@ -72,6 +72,7 @@ String formatDate(String locale, DateTime? dt) {
 
 String rideStatusText(AppLocalizations l, RideStatus s) => switch (s) {
       RideStatus.searching => l.rideStatusSearching,
+      RideStatus.queued => l.rideStatusQueued,
       RideStatus.accepted => l.rideStatusAccepted,
       RideStatus.arrived => l.rideStatusArrived,
       RideStatus.inProgress => l.rideStatusInProgress,

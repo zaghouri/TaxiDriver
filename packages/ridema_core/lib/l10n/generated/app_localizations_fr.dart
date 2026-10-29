@@ -2344,4 +2344,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errOnAnotherRide =>
       'Vous êtes en course. Terminez-la avant de faire une nouvelle offre.';
+
+  @override
+  String get rideStatusQueued => 'Chauffeur réservé, il termine une course';
 }

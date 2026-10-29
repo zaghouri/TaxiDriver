@@ -4125,6 +4125,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You are on a ride. Finish it before making a new offer.'**
   String get errOnAnotherRide;
+
+  /// Ride status: accepted by a driver who is finishing another trip (D88)
+  ///
+  /// In en, this message translates to:
+  /// **'Driver booked, finishing a trip'**
+  String get rideStatusQueued;
 }
 
 class _AppLocalizationsDelegate

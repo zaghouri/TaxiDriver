@@ -670,5 +670,6 @@
   "errChatClosed": "Les messages sont ouverts seulement pendant la course.",
   "callRingFromDriver": "Votre chauffeur vous appelle dans RideMA",
   "callRingFromRider": "Votre passager vous appelle dans RideMA",
-  "errOnAnotherRide": "Vous êtes en course. Terminez-la avant de faire une nouvelle offre."
+  "errOnAnotherRide": "Vous êtes en course. Terminez-la avant de faire une nouvelle offre.",
+  "rideStatusQueued": "Chauffeur réservé, il termine une course"
 }

@@ -366,6 +366,18 @@ class RiderStrings {
   String get acceptAnyway => _t({'en': 'Accept anyway', 'fr': 'Accepter quand même', 'ar': 'قبول رغم ذلك'});
   String get keepLooking => _t({'en': 'Keep looking', 'fr': 'Continuer à chercher', 'ar': 'مواصلة البحث'});
 
+  // Driver booked while finishing another trip (REA P3 #26, D88).
+  String get queuedTitle => _t({
+        'en': 'Your driver is finishing a trip nearby',
+        'fr': 'Votre chauffeur termine une course tout près',
+        'ar': 'سائقك ينهي رحلة قريبة',
+      });
+  String queuedBody(String time) => _t({
+        'en': 'They come to you right after, around $time. You can cancel for free until then.',
+        'fr': 'Il vient vers vous juste après, vers $time. Vous pouvez annuler sans frais d’ici là.',
+        'ar': 'سيأتي إليك مباشرة بعد ذلك، حوالي $time. يمكنك الإلغاء مجانًا إلى ذلك الحين.',
+      });
+
   String? errorForCode(String code) => switch (code) {
         'RETRY' || 'CONFLICT' || 'INVALID_STATE' => _t({
             'en': 'Something changed in the meantime. Please try again.',

@@ -351,6 +351,49 @@ Future<void> showCarMismatch(BuildContext context, RideController c) async {
 }
 
 /// Panel while a driver is assigned (reads [RideController]).
+/// Driver booked while finishing another trip (D88): driver and car, PIN, free cancel. No call, chat, share or
+/// live position until the driver is free and on the way.
+class QueuedPanel extends StatelessWidget {
+  const QueuedPanel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final rs = RiderStrings.of(context);
+    final c = context.watch<RideController>();
+    final r = c.ride;
+    if (r == null) return const SizedBox.shrink();
+    return SheetCard(
+      children: [
+        Row(children: [
+          const Icon(Icons.hourglass_top, color: BrandColors.accent),
+          const SizedBox(width: 8),
+          Expanded(child: Text(rs.queuedTitle, key: const ValueKey('queued_title'), style: Theme.of(context).textTheme.titleLarge)),
+        ]),
+        gap8,
+        Text(rs.queuedBody(formatTime(r.queuedPickupAt ?? r.pickupDueAt)), key: const ValueKey('queued_body')),
+        if (c.error != null) ...[gap8, ErrorBanner(riderErrorText(context, c.error!))],
+        gap8,
+        CarCard(vehicle: r.driver?.vehicle ?? const Vehicle(), driver: r.driver),
+        if (c.visiblePin != null) ...[gap8, Center(child: PinDisplay(key: const ValueKey('ride_pin'), pin: c.visiblePin!))],
+        gap8,
+        TextButton(
+          key: const ValueKey('ride_cancel'),
+          onPressed: c.busy
+              ? null
+              : () async {
+                  final reason = await askCancel(context, searching: false, free: true);
+                  if (reason != null) await c.cancel(reason);
+                },
+          style: TextButton.styleFrom(foregroundColor: BrandColors.danger),
+          child: Text(l.cancelRide),
+        ),
+        Text(l.cancelFreeInfo, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+      ],
+    );
+  }
+}
+
 class ActiveRidePanel extends StatelessWidget {
   const ActiveRidePanel({
     super.key,

@@ -2307,4 +2307,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errOnAnotherRide =>
       'You are on a ride. Finish it before making a new offer.';
+
+  @override
+  String get rideStatusQueued => 'Driver booked, finishing a trip';
 }

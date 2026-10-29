@@ -304,6 +304,46 @@ void main() {
     });
   });
 
+  group('Driver booked while finishing a trip (D88)', () {
+    testWidgets('queued: driver card, PIN and free cancel; then the usual ride screen', (tester) async {
+      await _setPhone(tester);
+      final h = Harness();
+      await h.searching();
+      h.rt.rideUpdate.add(Ride.fromJson({
+        ...rideJson(status: 'queued', withDriver: true, pin: '4821'),
+        'queued': {'queued_at': '2026-10-29T10:00:00Z', 'estimated_pickup_at': '2026-10-29T10:12:00Z'},
+      }));
+      expect(h.c.phase, RiderPhase.queued);
+      expect(h.c.canCancel, isTrue);
+      expect(h.c.cancelIsFree, isTrue);
+      expect(h.c.visiblePin, '4821');
+      await tester.pumpWidget(wrapApp(const Scaffold(body: SingleChildScrollView(child: QueuedPanel())), controller: h.c));
+      await tester.pump();
+      expect(find.text(RiderStrings('en').queuedTitle), findsOneWidget);
+      expect(find.byKey(const ValueKey('ride_pin')), findsOneWidget);
+      expect(find.byKey(const ValueKey('ride_call')), findsNothing);
+      // The driver finished the trip: the ride becomes accepted.
+      h.rt.rideUpdate.add(mkRide(status: 'accepted', withDriver: true, pin: '4821'));
+      expect(h.c.phase, RiderPhase.accepted);
+      h.c.dispose();
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    test('a late "searching" event does not undo the queued state; strings exist', () async {
+      final h = Harness();
+      addTearDown(h.c.dispose);
+      await h.searching();
+      h.rt.rideUpdate.add(Ride.fromJson(rideJson(status: 'queued', withDriver: true)));
+      h.rt.rideUpdate.add(Ride.fromJson(rideJson(status: 'searching')));
+      expect(h.c.phase, RiderPhase.queued);
+      for (final lang in ['ar', 'fr', 'en']) {
+        expect(RiderStrings(lang).queuedTitle, isNotEmpty);
+        expect(RiderStrings(lang).queuedBody('10:12'), contains('10:12'));
+      }
+      expect(rideStatusText(lookupAppLocalizations(const Locale('ar')), RideStatus.queued), isNotEmpty);
+    });
+  });
+
   group('Change pickup point (D61)', () {
     testWidgets('the button shows only while the pickup can still move', (tester) async {
       await _setPhone(tester);
