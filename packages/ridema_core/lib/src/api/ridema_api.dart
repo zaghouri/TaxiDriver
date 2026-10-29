@@ -386,6 +386,8 @@ class RideMaApi {
           .get('/v1/driver/preview', query: {if (lat != null && lng != null) ...{'lat': lat, 'lng': lng}}))['items'])
       .map(RequestPreview.fromJson)
       .toList();
+  /// Recent demand per ~500 m cell for the home map (D87).
+  Future<DemandMap> driverDemand() async => DemandMap.fromJson(await client.get('/v1/driver/demand'));
 
   Future<Json> earnings({int days = 7}) async => asJson(await client.get('/v1/driver/earnings', query: {'days': days}));
 

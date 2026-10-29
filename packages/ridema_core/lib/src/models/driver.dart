@@ -1,4 +1,5 @@
 import 'json.dart';
+import 'ride.dart' show LatLng;
 
 /// Driver application/approval status.
 enum DriverStatus {
@@ -354,6 +355,40 @@ class RequestPreview {
       offeredPrice: asInt(j['offered_price']) ?? 0,
       minutesAgo: asInt(j['minutes_ago']) ?? 0,
       awayKm: asDouble(j['away_km']),
+    );
+  }
+}
+
+/// One cell of the driver demand map (D87): where riders asked for rides recently, no rider data.
+class DemandCell {
+  const DemandCell({required this.lat, required this.lng, required this.level});
+  final double lat;
+  final double lng;
+
+  /// 1 (some) … 3 (most).
+  final int level;
+
+  LatLng get latLng => LatLng(lat, lng);
+
+  factory DemandCell.fromJson(Object? json) {
+    final j = asJson(json);
+    return DemandCell(lat: asDouble(j['lat']) ?? 0, lng: asDouble(j['lng']) ?? 0, level: (asInt(j['level']) ?? 1).clamp(1, 3));
+  }
+}
+
+/// `GET /v1/driver/demand`.
+class DemandMap {
+  const DemandMap({this.cells = const [], this.windowMin = 45, this.cellM = 500});
+  final List<DemandCell> cells;
+  final int windowMin;
+  final int cellM;
+
+  factory DemandMap.fromJson(Object? json) {
+    final j = asJson(json);
+    return DemandMap(
+      cells: asJsonList(j['cells']).map(DemandCell.fromJson).toList(),
+      windowMin: asInt(j['window_min']) ?? 45,
+      cellM: asInt(j['cell_m']) ?? 500,
     );
   }
 }

@@ -3,7 +3,7 @@
 import 'dart:async';
 
 import 'package:ridema_core/ridema_core.dart'
-    show ActiveRide, Bid, BidUpdate, CancelReason, DriverEarnings, DriverProfile, Json, RequestClosed, RequestUpdate, Ride, RideRequest, SocketAck;
+    show ActiveRide, Bid, BidUpdate, CancelReason, DemandMap, DriverEarnings, DriverProfile, Json, RequestClosed, RequestUpdate, Ride, RideRequest, SocketAck;
 
 /// A GPS fix as the driver app needs it.
 class DriverPosition {
@@ -62,6 +62,8 @@ abstract class DriverBackend {
 
   /// Today's income and the daily goal (D82).
   Future<DriverEarnings> earnings();
+  /// Demand map cells (D87).
+  Future<DemandMap> demand();
   Future<ActiveRide> activeRide();
   Future<Ride> ride(String id);
   Future<Ride> arrived(String rideId);
