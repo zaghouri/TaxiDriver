@@ -8,6 +8,8 @@ import { roomOf, type Realtime, type Target } from '../core/realtime.js';
 import { verifyAccess, type AccessClaims } from '../http/tokens.js';
 import { latLng } from '../lib/validation.js';
 import { recordDriverLocation } from './location.js';
+import { enqueue } from '../core/outbox.js';
+import { firstName } from './users.js';
 import { chatInput, sendMessage } from './chat.js';
 
 export class SocketRealtime implements Realtime {
@@ -29,6 +31,38 @@ async function authenticate(ctx: AppContext, token: unknown): Promise<AccessClai
   const s = await one(ctx.db, 'SELECT 1 FROM refresh_tokens WHERE family_id = $1 AND revoked_at IS NULL LIMIT 1', [c.sid]);
   if (!s) throw new Error('SESSION_REVOKED');
   return c;
+}
+
+/** Pending incoming call for a user (D73): kept while it rings so a reconnecting app still rings. */
+const callKey = (ctx: AppContext, userId: string) => `${ctx.cfg.REDIS_PREFIX}:call:pending:${userId}`;
+const RING_S = 45;
+
+/**
+ * Calls when the callee's app is in the background, locked or closed (D73): the invite is kept for the ring time
+ * and replayed on reconnect, and a high-priority push (channel `calls`) wakes the phone. Accept / reject / end clear it.
+ */
+async function trackCall(ctx: AppContext, ev: string, c: { rideId: string; from: string; fromRole: string; to: string; payload: Record<string, unknown> }) {
+  if (ev === 'call:invite') {
+    await ctx.redis.set(callKey(ctx, c.to), JSON.stringify(c.payload), 'EX', RING_S);
+    const me = await one<{ full_name: string }>(ctx.db, 'SELECT full_name FROM users WHERE id = $1', [c.from]);
+    await enqueue(ctx.db, {
+      topic: 'push',
+      payload: {
+        user_ids: [c.to],
+        title: 'push_call_title',
+        body: c.fromRole === 'driver' ? 'push_call_body_driver' : 'push_call_body_rider',
+        vars: { name: firstName(me?.full_name ?? '') },
+        data: { type: 'call', ride_id: c.rideId },
+        channel: 'calls',
+        tag: `call-${c.rideId}`,
+      },
+    });
+  } else if (ev === 'call:accept' || ev === 'call:reject') {
+    await ctx.redis.del(callKey(ctx, c.from));
+  } else if (ev === 'call:end') {
+    // Either side may hang up, before or after the answer.
+    await ctx.redis.del(callKey(ctx, c.to), callKey(ctx, c.from));
+  }
 }
 
 export async function attachSocketServer(ctx: AppContext, server: HttpServer, opts: { redisAdapter?: boolean } = {}): Promise<Server> {
@@ -120,6 +154,7 @@ export async function attachSocketServer(ctx: AppContext, server: HttpServer, op
           if (JSON.stringify(raw).length > 32 * 1024) throw new Error('TOO_LARGE');
           const to = r.rider_id === userId ? r.driver_id : r.rider_id;
           io.to(roomOf({ user: to })).emit(ev, { ...raw, from_role: claims.role });
+          await trackCall(ctx, ev, { rideId, from: userId, fromRole: claims.role, to, payload: { ...raw, from_role: claims.role } });
           if (ev === 'call:invite' || ev === 'call:end') {
             await ctx.db.query('INSERT INTO ride_events (ride_id, type, actor_id, actor_role) VALUES ($1,$2,$3,$4)', [rideId, ev.replace(':', '_'), userId, claims.role]);
           }
@@ -129,6 +164,11 @@ export async function attachSocketServer(ctx: AppContext, server: HttpServer, op
         }
       });
     }
+
+    // A call that started ringing while this app was closed or offline (D73): ring now if it is still pending.
+    // Last, so no handler above is registered late.
+    const pending = await ctx.redis.get(callKey(ctx, userId)).catch(() => null);
+    if (pending && socket.connected) socket.emit('call:invite', JSON.parse(pending));
   });
   return io;
 }

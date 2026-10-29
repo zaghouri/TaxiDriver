@@ -7,4 +7,6 @@
     <string name="channel_ride_updates_desc">Your offer was accepted, the rider cancelled, and other changes.</string>
     <string name="channel_offers">Offers and news</string>
     <string name="channel_offers_desc">Messages from RideMA.</string>
+    <string name="channel_calls">Calls</string>
+    <string name="channel_calls_desc">Incoming calls from your rider or driver in RideMA.</string>
 </resources>

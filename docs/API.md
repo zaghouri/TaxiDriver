@@ -147,7 +147,7 @@ Server → client events:
 
 Client → server (use emitWithAck; ack is `{ok:true,...}` or `{ok:false, error}`):
 - `driver:location` `{lat, lng, heading?, speed?, accuracy?, mocked?, recorded_at?}`
-- `call:*` `{ride_id, ...webrtc payload (sdp / candidate)}`
+- `call:*` `{ride_id, ...webrtc payload (sdp / candidate)}`. A `call:invite` also pushes the callee (channel `calls`, tag `call-<ride>`) and stays pending for 45 s: if the callee's app connects meanwhile, the server sends it the `call:invite` again right after `session:ready`; `call:accept` / `call:reject` / `call:end` clear it (D73)
 - `chat:send` `{ride_id, text | quick, client_id}` → ack `{ok:true, message}` or `{ok:false, error}` (same rules as `POST /v1/rides/:id/messages`)
 - `reauth` `<new access token>` after a refresh.
 

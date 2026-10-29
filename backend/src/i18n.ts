@@ -63,6 +63,9 @@ const t = {
     fr: 'L’attente gratuite se termine dans 1 minute. Ensuite, l’attente coûte {fee} DH par minute.',
     ar: 'ينتهي الانتظار المجاني بعد دقيقة واحدة. بعد ذلك، يكلّف الانتظار {fee} درهم للدقيقة.',
   },
+  push_call_title: { en: 'Incoming call', fr: 'Appel entrant', ar: 'مكالمة واردة' },
+  push_call_body_driver: { en: 'Your driver {name} is calling you in RideMA', fr: 'Votre chauffeur {name} vous appelle dans RideMA', ar: 'سائقك {name} يتصل بك عبر RideMA' },
+  push_call_body_rider: { en: 'Your rider {name} is calling you in RideMA', fr: 'Votre passager {name} vous appelle dans RideMA', ar: 'راكبك {name} يتصل بك عبر RideMA' },
   push_chat_title: { en: 'Message from {name}', fr: 'Message de {name}', ar: 'رسالة من {name}' },
   push_chat_body: { en: '{text}', fr: '{text}', ar: '{text}' },
   // Quick replies (D72): keys stored with the message, shown in the reader's language. Same texts as the apps.

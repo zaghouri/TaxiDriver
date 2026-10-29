@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:ridema_core/ridema_core.dart';
 
 import 'support/fake_backend.dart';
@@ -127,6 +129,47 @@ void main() {
     expect(sent().where((e) => e == 'call:end'), isEmpty, reason: 'no echo of the end');
   });
 
+  test('a replayed invite after a reconnect is the same call, not a busy second call (D73)', () async {
+    socket.fire('call:invite', {'ride_id': 'ride-4', 'from_role': 'driver'});
+    await pumpEventQueue();
+    socket.fire('call:invite', {'ride_id': 'ride-4', 'from_role': 'driver'});
+    await pumpEventQueue();
+    expect(call.state, CallState.incoming);
+    expect(sent(), isEmpty, reason: 'no call:reject to the caller');
+    socket.fire('call:invite', {'ride_id': 'other-ride', 'from_role': 'rider'});
+    await pumpEventQueue();
+    expect(sent(), ['call:reject'], reason: 'a different call while busy is declined');
+  });
+
+  testWidgets('CallHost rings through the system only while the app is not in front (D73)', (tester) async {
+    final alert = _FakeAlert();
+    final s = await buildTestServices(backend: backend, socket: socket, access: 'a', refresh: 'refresh-xxxxxxxxxxxxxxxxxxxxxx');
+    await tester.pumpWidget(testApp(
+      s,
+      ChangeNotifierProvider<CallController>.value(value: call, child: CallHost(alert: alert, child: const SizedBox())),
+      locale: 'en',
+    ));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    socket.fire('call:invite', {'ride_id': 'ride-5', 'from_role': 'driver'});
+    await tester.pump();
+    await tester.pump();
+    expect(alert.log, ['ring:ride-5:Incoming call|Your driver is calling you in RideMA']);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(alert.log.last, 'cancel:ride-5');
+    await call.reject();
+    await tester.pump();
+    expect(alert.log, hasLength(2));
+
+    // In front: the call screen opens and nothing rings through the system.
+    call.clear();
+    socket.fire('call:invite', {'ride_id': 'ride-6', 'from_role': 'rider'});
+    await tester.pump();
+    await tester.pump();
+    expect(alert.log, hasLength(2));
+    await tester.pumpWidget(const SizedBox());
+  });
+
   test('incoming call declined sends call:reject', () async {
     socket.fire('call:invite', {'ride_id': 'ride-3', 'from_role': 'driver'});
     await pumpEventQueue();
@@ -143,4 +186,12 @@ void main() {
     expect(call.state, CallState.ended);
     expect(call.endReason, CallEndReason.failed);
   });
+}
+
+class _FakeAlert implements CallAlert {
+  final log = <String>[];
+  @override
+  Future<void> ring(String rideId, {required String title, required String body}) async => log.add('ring:$rideId:$title|$body');
+  @override
+  Future<void> cancel(String rideId) async => log.add('cancel:$rideId');
 }

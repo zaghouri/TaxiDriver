@@ -1628,5 +1628,7 @@
   "errChatClosed": "Messages are open only during the ride.",
   "@errChatClosed": {
     "description": "Error text for API code CHAT_CLOSED"
-  }
+  },
+  "callRingFromDriver": "Your driver is calling you in RideMA",
+  "callRingFromRider": "Your rider is calling you in RideMA"
 }
