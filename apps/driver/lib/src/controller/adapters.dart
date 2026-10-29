@@ -42,6 +42,8 @@ class ApiDriverBackend implements DriverBackend {
   @override
   Future<DriverEarnings> earnings() => api.driverEarnings(days: 1);
   @override
+  Future<DemandMap> demand() => api.driverDemand();
+  @override
   Future<Bid> placeBid(String rideId, {int? counterPrice, int? etaMin}) =>
       api.placeBid(rideId, counterPrice: counterPrice, etaMin: etaMin);
   @override

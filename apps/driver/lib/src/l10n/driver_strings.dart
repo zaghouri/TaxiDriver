@@ -123,6 +123,11 @@ class DriverStrings {
   String get firstRideDone => _t('firstRideDone');
   String firstRideTip(String id) => _t('tip_$id');
   String firstRideTipBody(String id) => _t('tip_${id}_body');
+  // Demand map (D87).
+  String get demandShow => _t('demandShow');
+  String get demandHide => _t('demandHide');
+  String demandLegend(int min) => _f('demandLegend', {'min': min});
+  String get demandEmpty => _t('demandEmpty');
   String get refresh => _t('refresh');
   String get deviceCheckTitle => _t('deviceCheckTitle');
   String get serviceReopen => _t('serviceReopen');
@@ -275,6 +280,10 @@ class DriverStrings {
       'tip_pin_body': 'The rider tells you a 4-digit code. It confirms you picked up the right person.',
       'tip_cash': 'Collect cash, then rate the rider',
       'tip_cash_body': 'The app shows the total to collect, waiting fee included. RideMA takes 0 % commission.',
+      'demandShow': 'Show where riders ask',
+      'demandHide': 'Hide demand',
+      'demandLegend': 'Where riders asked in the last {min} min',
+      'demandEmpty': 'Few requests right now',
       'refresh': 'Refresh',
       'deviceCheckTitle': 'Phone check',
       'serviceReopen': 'Open RideMA to stay online.',
@@ -409,6 +418,10 @@ class DriverStrings {
       'tip_pin_body': 'Le passager vous donne un code à 4 chiffres. Il confirme que c’est la bonne personne.',
       'tip_cash': 'Encaissez en espèces, puis notez le passager',
       'tip_cash_body': 'L’application affiche le total à encaisser, frais d’attente compris. RideMA prend 0 % de commission.',
+      'demandShow': 'Voir où les passagers demandent',
+      'demandHide': 'Masquer la demande',
+      'demandLegend': 'Demandes des {min} dernières minutes',
+      'demandEmpty': 'Peu de demandes en ce moment',
       'refresh': 'Actualiser',
       'deviceCheckTitle': 'Vérification du téléphone',
       'serviceReopen': 'Ouvrez RideMA pour rester en ligne.',
@@ -543,6 +556,10 @@ class DriverStrings {
       'tip_pin_body': 'يعطيك الراكب رمزًا من 4 أرقام. يؤكد أن الراكب الذي معك هو الشخص الصحيح.',
       'tip_cash': 'استلم الثمن نقدًا ثم قيّم الراكب',
       'tip_cash_body': 'يعرض التطبيق المبلغ الإجمالي، بما فيه رسوم الانتظار. عمولة RideMA هي 0 %.',
+      'demandShow': 'أظهر أين يطلب الركاب',
+      'demandHide': 'إخفاء الطلب',
+      'demandLegend': 'أماكن الطلبات في آخر {min} دقيقة',
+      'demandEmpty': 'طلبات قليلة الآن',
       'refresh': 'تحديث',
       'deviceCheckTitle': 'فحص الهاتف',
       'serviceReopen': 'افتح RideMA لتبقى متصلًا.',

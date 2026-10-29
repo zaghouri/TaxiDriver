@@ -11,19 +11,25 @@ import '../../l10n/driver_strings.dart';
 /// (and a key in the manifest / Info.plist); otherwise a simple drawn
 /// placeholder so the app is fully usable without a Maps key.
 class DriverMap extends StatelessWidget {
-  const DriverMap({super.key, this.me, this.pickup, this.dropoff, this.enabled = DriverEnv.mapsEnabled});
+  const DriverMap({super.key, this.me, this.pickup, this.dropoff, this.demand = const [], this.enabled = DriverEnv.mapsEnabled});
 
   final LatLng? me;
   final Place? pickup;
   final Place? dropoff;
   final bool enabled;
 
+  /// Demand cells to shade (D87); empty = layer off.
+  final List<DemandCell> demand;
+
+  /// Cell colour by level: saffron, stronger where more riders asked.
+  static Color demandColor(int level) => BrandColors.accent.withValues(alpha: 0.18 + 0.14 * (level - 1));
+
   /// Meknes centre, used before the first GPS fix.
   static const LatLng meknes = LatLng(33.8935, -5.5473);
 
   @override
   Widget build(BuildContext context) {
-    if (!enabled) return _PlaceholderMap(me: me, pickup: pickup, dropoff: dropoff);
+    if (!enabled) return _PlaceholderMap(me: me, pickup: pickup, dropoff: dropoff, demand: demand);
     final centre = me ?? pickup?.latLng ?? meknes;
     return gm.GoogleMap(
       initialCameraPosition: gm.CameraPosition(target: gm.LatLng(centre.lat, centre.lng), zoom: 14.5),
@@ -46,6 +52,16 @@ class DriverMap extends StatelessWidget {
             icon: gm.BitmapDescriptor.defaultMarkerWithHue(gm.BitmapDescriptor.hueRed),
           ),
       },
+      circles: {
+        for (final (i, c) in demand.indexed)
+          gm.Circle(
+            circleId: gm.CircleId('demand-$i'),
+            center: gm.LatLng(c.lat, c.lng),
+            radius: 280,
+            strokeWidth: 0,
+            fillColor: DriverMap.demandColor(c.level),
+          ),
+      },
       polylines: {
         if (pickup != null && dropoff != null)
           gm.Polyline(
@@ -60,26 +76,28 @@ class DriverMap extends StatelessWidget {
 }
 
 class _PlaceholderMap extends StatelessWidget {
-  const _PlaceholderMap({this.me, this.pickup, this.dropoff});
+  const _PlaceholderMap({this.me, this.pickup, this.dropoff, this.demand = const []});
   final LatLng? me;
   final Place? pickup;
   final Place? dropoff;
+  final List<DemandCell> demand;
 
   @override
   Widget build(BuildContext context) => Semantics(
         label: context.ds.mapPlaceholder,
         child: CustomPaint(
-          painter: _GridPainter(me: me, pickup: pickup?.latLng, dropoff: dropoff?.latLng),
+          painter: _GridPainter(me: me, pickup: pickup?.latLng, dropoff: dropoff?.latLng, demand: demand),
           child: const SizedBox.expand(),
         ),
       );
 }
 
 class _GridPainter extends CustomPainter {
-  _GridPainter({this.me, this.pickup, this.dropoff});
+  _GridPainter({this.me, this.pickup, this.dropoff, this.demand = const []});
   final LatLng? me;
   final LatLng? pickup;
   final LatLng? dropoff;
+  final List<DemandCell> demand;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -93,7 +111,7 @@ class _GridPainter extends CustomPainter {
     for (var y = 0.0; y < size.height; y += 48) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
     }
-    final pts = [me, pickup, dropoff].whereType<LatLng>().toList();
+    final pts = [me, pickup, dropoff, ...demand.map((c) => c.latLng)].whereType<LatLng>().toList();
     if (pts.isEmpty) return;
     var minLat = pts.first.lat, maxLat = pts.first.lat, minLng = pts.first.lng, maxLng = pts.first.lng;
     for (final p in pts) {
@@ -111,6 +129,17 @@ class _GridPainter extends CustomPainter {
       );
     }
 
+    // Demand cells (~500 m) as soft squares under the pins (D87).
+    if (demand.isNotEmpty) {
+      final w = (maxLng - minLng) + 2 * pad;
+      final half = (0.0025 / w * size.width).clamp(6.0, 60.0);
+      for (final c in demand) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(Rect.fromCenter(center: at(c.latLng), width: half * 2, height: half * 2), const Radius.circular(6)),
+          Paint()..color = DriverMap.demandColor(c.level),
+        );
+      }
+    }
     if (pickup != null && dropoff != null) {
       canvas.drawLine(at(pickup!), at(dropoff!), Paint()
         ..color = BrandColors.primary
@@ -128,5 +157,5 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GridPainter old) => old.me != me || old.pickup != pickup || old.dropoff != dropoff;
+  bool shouldRepaint(_GridPainter old) => old.me != me || old.pickup != pickup || old.dropoff != dropoff || old.demand != demand;
 }
