@@ -503,6 +503,7 @@ class _RiderHomeViewState extends State<RiderHomeView> with WidgetsBindingObserv
         ),
       RiderPhase.searching => SearchingPanel(onCancel: _cancelSearch, onRaise: _raise),
       RiderPhase.expired => const ExpiredPanel(),
+      RiderPhase.queued => const QueuedPanel(),
       RiderPhase.accepted || RiderPhase.arrived || RiderPhase.inProgress => ActiveRidePanel(
           onCall: features.feature('voice_calls', fallback: true) ? _call : () {},
           onShare: features.feature('trip_share', fallback: true) ? _share : () {},

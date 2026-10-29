@@ -670,5 +670,6 @@
   "errChatClosed": "الرسائل متاحة فقط أثناء الرحلة.",
   "callRingFromDriver": "سائقك يتصل بك عبر RideMA",
   "callRingFromRider": "راكبك يتصل بك عبر RideMA",
-  "errOnAnotherRide": "أنت في رحلة الآن. أنهِها قبل تقديم عرض جديد."
+  "errOnAnotherRide": "أنت في رحلة الآن. أنهِها قبل تقديم عرض جديد.",
+  "rideStatusQueued": "تم حجز سائق، وهو ينهي رحلة"
 }

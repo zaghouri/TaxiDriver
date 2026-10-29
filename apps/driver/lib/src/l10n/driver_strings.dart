@@ -128,6 +128,13 @@ class DriverStrings {
   String get demandHide => _t('demandHide');
   String demandLegend(int min) => _f('demandLegend', {'min': min});
   String get demandEmpty => _t('demandEmpty');
+  // Chain of requests (D88).
+  String get nextRideTitle => _t('nextRideTitle');
+  String get nextRideHint => _t('nextRideHint');
+  String get dropNextRide => _t('dropNextRide');
+  String get dropNextConfirm => _t('dropNextConfirm');
+  String get nextRequestsTitle => _t('nextRequestsTitle');
+  String get nextRideAfterFare => _t('nextRideAfterFare');
   String get refresh => _t('refresh');
   String get deviceCheckTitle => _t('deviceCheckTitle');
   String get serviceReopen => _t('serviceReopen');
@@ -284,6 +291,12 @@ class DriverStrings {
       'demandHide': 'Hide demand',
       'demandLegend': 'Where riders asked in the last {min} min',
       'demandEmpty': 'Few requests right now',
+      'nextRideTitle': 'Next ride after this trip',
+      'nextRideHint': 'Drop off your rider first. We tell the next rider you are coming.',
+      'dropNextRide': 'Drop the next ride',
+      'dropNextConfirm': 'The next rider will look for another driver. It counts as a cancellation.',
+      'nextRequestsTitle': 'Requests near your destination',
+      'nextRideAfterFare': 'Your next ride is waiting: collect the fare, then go to the pickup.',
       'refresh': 'Refresh',
       'deviceCheckTitle': 'Phone check',
       'serviceReopen': 'Open RideMA to stay online.',
@@ -422,6 +435,12 @@ class DriverStrings {
       'demandHide': 'Masquer la demande',
       'demandLegend': 'Demandes des {min} dernières minutes',
       'demandEmpty': 'Peu de demandes en ce moment',
+      'nextRideTitle': 'Prochaine course après celle-ci',
+      'nextRideHint': 'Déposez d’abord votre passager. Nous prévenons le suivant que vous arrivez.',
+      'dropNextRide': 'Renoncer à la prochaine course',
+      'dropNextConfirm': 'Le prochain passager cherchera un autre chauffeur. Cela compte comme une annulation.',
+      'nextRequestsTitle': 'Demandes près de votre destination',
+      'nextRideAfterFare': 'Votre prochaine course attend : encaissez, puis allez au point de départ.',
       'refresh': 'Actualiser',
       'deviceCheckTitle': 'Vérification du téléphone',
       'serviceReopen': 'Ouvrez RideMA pour rester en ligne.',
@@ -560,6 +579,12 @@ class DriverStrings {
       'demandHide': 'إخفاء الطلب',
       'demandLegend': 'أماكن الطلبات في آخر {min} دقيقة',
       'demandEmpty': 'طلبات قليلة الآن',
+      'nextRideTitle': 'الرحلة التالية بعد هذه',
+      'nextRideHint': 'أوصل راكبك أولًا. سنخبر الراكب التالي بأنك قادم.',
+      'dropNextRide': 'التخلي عن الرحلة التالية',
+      'dropNextConfirm': 'سيبحث الراكب التالي عن سائق آخر. يُحتسب ذلك إلغاءً.',
+      'nextRequestsTitle': 'طلبات قرب وجهتك',
+      'nextRideAfterFare': 'رحلتك التالية في الانتظار: استلم الثمن ثم توجّه إلى نقطة الانطلاق.',
       'refresh': 'تحديث',
       'deviceCheckTitle': 'فحص الهاتف',
       'serviceReopen': 'افتح RideMA لتبقى متصلًا.',

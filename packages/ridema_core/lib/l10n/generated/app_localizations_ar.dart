@@ -2280,4 +2280,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errOnAnotherRide => 'أنت في رحلة الآن. أنهِها قبل تقديم عرض جديد.';
+
+  @override
+  String get rideStatusQueued => 'تم حجز سائق، وهو ينهي رحلة';
 }

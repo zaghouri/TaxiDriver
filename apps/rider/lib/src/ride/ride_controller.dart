@@ -13,6 +13,9 @@ enum RiderPhase {
   /// Request open, offers arriving.
   searching,
 
+  /// Accepted by a driver who is finishing another trip (D88): picked up right after it.
+  queued,
+
   /// 5 minutes passed without an accepted offer: "No driver found".
   expired,
 
@@ -211,17 +214,18 @@ class RideController extends ChangeNotifier {
   String? get visiblePin {
     final pin = _ride?.pickupPin;
     if (pin == null || pin.isEmpty) return null;
-    return _phase == RiderPhase.accepted || _phase == RiderPhase.arrived ? pin : null;
+    return _phase == RiderPhase.queued || _phase == RiderPhase.accepted || _phase == RiderPhase.arrived ? pin : null;
   }
 
   /// Free until the driver taps "I've arrived" (D11).
   bool get cancelIsFree {
-    if (_phase == RiderPhase.searching) return true;
+    if (_phase == RiderPhase.searching || _phase == RiderPhase.queued) return true;
     if (_phase == RiderPhase.accepted) return _ride?.canCancelFree ?? true;
     return false;
   }
 
-  bool get canCancel => _phase == RiderPhase.searching || _phase == RiderPhase.accepted || _phase == RiderPhase.arrived;
+  bool get canCancel =>
+      _phase == RiderPhase.searching || _phase == RiderPhase.queued || _phase == RiderPhase.accepted || _phase == RiderPhase.arrived;
 
   /// ETA in minutes: to pickup while accepted, to the destination on trip.
   int? get etaMinutes {
@@ -256,10 +260,11 @@ class RideController extends ChangeNotifier {
 
   static int _rank(RideStatus s) => switch (s) {
         RideStatus.searching => 0,
-        RideStatus.accepted => 1,
-        RideStatus.arrived => 2,
-        RideStatus.inProgress => 3,
-        RideStatus.completed || RideStatus.cancelled || RideStatus.expired => 4,
+        RideStatus.queued => 1,
+        RideStatus.accepted => 2,
+        RideStatus.arrived => 3,
+        RideStatus.inProgress => 4,
+        RideStatus.completed || RideStatus.cancelled || RideStatus.expired => 5,
         RideStatus.unknown => -1,
       };
 
@@ -837,6 +842,10 @@ class RideController extends ChangeNotifier {
         if (offers != null) _replaceBids(offers);
         if (offers != null) _offersTotal = _activeBids().length;
         _startTimers();
+      case RideStatus.queued:
+        _phase = RiderPhase.queued;
+        _bids.clear();
+        _stopTimers();
       case RideStatus.accepted:
         _phase = RiderPhase.accepted;
         _bids.clear();

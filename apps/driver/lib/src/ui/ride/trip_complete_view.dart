@@ -48,6 +48,10 @@ class _TripCompleteViewState extends State<TripCompleteView> {
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(20), children: [
           const Icon(Icons.check_circle, color: BrandColors.success, size: 72),
+          if (context.watch<DriverController>().activeRide != null) ...[
+            gap8,
+            InfoBox(context.ds.nextRideAfterFare, icon: Icons.directions_car, key: const ValueKey('next_ride_waiting')),
+          ],
           gap8,
           Text(context.ds.tripCompleteTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
           gap16,

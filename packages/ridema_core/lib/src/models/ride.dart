@@ -3,6 +3,9 @@ import 'json.dart';
 /// Ride lifecycle states (D15).
 enum RideStatus {
   searching,
+
+  /// Accepted by a driver who is finishing another trip (D88); becomes [accepted] when that trip ends.
+  queued,
   accepted,
   arrived,
   inProgress,
@@ -13,6 +16,7 @@ enum RideStatus {
 
   static RideStatus parse(Object? v) => switch (v) {
         'searching' => RideStatus.searching,
+        'queued' => RideStatus.queued,
         'accepted' => RideStatus.accepted,
         'arrived' => RideStatus.arrived,
         'in_progress' => RideStatus.inProgress,
@@ -205,6 +209,7 @@ class Ride {
     this.waitingRules,
     this.speedRules,
     this.renotify,
+    this.queuedPickupAt,
   });
 
   final String id;
@@ -275,6 +280,8 @@ class Ride {
   final SpeedRules? speedRules;
   /// Rider only (D84): "ask the drivers who offered again" is available.
   final RenotifyInfo? renotify;
+  /// While `queued` (D88): estimated pickup time once the driver's current trip ends.
+  final DateTime? queuedPickupAt;
 
   /// Agreed price once accepted, else the current offer.
   int get fare => finalPrice ?? offeredPrice;
@@ -325,6 +332,7 @@ class Ride {
       waitingRules: j['waiting_rules'] is Map ? WaitingRules.fromJson(j['waiting_rules']) : null,
       speedRules: j['speed_rules'] is Map ? SpeedRules.fromJson(j['speed_rules']) : null,
       renotify: j['renotify'] is Map ? RenotifyInfo.fromJson(j['renotify']) : null,
+      queuedPickupAt: j['queued'] is Map ? asDate(asJson(j['queued'])['estimated_pickup_at']) : null,
     );
   }
 }
@@ -558,7 +566,7 @@ class RideRequest {
 
 /// `GET /v1/rides/active`.
 class ActiveRide {
-  const ActiveRide({this.ride, this.offers = const [], this.pendingBids = const []});
+  const ActiveRide({this.ride, this.offers = const [], this.pendingBids = const [], this.queuedRide});
 
   final Ride? ride;
 
@@ -568,12 +576,16 @@ class ActiveRide {
   /// Driver: own bids still waiting for an answer.
   final List<Bid> pendingBids;
 
+  /// Driver: the next ride waiting behind the current trip (D88).
+  final Ride? queuedRide;
+
   factory ActiveRide.fromJson(Object? json) {
     final j = asJson(json);
     return ActiveRide(
       ride: j['ride'] is Map ? Ride.fromJson(j['ride']) : null,
       offers: asJsonList(j['offers']).map(Bid.fromJson).toList(),
       pendingBids: asJsonList(j['pending_bids']).map(Bid.fromJson).toList(),
+      queuedRide: j['queued_ride'] is Map ? Ride.fromJson(j['queued_ride']) : null,
     );
   }
 }

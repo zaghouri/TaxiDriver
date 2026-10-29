@@ -358,7 +358,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _lastFinishedId = finished?.id;
       if (finished != null) WidgetsBinding.instance.addPostFrameCallback((_) => _loadEarnings());
     }
-    if (finished != null && c.activeRide == null) return TripCompleteView(ride: finished);
+    // Shown even when a queued next ride just became active (D88): collect the fare first.
+    if (finished != null) return TripCompleteView(ride: finished);
 
     final active = c.activeRide;
     final pos = c.position;
