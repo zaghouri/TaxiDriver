@@ -17,7 +17,7 @@ import 'ui/screens/boot_screens.dart';
 /// Builds [CoreServices] for an app (default: [CoreServices.create]).
 typedef CoreServicesFactory = Future<CoreServices> Function(AppConfig config);
 
-/// Root widget of both apps.
+/// Root widget of the RideMA app.
 ///
 /// Boot sequence (SPEC §3.1): splash → services (Firebase optional, remote
 /// config `api_base_url`) → `GET /v1/app/config` (+ restore session) →
@@ -27,13 +27,12 @@ typedef CoreServicesFactory = Future<CoreServices> Function(AppConfig config);
 /// ```dart
 /// void main() {
 ///   WidgetsFlutterBinding.ensureInitialized();
-///   runApp(RideMaApp(app: AppKind.rider, homeBuilder: (_) => const RiderHome()));
+///   runApp(RideMaApp(homeBuilder: (_) => const ModeHome()));
 /// }
 /// ```
 class RideMaApp extends StatefulWidget {
   const RideMaApp({
     super.key,
-    required this.app,
     required this.homeBuilder,
     this.config,
     this.servicesFactory,
@@ -43,9 +42,6 @@ class RideMaApp extends StatefulWidget {
     this.navigatorKey,
     this.onReady,
   });
-
-  /// rider or driver.
-  final AppKind app;
 
   /// Signed-in home of the app (map, requests, ...).
   final WidgetBuilder homeBuilder;
@@ -87,7 +83,7 @@ class _RideMaAppState extends State<RideMaApp> {
     try {
       final s = widget.services ??
           await (widget.servicesFactory ?? ((c) => CoreServices.create(config: c)))(
-            widget.config ?? await AppConfig.load(app: widget.app),
+            widget.config ?? await AppConfig.load(),
           );
       if (!mounted) return;
       setState(() => _services = s);

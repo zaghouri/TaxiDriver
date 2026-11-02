@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../brand.dart';
-import '../../config/app_config.dart';
 import '../../core_services.dart';
 import '../../l10n/l10n.dart';
 import '../../platform/apk_installer.dart';
@@ -216,8 +215,6 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final s = CoreServices.of(context);
-    final driver = s.config.app == AppKind.driver;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -238,11 +235,9 @@ class WelcomeScreen extends StatelessWidget {
               gap24,
               Text(l.welcomeTitle(kAppName), textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
               gap16,
-              Text(
-                driver ? l.welcomeDriverTagline : l.welcomeRiderTagline,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18),
-              ),
+              Text(l.welcomeRiderTagline, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18)),
+              gap8,
+              Text(l.welcomeDriveToo, textAlign: TextAlign.center),
               gap8,
               Text(l.welcomeCash, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700)),
               const Spacer(),

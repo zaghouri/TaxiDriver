@@ -65,7 +65,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final auth = context.watch<AuthController>();
-    final driver = CoreServices.of(context).config.isDriver;
+    final driver = auth.isDriverMode;
     final sent = _sentTo != null;
     return FormPage(
       title: l.verifyPhoneTitle,

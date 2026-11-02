@@ -71,7 +71,7 @@ class LocationDisclosureScreen extends StatelessWidget {
 /// Explains notifications before the Android 13+/iOS prompt. Pops `true`/`false`.
 class NotificationExplainerScreen extends StatelessWidget {
   const NotificationExplainerScreen({super.key, required this.app});
-  final AppKind app;
+  final AppMode app;
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +89,7 @@ class NotificationExplainerScreen extends StatelessWidget {
               Text(l.notifTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
               gap16,
               Text(
-                app == AppKind.driver ? l.notifDriverBody : l.notifRiderBody,
+                app == AppMode.driver ? l.notifDriverBody : l.notifRiderBody,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 18),
               ),

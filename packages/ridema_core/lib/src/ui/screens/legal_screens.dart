@@ -62,7 +62,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
     final l = context.l10n;
     final s = CoreServices.of(context);
     final company = s.boot.appConfigOrDefault.company;
-    final driver = s.config.isDriver;
+    final driver = s.auth.canDrive;
     return Scaffold(
       appBar: AppBar(title: Text(l.legalTitle)),
       body: SafeArea(

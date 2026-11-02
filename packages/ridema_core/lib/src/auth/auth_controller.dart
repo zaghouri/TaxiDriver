@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_exception.dart';
 import '../api/ridema_api.dart';
@@ -20,7 +21,8 @@ enum AuthStatus {
 enum LoginStep { signedIn, twoFactorRequired }
 
 /// Signup, email verification, login (+2FA), password reset, phone
-/// verification, profile and account deletion (SPEC §5).
+/// verification, profile and account deletion (SPEC §5), and the rider /
+/// driver mode of the session (D89).
 ///
 /// Screens call these methods and show `errorText(l10n, e)` for any
 /// [ApiException] thrown.
@@ -30,7 +32,9 @@ class AuthController extends ChangeNotifier {
     required this.tokens,
     required this.config,
     required this.localeProvider,
+    this.prefs,
     this.onSignedIn,
+    this.onModeChanged,
   }) {
     _sessionSub = api.client.onSessionEnded.listen((reason) => _setSignedOut(notify: true, reason: reason));
   }
@@ -42,13 +46,23 @@ class AuthController extends ChangeNotifier {
   /// Current UI language, used for the signup locale.
   final String Function() localeProvider;
 
+  /// Remembers the last mode on this phone ([modeKey]).
+  final SharedPreferences? prefs;
+
   /// Called after every successful login / restore (register device, connect socket…).
   final Future<void> Function(Me me)? onSignedIn;
+
+  /// Called after the session changed mode (reconnect the socket: its rooms depend on the mode).
+  final void Function(AppMode mode)? onModeChanged;
+
+  /// Last mode chosen on this phone; restored after login when the account allows it.
+  static const String modeKey = 'ridema.mode';
 
   StreamSubscription<String>? _sessionSub;
   AuthStatus _status = AuthStatus.unknown;
   Me? _me;
   bool _busy = false;
+  AppMode _mode = AppMode.rider;
 
   // Pending flow state (memory only).
   String? _pendingEmail;
@@ -62,6 +76,13 @@ class AuthController extends ChangeNotifier {
   bool get isSignedIn => _status == AuthStatus.signedIn;
   Me? get me => _me;
   bool get busy => _busy;
+
+  /// Rider or driver mode of this session (D89).
+  AppMode get mode => _mode;
+  bool get isDriverMode => _mode == AppMode.driver;
+
+  /// The account already has a driver profile: switching to driver mode needs no application.
+  bool get canDrive => _me?.canDrive ?? false;
 
   /// Email waiting for verification / password reset.
   String? get pendingEmail => _pendingEmail;
@@ -87,6 +108,7 @@ class AuthController extends ChangeNotifier {
     } on ApiException catch (e) {
       if (e.isNetwork) {
         // Offline start: keep the session; `me` loads later via [refreshMe].
+        _mode = _preferredMode ?? AppMode.rider;
         _status = AuthStatus.signedIn;
         notifyListeners();
       } else if (!tokens.hasSession || e.status == 401 || e.status == 403) {
@@ -103,8 +125,31 @@ class AuthController extends ChangeNotifier {
     if (!tokens.hasSession) return null;
     final me = await api.me();
     _me = me;
+    _mode = me.mode;
     notifyListeners();
     return me;
+  }
+
+  AppMode? get _preferredMode {
+    final v = prefs?.getString(modeKey);
+    return v == null ? null : AppMode.parse(v);
+  }
+
+  /// Moves the session to [target] (D89). Becoming a driver the first time needs the
+  /// `background_location` version in [consents]. Throws `ACTIVE_RIDE` (a ride is open) and
+  /// `OTHER_MODE_BUSY` (still online as a driver: go offline first).
+  Future<void> switchMode(AppMode target, {Map<String, String> consents = const {}}) => _run(() async {
+        await _applyMode(await api.switchMode(target, consents: consents));
+      });
+
+  Future<void> _applyMode(ModeSwitch r) async {
+    final refresh = tokens.refreshToken;
+    if (r.accessToken.isEmpty || refresh == null) throw const ApiException(ApiException.badResponse, 'No tokens');
+    await tokens.save(Tokens(accessToken: r.accessToken, refreshToken: refresh, expiresIn: r.expiresIn, scope: r.scope));
+    _me = r.me;
+    _mode = r.me.mode;
+    await prefs?.setString(modeKey, _mode.name);
+    onModeChanged?.call(_mode);
   }
 
   // ------------------------------------------------------------ signup
@@ -214,8 +259,8 @@ class AuthController extends ChangeNotifier {
     await tokens.save(t);
     var me = r.user;
     me ??= await api.me();
-    if (me.role.name != config.app.apiName) {
-      // A rider account in the driver app (or the reverse): refuse cleanly.
+    if (me.role == Role.admin) {
+      // Admins use the web back office, not the app.
       try {
         await api.logout();
       } catch (_) {}
@@ -230,6 +275,16 @@ class AuthController extends ChangeNotifier {
 
   Future<void> _setSignedIn(Me me) async {
     _me = me;
+    _mode = me.mode;
+    final wanted = _preferredMode;
+    if (wanted != null && wanted != me.mode && (wanted == AppMode.rider || me.canDrive)) {
+      // Back to the mode last used on this phone. Refused (open ride, still online elsewhere): stay as the server says.
+      try {
+        await _applyMode(await api.switchMode(wanted));
+      } on ApiException catch (e) {
+        debugPrint('restore mode ${wanted.name} failed: ${e.code}');
+      }
+    }
     _status = AuthStatus.signedIn;
     _lastEndReason = null;
     notifyListeners();
@@ -262,6 +317,7 @@ class AuthController extends ChangeNotifier {
       // Offline or already revoked: still log out locally.
     }
     await tokens.clear();
+    await prefs?.remove(modeKey);
     _setSignedOut(notify: true);
   }
 

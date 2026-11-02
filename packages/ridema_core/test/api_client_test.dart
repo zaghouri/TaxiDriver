@@ -16,7 +16,7 @@ void main() {
     tokens = MemoryTokenStore(access: access, refresh: refresh);
     return ApiClient(
       baseUrl: 'https://api.test',
-      config: const AppConfig(app: AppKind.driver, version: '1.2.3', platform: 'android'),
+      config: const AppConfig(version: '1.2.3', platform: 'android'),
       tokens: tokens,
       deviceId: 'dev-42',
       localeProvider: () => 'ar',
@@ -37,7 +37,7 @@ void main() {
       await api.me();
       final r = backend.requests.single;
       expect(r.header('X-Device-Id'), 'dev-42');
-      expect(r.header('X-App-Name'), 'driver');
+      expect(r.header('X-App-Name'), 'ridema');
       expect(r.header('X-Platform'), 'android');
       expect(r.header('X-App-Version'), '1.2.3');
       expect(r.header('Accept-Language'), 'ar');

@@ -256,7 +256,7 @@ void main() {
         s,
         Builder(
           builder: (c) => Scaffold(
-            body: TextButton(onPressed: () async => result = await perms.ensure(c, app: AppKind.driver), child: const Text('go')),
+            body: TextButton(onPressed: () async => result = await perms.ensure(c, app: AppMode.driver), child: const Text('go')),
           ),
         ),
       ));

@@ -86,7 +86,7 @@ class ApiClient {
   /// Headers sent on every call.
   Map<String, String> get commonHeaders => {
         'X-Device-Id': deviceId,
-        'X-App-Name': config.app.apiName,
+        'X-App-Name': AppConfig.apiAppName,
         'X-Platform': config.platform,
         'X-App-Version': config.version,
         'Accept-Language': localeProvider(),

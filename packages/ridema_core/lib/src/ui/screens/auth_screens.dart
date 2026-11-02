@@ -125,8 +125,8 @@ class _ConsentsScreenState extends State<ConsentsScreen> {
   List<String> get _kinds => [
         LegalKind.terms,
         LegalKind.privacy,
+        // Background location is accepted later, on the first switch to driver mode (D89).
         LegalKind.dataTransfer,
-        if (CoreServices.of(context).config.isDriver) LegalKind.backgroundLocation,
       ];
 
   @override
@@ -426,7 +426,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       if (e.code == 'WRONG_ROLE') {
-        setState(() => _error = s.config.isDriver ? l.wrongAppDriver : l.wrongAppRider(kAppName));
+        setState(() => _error = l.wrongAppAdmin);
         return;
       }
       setState(() => _error = errorText(l, e));

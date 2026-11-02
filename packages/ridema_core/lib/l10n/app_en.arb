@@ -129,7 +129,7 @@
     }
   },
   "welcomeRiderTagline": "You choose the price. Drivers nearby answer.",
-  "welcomeDriverTagline": "Receive rides near you. Accept the price or propose yours. 0% commission.",
+  "welcomeDriveToo": "Have a car? Switch to driver mode from the menu to earn with the same account.",
   "welcomeSignUp": "Create an account",
   "welcomeLogIn": "I already have an account",
   "welcomeCash": "Pay in cash, directly to the driver.",
@@ -200,15 +200,7 @@
   "loginButton": "Log in",
   "forgotPasswordLink": "Forgot your password?",
   "noAccountLink": "No account yet? Create one",
-  "wrongAppRider": "This is a driver account. Use the {app} Driver app.",
-  "@wrongAppRider": {
-    "placeholders": {
-      "app": {
-        "type": "String"
-      }
-    }
-  },
-  "wrongAppDriver": "This is a rider account. Create a driver account with another email.",
+  "wrongAppAdmin": "This is a back-office account. Use the RideMA admin website.",
   "twoFactorTitle": "Security code",
   "twoFactorEmailBody": "We sent a code to your email. Enter it below.",
   "twoFactorTotpBody": "Open your authenticator app and enter the 6-digit code for {app}.",

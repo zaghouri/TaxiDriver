@@ -177,7 +177,7 @@ class NotificationPermissions {
   }
 
   /// Shows [NotificationExplainerScreen], then the OS prompt if the user agrees.
-  Future<NotificationAccess> ensure(BuildContext context, {required AppKind app}) async {
+  Future<NotificationAccess> ensure(BuildContext context, {required AppMode app}) async {
     final current = await status();
     if (current != NotificationAccess.denied) return current;
     if (!context.mounted) return current;

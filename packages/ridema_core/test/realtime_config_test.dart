@@ -184,7 +184,7 @@ void main() {
       return SharedPreferences.getInstance();
     }
 
-    const cfg = AppConfig(app: AppKind.rider, version: '1.0.0', defaultApiBaseUrl: 'https://127.0.0.1.sslip.io');
+    const cfg = AppConfig(version: '1.0.0', defaultApiBaseUrl: 'https://127.0.0.1.sslip.io');
 
     test('remote value wins and is cached', () async {
       final p = await prefs();
