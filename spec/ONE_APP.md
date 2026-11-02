@@ -201,9 +201,21 @@ Names are Android string resources in values / values-fr / values-ar. All channe
 - **Accounts:** old driver accounts become accounts with both modes (they start in driver mode). Old rider accounts can apply to drive. People who made two accounts (one rider email, one driver email) keep two accounts. Merging them would need an admin tool (open question).
 - **Firebase:** register one Android and one iOS app for `ma.ridema.app` and download one `google-services.json` / `GoogleService-Info.plist`. Restrict the Maps keys to the new id.
 
-## 5. Open questions for the owner
-1. **App name on the stores and home screen:** "RideMA" (current), or a longer store title such as "RideMA: rides and driving"?
-2. **Two accounts of one person** (old rider + old driver emails): leave them, or add an admin merge?
-3. **Old test installs:** when should `rider` / `driver` min versions be raised to push testers to the new app?
-4. **Rating shown to drivers about a rider who is also a driver:** we show only the rider rating. Should driver status ever be visible to the other side? We assume never.
-5. **iOS:** the merged iOS project was not compiled on this Mac (other sessions use the simulators). `docs/IOS_BUILD.md` lists the steps.
+## 5. Defaults chosen for the open questions (2026-11-02; change any by editing this section and D89)
+1. **App name:**
+   - "RideMA" everywhere (home screen, Play, App Store), as in D8. A store subtitle can say "rides and driving" without renaming the app.
+   - **Why:** one short brand works in ar/fr/en, and the name is already in the code, the ARB files and the legal texts.
+2. **People with two old accounts** (one rider email, one driver email):
+   - Leave them as two accounts. No merge tool now.
+   - Support can delete the spare account on request (D21). Each account is then used in both modes on its own.
+   - **Why:** before launch there are only test accounts. A merge would touch rides, ratings, consents and documents across users, which is a risky data migration with almost no users to gain.
+3. **Retiring old test installs:**
+   - Raise `app_versions.rider` and `app_versions.driver` `min` to `1.1.0` in Admin › Settings on the day the first `ridema-sideload` APK is on `/download`.
+   - On the same day, point `apk.rider` / `apk.driver` at that file.
+   - Until then the old apps keep working.
+   - **Why:** testers get the "please update" screen only once the replacement can be downloaded.
+4. **Ratings across modes:**
+   - The other side only ever sees the rating of the mode in use: riders see a driver's driver rating, drivers see a rider's rider rating.
+   - Driver status is never shown to riders.
+   - **Why:** the two ratings measure different behaviour, and showing that a passenger also drives adds nothing for the driver.
+5. **Still open:** compile and test the merged iOS project on a Mac with a free simulator (`docs/IOS_BUILD.md`). The Firebase / Maps / Play Console registrations for `ma.ridema.app` need the owner's accounts.
