@@ -23,6 +23,21 @@ void main() {
         homeBuilder: (_) => const Scaffold(body: Text('HOME')),
       );
 
+  testWidgets('services built at boot (no injected services) leave the splash', (tester) async {
+    phone(tester);
+    final backend = FakeBackend();
+    FakeAuthServer(backend);
+    final s = await buildTestServices(backend: backend, prefs: const {});
+    await tester.pumpWidget(RideMaApp(
+      app: s.config.app,
+      config: s.config,
+      servicesFactory: (_) async => s,
+      homeBuilder: (_) => const Scaffold(body: Text('HOME')),
+    ));
+    await settle(tester);
+    expect(find.byType(LanguagePickerScreen), findsOneWidget);
+  });
+
   testWidgets('first launch shows the language picker, then Welcome', (tester) async {
     phone(tester);
     final backend = FakeBackend();

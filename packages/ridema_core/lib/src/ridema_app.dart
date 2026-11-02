@@ -100,12 +100,14 @@ class _RideMaAppState extends State<RideMaApp> {
     super.dispose();
   }
 
-  MaterialApp _material({required Locale? locale, required Widget home}) => MaterialApp(
+  /// The boot app ([booting]) must not share the global keys: a reused
+  /// navigator key would carry its splash route into the real app.
+  MaterialApp _material({required Locale? locale, required Widget home, bool booting = false}) => MaterialApp(
         title: kAppName,
         debugShowCheckedModeBanner: false,
         theme: widget.theme ?? buildRideMaTheme(),
-        navigatorKey: _navKey,
-        scaffoldMessengerKey: _messengerKey,
+        navigatorKey: booting ? null : _navKey,
+        scaffoldMessengerKey: booting ? null : _messengerKey,
         locale: locale,
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: const [
@@ -125,6 +127,7 @@ class _RideMaAppState extends State<RideMaApp> {
     if (s == null) {
       return _material(
         locale: null,
+        booting: true,
         home: _bootError == null
             ? const SplashScreen()
             : Builder(builder: (c) => SplashScreen(message: errorText(c.l10n, _bootError!))),
