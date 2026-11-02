@@ -38,10 +38,12 @@ export const DEFAULT_SETTINGS: Record<string, unknown> = {
     address: 'Meknès, Maroc', support_phone: '+212500000000', support_email: 'support@ridema.ma',
   },
   app_versions: {
+    ridema: { android: { min: '1.0.0', latest: '1.0.0' }, ios: { min: '1.0.0', latest: '1.0.0' } },
     rider: { android: { min: '1.0.0', latest: '1.0.0' }, ios: { min: '1.0.0', latest: '1.0.0' } },
     driver: { android: { min: '1.0.0', latest: '1.0.0' }, ios: { min: '1.0.0', latest: '1.0.0' } },
   },
   apk: {
+    ridema: { version: '1.0.0', file: 'ridema-sideload-1.0.0.apk', store_url: '' },
     rider: { version: '1.0.0', file: 'ridema-rider-sideload-1.0.0.apk', store_url: '' },
     driver: { version: '1.0.0', file: 'ridema-driver-sideload-1.0.0.apk', store_url: '' },
   },

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import type { AppContext } from '../context.js';
 import { one } from '../db/pool.js';
 import { roomOf, type Realtime, type Target } from '../core/realtime.js';
-import { verifyAccess, type AccessClaims } from '../http/tokens.js';
+import { sessionRole, verifyAccess, type AccessClaims, type Mode, type Role } from '../http/tokens.js';
 import { latLng } from '../lib/validation.js';
 import { recordDriverLocation } from './location.js';
 import { enqueue } from '../core/outbox.js';
@@ -26,10 +26,11 @@ async function authenticate(ctx: AppContext, token: unknown): Promise<AccessClai
   if (typeof token !== 'string') throw new Error('AUTH_REQUIRED');
   const c = await verifyAccess(ctx.cfg, token);
   if (c.scp !== 'full') throw new Error('TOTP_ENROLLMENT_REQUIRED');
-  const u = await one<{ status: string }>(ctx.db, 'SELECT status FROM users WHERE id = $1', [c.sub]);
+  const u = await one<{ status: string; role: Role }>(ctx.db, 'SELECT status, role FROM users WHERE id = $1', [c.sub]);
   if (!u || u.status !== 'active') throw new Error('ACCOUNT_DISABLED');
-  const s = await one(ctx.db, 'SELECT 1 FROM refresh_tokens WHERE family_id = $1 AND revoked_at IS NULL LIMIT 1', [c.sid]);
+  const s = await one<{ mode: Mode | null }>(ctx.db, 'SELECT mode FROM refresh_tokens WHERE family_id = $1 AND revoked_at IS NULL LIMIT 1', [c.sid]);
   if (!s) throw new Error('SESSION_REVOKED');
+  if (c.role !== sessionRole(u.role, s.mode)) throw new Error('TOKEN_INVALID');
   return c;
 }
 
@@ -103,6 +104,8 @@ export async function attachSocketServer(ctx: AppContext, server: HttpServer, op
       try {
         const c = await authenticate(ctx, token);
         if (c.sub !== userId) throw new Error('USER_MISMATCH');
+        // A socket lives in one mode (rooms, driver handlers): after a mode switch (D89) the app connects again.
+        if (c.role !== claims.role) throw new Error('MODE_CHANGED');
         socket.data.user = c;
         ack?.({ ok: true });
       } catch (e) {

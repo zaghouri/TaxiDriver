@@ -34,7 +34,7 @@ export async function appConfig(ctx: AppContext, app: string, platform: string, 
 
 export async function publicRoutes(app: FastifyInstance, ctx: AppContext) {
   app.get('/v1/app/config', async (req) => {
-    const q = parse(z.object({ app: z.enum(['rider', 'driver']).default('rider'), platform: z.enum(['android', 'ios']).default('android'), version: z.string().max(20).optional() }), req.query);
+    const q = parse(z.object({ app: z.enum(['ridema', 'rider', 'driver']).default('ridema'), platform: z.enum(['android', 'ios']).default('android'), version: z.string().max(20).optional() }), req.query);
     return appConfig(ctx, q.app, q.platform, q.version ?? (req.headers['x-app-version'] as string | undefined));
   });
 

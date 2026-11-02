@@ -11,7 +11,7 @@ interface FieldDef {
   kind: Kind;
 }
 
-const APPS = ['rider', 'driver'];
+const APPS = ['ridema', 'rider', 'driver'];
 const PLATFORMS = ['android', 'ios'];
 
 function sections(settings: Record<string, any>): [key: string, fields: FieldDef[]][] {

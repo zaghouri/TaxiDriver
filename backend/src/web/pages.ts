@@ -29,8 +29,7 @@ const T: Record<string, Record<L, string>> = {
   send: { ar: 'إرسال الطلب', fr: 'Envoyer la demande', en: 'Send request' },
   received: { ar: 'تم استلام طلبك. سنراسلك على بريدك الإلكتروني.', fr: 'Demande reçue. Nous vous écrirons par email.', en: 'Request received. We will email you.' },
   download: { ar: 'تحميل التطبيقات', fr: 'Télécharger les applications', en: 'Download the apps' },
-  rider_app: { ar: 'تطبيق الراكب', fr: 'Application passager', en: 'Rider app' },
-  driver_app: { ar: 'تطبيق السائق', fr: 'Application chauffeur', en: 'Driver app' },
+  one_app: { ar: 'تطبيق RideMA: راكب وسائق في تطبيق واحد', fr: 'Application RideMA : passager et chauffeur dans une seule appli', en: 'RideMA app: rider and driver in one app' },
   install_help: {
     ar: 'على أندرويد: حمّل الملف، ثم اسمح بالتثبيت من هذا المصدر عندما يطلب الهاتف ذلك.',
     fr: "Sur Android : téléchargez le fichier, puis autorisez l'installation depuis cette source quand le téléphone le demande.",
@@ -138,13 +137,13 @@ export async function webRoutes(app: FastifyInstance, ctx: AppContext) {
   app.get('/download', async (req, reply) => {
     const l = lang(req);
     const apk = (await ctx.settings.setting<any>('apk')) ?? {};
-    const card = (key: 'rider' | 'driver', label: string) => {
+    const card = (key: 'ridema', label: string) => {
       const a = apk[key] ?? {};
       const info = a.file ? apkInfo(a.file) : null;
       return `<div class="card"><h2>${label}</h2>${info ? `<a class="btn" href="/apk/${esc(a.file)}">⬇ ${esc(a.file)}</a><p><small>v${esc(a.version)} · ${(info.size / 1048576).toFixed(1)} MB<br>SHA-256: <code>${info.sha256}</code></small></p>` : `<p>${T.not_ready[l]}</p>`}
 ${a.store_url ? `<p><a href="${esc(a.store_url)}">Google Play</a></p>` : ''}</div>`;
     };
-    return send(reply, page(l, T.download[l], `<h1>${T.download[l]}</h1>${card('rider', T.rider_app[l])}${card('driver', T.driver_app[l])}<p><small>${T.install_help[l]}</small></p>
+    return send(reply, page(l, T.download[l], `<h1>${T.download[l]}</h1>${card('ridema', T.one_app[l])}<p><small>${T.install_help[l]}</small></p>
 <p><a href="/legal/privacy?lang=${l}">${T.privacy[l]}</a> · <a href="/legal/terms?lang=${l}">${T.terms[l]}</a> · <a href="/account-deletion?lang=${l}">${T.deletion[l]}</a></p>`));
   });
 
