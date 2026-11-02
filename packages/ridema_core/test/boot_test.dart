@@ -29,7 +29,6 @@ void main() {
     FakeAuthServer(backend);
     final s = await buildTestServices(backend: backend, prefs: const {});
     await tester.pumpWidget(RideMaApp(
-      app: s.config.app,
       config: s.config,
       servicesFactory: (_) async => s,
       homeBuilder: (_) => const Scaffold(body: Text('HOME')),
