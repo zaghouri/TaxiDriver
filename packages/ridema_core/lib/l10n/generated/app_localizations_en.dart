@@ -2025,6 +2025,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errActiveRide => 'Finish or cancel your current ride first.';
 
   @override
+  String get errOtherModeBusy =>
+      'You are riding and driving at the same time on another phone. Finish the ride or go offline there first.';
+
+  @override
   String get errFeatureDisabled => 'This feature is turned off for now.';
 
   @override

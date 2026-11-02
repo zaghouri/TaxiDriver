@@ -1404,6 +1404,7 @@
     "description": "Error text for API code PIN_LOCKED"
   },
   "errActiveRide": "Finish or cancel your current ride first.",
+  "errOtherModeBusy": "You are riding and driving at the same time on another phone. Finish the ride or go offline there first.",
   "@errActiveRide": {
     "description": "Error text for API code ACTIVE_RIDE"
   },

@@ -1,0 +1,5 @@
+tags:
+  live:
+    # Needs a running backend: --dart-define=LIVE_API=http://localhost:8080 (see README).
+  contract:
+    # Needs a running backend; see test/driver/backend_contract_test.dart.

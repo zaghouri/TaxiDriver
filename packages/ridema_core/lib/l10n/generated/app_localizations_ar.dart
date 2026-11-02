@@ -2001,6 +2001,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errActiveRide => 'أنهِ رحلتك الحالية أو ألغها أولًا.';
 
   @override
+  String get errOtherModeBusy =>
+      'أنت راكب وسائق في نفس الوقت على هاتف آخر. أنهِ الرحلة أو اخرج من الاتصال هناك أولاً.';
+
+  @override
   String get errFeatureDisabled => 'هذه الميزة متوقفة حاليًا.';
 
   @override

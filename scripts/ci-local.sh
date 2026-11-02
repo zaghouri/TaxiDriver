@@ -30,7 +30,7 @@ admin() {
 
 flutter_job() {
   need flutter "brew install --cask flutter"
-  for d in packages/ridema_core apps/driver apps/rider; do
+  for d in packages/ridema_core apps/ridema; do
     [ -f "$d/pubspec.yaml" ] || { log "skip $d (not created yet)"; continue; }
     (cd "$d" && flutter pub get && flutter analyze && flutter test)
   done
@@ -38,7 +38,7 @@ flutter_job() {
 
 android() {
   [ -n "${ANDROID_HOME:-}" ] || die "android needs the Android SDK (set ANDROID_HOME)"
-  APPS="rider driver" scripts/build-apks.sh
+  scripts/build-apks.sh
 }
 
 failed=()

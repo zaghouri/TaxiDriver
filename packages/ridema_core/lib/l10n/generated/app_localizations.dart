@@ -3616,6 +3616,12 @@ abstract class AppLocalizations {
   /// **'Finish or cancel your current ride first.'**
   String get errActiveRide;
 
+  /// No description provided for @errOtherModeBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'You are riding and driving at the same time on another phone. Finish the ride or go offline there first.'**
+  String get errOtherModeBusy;
+
   /// Error text for API code FEATURE_DISABLED
   ///
   /// In en, this message translates to:

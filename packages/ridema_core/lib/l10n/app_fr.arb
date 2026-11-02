@@ -586,6 +586,7 @@
   "errPinInvalid": "Code incorrect. Redemandez au client.",
   "errPinLocked": "Trop de codes incorrects. Notre équipe a été prévenue.",
   "errActiveRide": "Terminez ou annulez d’abord votre course en cours.",
+  "errOtherModeBusy": "Vous êtes passager et chauffeur en même temps sur un autre téléphone. Terminez la course ou passez hors ligne d’abord.",
   "errFeatureDisabled": "Cette fonction est désactivée pour l’instant.",
   "errSosNotFound": "Cette alerte est fermée.",
   "errShareNotFound": "Ce lien a expiré.",

@@ -2054,6 +2054,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Terminez ou annulez d’abord votre course en cours.';
 
   @override
+  String get errOtherModeBusy =>
+      'Vous êtes passager et chauffeur en même temps sur un autre téléphone. Terminez la course ou passez hors ligne d’abord.';
+
+  @override
   String get errFeatureDisabled =>
       'Cette fonction est désactivée pour l’instant.';
 
