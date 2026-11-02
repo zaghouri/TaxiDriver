@@ -1,6 +1,6 @@
 # PHONE TEST — manual checklist on real phones
 
-You need: 2 Android phones (one rider, one driver; ideally one cheap Xiaomi/Tecno/Infinix), a laptop with the admin panel open, and the server deployed (`RUNBOOK.md` §1). Use real Moroccan numbers with WhatsApp. Tick each line; note the phone model and Android version when something fails.
+You need: 2 Android phones with the one RideMA app (`ma.ridema.app`, D89): one used in rider mode, one in driver mode (ideally one cheap Xiaomi/Tecno/Infinix), a laptop with the admin panel open, and the server deployed (`RUNBOOK.md` §1). Use real Moroccan numbers with WhatsApp. Tick each line; note the phone model and Android version when something fails.
 
 APK download: `https://<SERVER_IP>.sslip.io/download` (or the APKs from the GitHub Actions artifact `ridema-android`).
 
@@ -17,18 +17,28 @@ APK download: `https://<SERVER_IP>.sslip.io/download` (or the APKs from the GitH
 - [ ] Admin › Users shows the user; Admin › Users › (user) shows the 3 consents with version and time.
 
 ## 2. Driver onboarding (driver phone)
-- [ ] Sign up as driver (4 consent ticks, incl. background location). Verify email + phone.
+- [ ] Sign up like a rider (3 consent ticks, no background location). Verify email + phone.
+- [ ] Menu › **Drive with RideMA** ("Earn with your car, same account") → **Become a RideMA driver** explains the steps and shows the background-location text; **Start my application** stays grey until the box is ticked. Start → the app is in driver mode on the onboarding wizard. Admin › Users › (user) shows the 4th consent (background location).
+- [ ] While the application is in draft or under review, the app bar's passenger icon switches back: you can request a ride as a passenger, then return to driver mode from the menu (one tap, no consent again).
 - [ ] Wizard: only "Taxi" and "Licensed operator" are offered in Meknes. A licence less than 3 years old is refused; a car older than 7 years / 2 doors / no A/C is refused.
 - [ ] Upload all 7 documents with the camera (CIN front/back, licence, carte grise, insurance, visite technique, selfie) with expiry dates. Submit → "Under review".
 - [ ] Admin › Drivers › Pending: open each document (it displays); Admin › Documents › (doc) › access log shows your view. Approve all documents, then approve the driver. The driver phone gets a notification "You are approved".
 
 ## 3. Permissions and background location (driver phone)
+- [ ] Before the first switch to driver mode (rider mode only), Android › Settings › Apps › RideMA › Permissions › Location offers only "while using the app" in use; no "RideMA — you are online" notification ever appears in rider mode.
 - [ ] Tap Online: first a full-screen explanation ("location is used even when the app is closed") BEFORE Android's permission prompt. Choose "Allow all the time" / precise.
 - [ ] A persistent notification "RideMA — you are online" appears. Lock the phone 10 minutes, walk/drive a bit: the admin Live map keeps showing the driver moving.
 - [ ] Refuse location once (or revoke it in settings): the app explains it's needed to go online, with a Settings button; the rest of the app still works.
 - [ ] Battery guide (Profile › Battery): steps match your phone brand; "Open settings" opens the right page. After following it, the driver stays online 30 min with screen off.
 - [ ] Ready to drive check (menu): turn on Battery saver and Do Not Disturb → the home shows the red "Your phone may hide ride requests" banner; the checklist marks both, each **Fix** opens the right settings page, and the lines turn green when you come back. Also check "Location all the time", battery optimisation and the "New ride requests" notification channel.
 - [ ] Install a fake-GPS app and enable it as mock location provider → going online is blocked ("Fake GPS"), an abuse alert appears in the admin panel. Disable it again.
+
+## 3b. Switching modes (D89)
+- [ ] Driver phone online → Menu › **Switch to passenger mode** → dialog **Go offline first?**; Cancel keeps you online; **Go offline and switch** stops the online notification and opens the rider home. Menu › Drive with RideMA → back in driver mode (offline).
+- [ ] During an accepted ride the passenger-mode entry is greyed ("Available after this ride"); on the rider phone during a ride, Drive with RideMA answers "Finish or cancel your current ride first."
+- [ ] Close and reopen the app: it opens in the last mode used. Log out and in again: same mode.
+- [ ] Log in to the driver account on a second phone while the first is online, switch it to passenger mode and request a ride → refused ("You are riding and driving at the same time…").
+- [ ] Ratings: the driver menu shows the driver rating, the rider menu the rider rating of the same account.
 
 ## 4. A full ride (both phones, outside, ~1 km apart in Meknes)
 - [ ] Rider: map shows your position after the disclosure screen (foreground only — Android must NOT offer "Allow all the time"). Choose a destination (address search); a suggested price in DH appears; −5/+5 work; offering below the minimum is refused.
@@ -69,7 +79,7 @@ APK download: `https://<SERVER_IP>.sslip.io/download` (or the APKs from the GitH
 - [ ] Web: `https://<host>/legal/privacy`, `/legal/terms`, `/account-deletion` open in the 3 languages.
 
 ## 7. Updates and admin switches
-- [ ] Admin › Settings › App versions: set rider `min` above the installed version → the rider app shows the Force update screen with a download button; the downloaded APK installs over the old one (same signature). Set it back.
+- [ ] Admin › Settings › App versions: set `ridema` `min` above the installed version → the app shows the Force update screen with a download button; the downloaded APK installs over the old one (same signature). Set it back.
 - [ ] Admin › Cities › Meknès: change the base fare → the next estimate changes within seconds.
 - [ ] Admin › Feature flags: turn off trip sharing → the Share button disappears/answers "turned off". Turn it back on.
 - [ ] Admin › Documents: set a driver's insurance expiry to tomorrow → the driver gets a reminder (within the hour); set it to yesterday → the driver is suspended automatically and can't go online.

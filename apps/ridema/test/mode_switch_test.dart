@@ -62,7 +62,7 @@ class _Api implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-Iterable<Object?> modeCalls(_Api api) => api.log.where((c) => c.key == 'POST /v1/auth/mode').map((c) => c.body);
+Iterable<Object?> _modeCalls(_Api api) => api.log.where((c) => c.key == 'POST /v1/auth/mode').map((c) => c.body);
 
 void main() {
   testWidgets('a rider applies to drive: background-location text accepted, then the session is in driver mode', (tester) async {
@@ -88,14 +88,14 @@ void main() {
     // Nothing is sent before the text is accepted.
     await tester.tap(find.byKey(const ValueKey('become_driver_start')));
     await tester.pump();
-    expect(modeCalls(api), isEmpty);
+    expect(_modeCalls(api), isEmpty);
 
     await tester.tap(find.byKey(const ValueKey('become_driver_accept')));
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('become_driver_start')));
     await tester.pumpAndSettle();
 
-    expect(modeCalls(api).single, {
+    expect(_modeCalls(api).single, {
       'mode': 'driver',
       'consents': [
         {'kind': 'background_location', 'version': '2.0'},
@@ -112,7 +112,7 @@ void main() {
     expect(find.text(rs.driveMenuSwitch), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('menu_driver_mode')));
     await tester.pumpAndSettle();
-    expect(modeCalls(api).last, {'mode': 'driver', 'consents': <Object>[]});
+    expect(_modeCalls(api).last, {'mode': 'driver', 'consents': <Object>[]});
   });
 
   testWidgets('an online driver confirms going offline before passenger mode', (tester) async {
@@ -133,7 +133,7 @@ void main() {
     await tester.tap(find.text(lookupAppLocalizations(const Locale('fr')).cancel));
     await tester.pumpAndSettle();
     expect(h.controller.online, isTrue);
-    expect(modeCalls(api), isEmpty);
+    expect(_modeCalls(api), isEmpty);
 
     await tester.tap(find.byKey(const ValueKey('menu_rider_mode')));
     await tester.pumpAndSettle();
@@ -144,7 +144,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(h.api.calls, contains('offline'));
     expect(h.controller.online, isFalse);
-    expect(modeCalls(api).single, {'mode': 'rider', 'consents': <Object>[]});
+    expect(_modeCalls(api).single, {'mode': 'rider', 'consents': <Object>[]});
     expect(h.services.auth.mode, AppMode.rider);
     h.controller.dispose();
   });

@@ -11,15 +11,15 @@ interface FieldDef {
   kind: Kind;
 }
 
-const APPS = ['ridema', 'rider', 'driver'];
 const PLATFORMS = ['android', 'ios'];
 
 function sections(settings: Record<string, any>): [key: string, fields: FieldDef[]][] {
   const f = (path: string[], label: string, kind: Kind = 'text'): FieldDef => ({ path, label, kind });
   return [
     ['company', [f(['name'], 's_name'), f(['legal_name'], 's_legal_name'), f(['rc'], 's_rc'), f(['ice'], 's_ice'), f(['address'], 's_address'), f(['support_phone'], 's_support_phone', 'phone'), f(['support_email'], 's_support_email', 'email')]],
-    ['app_versions', APPS.flatMap((a) => PLATFORMS.flatMap((p) => [f([a, p, 'min'], `${a}/${p} min`, 'version'), f([a, p, 'latest'], `${a}/${p} latest`, 'version')]))],
-    ['apk', APPS.flatMap((a) => [f([a, 'version'], `${a} version`, 'version'), f([a, 'file'], `${a} APK`), f([a, 'store_url'], `${a} store URL`, 'url')])],
+    // One entry per app in the stored settings: `ridema` (D89), plus the retired `rider` / `driver` apps.
+    ['app_versions', Object.keys(settings.app_versions ?? {}).flatMap((a) => PLATFORMS.flatMap((p) => [f([a, p, 'min'], `${a}/${p} min`, 'version'), f([a, p, 'latest'], `${a}/${p} latest`, 'version')]))],
+    ['apk', Object.keys(settings.apk ?? {}).flatMap((a) => [f([a, 'version'], `${a} version`, 'version'), f([a, 'file'], `${a} APK`), f([a, 'store_url'], `${a} store URL`, 'url')])],
     ['retention_days', Object.keys(settings.retention_days ?? {}).map((k) => f([k], `ret_${k}`, 'int'))],
     ['subscription', [f(['price'], 's_price', 'int'), f(['free_rides_per_day'], 's_free_rides', 'int'), f(['period_days'], 's_period_days', 'int')]],
     ['emergency_numbers', [f(['police'], 'svc_police', 'phone'), f(['gendarmerie'], 'svc_gendarmerie', 'phone'), f(['ambulance'], 'svc_ambulance', 'phone')]],
