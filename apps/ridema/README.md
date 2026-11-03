@@ -102,3 +102,18 @@ integration_test/driver/run.sh emulator-5554
 ```
 
 Emulator images are rooted, so the driver tests replace only the root check (`EmulatorDeviceChecks`). Check root detection by hand on a rooted phone.
+
+iOS simulator (it reaches the backend at `localhost`; seed and provision as above first):
+
+```bash
+U=<simulator udid>
+xcrun simctl location $U set 33.8935,-5.5473
+flutter test integration_test/rider -d $U --no-uninstall --dart-define=API_BASE_URL=http://localhost:8080
+xcrun simctl privacy $U grant location-always ma.ridema.app   # after the first install
+flutter test integration_test/driver -d $U --no-uninstall --dart-define=API_BASE_URL=http://localhost:8080
+```
+
+- `--no-uninstall` keeps the app between runs. Without it, `flutter test` reinstalls the app and the location grant is lost.
+- The simulator marks every location as simulated, so the driver tests drop that flag (`SimulatorLocationSource`).
+- The fake-GPS test runs on Android only.
+- A simulator can't grant notification permission ahead of time, so the tests tap "Not now" on the notification prompt.
