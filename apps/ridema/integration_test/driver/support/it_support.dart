@@ -1,5 +1,6 @@
 // Helpers for the driver integration tests (Android emulator + local backend).
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ridema_core/ridema_core.dart';
@@ -121,7 +122,26 @@ class ApiActor {
 Future<void> pumpUntil(WidgetTester tester, bool Function() condition, {Duration timeout = const Duration(seconds: 30), String? reason}) async {
   final end = DateTime.now().add(timeout);
   while (!condition()) {
-    if (DateTime.now().isAfter(end)) fail('Timed out waiting for ${reason ?? 'condition'}');
+    if (DateTime.now().isAfter(end)) fail('Timed out waiting for ${reason ?? 'condition'}. On screen: ${_screenText()}');
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+}
+
+String _screenText() =>
+    find.byType(Text).evaluate().map((e) => (e.widget as Text).data).whereType<String>().join(' | ');
+
+/// Taps the online switch and waits until online. The notification explainer is dismissed:
+/// an iOS simulator cannot pre-grant notifications, and going online works without them.
+Future<void> switchOnline(WidgetTester tester, bool Function() online) async {
+  await tester.tap(find.byKey(const ValueKey('online_switch')));
+  final notNow = find.byKey(const ValueKey('notif_not_now'));
+  final end = DateTime.now().add(const Duration(seconds: 30));
+  while (!online()) {
+    if (DateTime.now().isAfter(end)) fail('Timed out waiting for online. On screen: ${_screenText()}');
+    final route = notNow.evaluate().isEmpty ? null : ModalRoute.of(notNow.evaluate().first);
+    if (route != null && route.isCurrent && route.animation?.status == AnimationStatus.completed) {
+      await tester.tap(notNow);
+    }
     await tester.pump(const Duration(milliseconds: 200));
   }
 }

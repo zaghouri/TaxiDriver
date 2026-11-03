@@ -100,7 +100,11 @@ class NotificationExplainerScreen extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(true),
               ),
               gap8,
-              TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l.notNow)),
+              TextButton(
+                key: const ValueKey('notif_not_now'),
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l.notNow),
+              ),
             ],
           ),
         ),

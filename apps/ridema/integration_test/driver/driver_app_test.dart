@@ -1,8 +1,10 @@
-// End-to-end tests on an Android emulator against the LOCAL backend.
+// End-to-end tests on an Android emulator or iOS simulator against the LOCAL backend.
 //
 //   integration_test/run.sh            (provisions accounts, sets GPS + permissions, runs this file)
 //
 // or by hand: see README.md "Integration tests". They cannot run in CI without an emulator.
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,7 +85,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(c.deviceBlock, isNull);
     await shutdown(tester, c);
-  });
+  }, skip: !Platform.isAndroid); // the fake-GPS hook (DebugHooks.kt) exists only on Android
 
   testWidgets('online → request → accept → arrived → PIN → complete → rate', (tester) async {
     final rider = ApiActor(app: 'rider');
@@ -91,8 +93,7 @@ void main() {
     await rider.cancelActive();
 
     final c = await launchSignedIn(tester);
-    await tester.tap(find.byKey(const ValueKey('online_switch')));
-    await pumpUntil(tester, () => c.online, reason: 'online');
+    await switchOnline(tester, () => c.online);
     await pumpUntilFound(tester, find.text('En ligne'));
 
     final rideId = await rider.requestRide();
@@ -145,8 +146,7 @@ void main() {
     await rider.cancelActive();
 
     var c = await launchSignedIn(tester);
-    await tester.tap(find.byKey(const ValueKey('online_switch')));
-    await pumpUntil(tester, () => c.online, reason: 'online');
+    await switchOnline(tester, () => c.online);
     final rideId = await rider.requestRide();
     await pumpUntil(tester, () => c.request(rideId) != null, reason: 'request received');
     await c.acceptRequest(rideId);

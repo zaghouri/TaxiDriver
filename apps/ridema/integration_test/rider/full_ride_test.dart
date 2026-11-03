@@ -40,7 +40,16 @@ Future<bool> appears(WidgetTester tester, Finder f, {Duration within = const Dur
   }
 }
 
+/// Found on the top route, with its transition over (a route ignores taps while it animates; the
+/// iOS slide is slow enough to catch a tap that comes as soon as the widget exists).
+Finder onTopRoute(Finder f) => find.byElementPredicate((e) {
+      if (!f.evaluate().contains(e)) return false;
+      final route = ModalRoute.of(e);
+      return route == null || (route.isCurrent && route.animation?.status == AnimationStatus.completed);
+    });
+
 Future<void> tapWhenReady(WidgetTester tester, Finder f) async {
+  f = onTopRoute(f);
   await pumpUntil(tester, f);
   await tester.ensureVisible(f.first);
   await tester.pump();
@@ -67,9 +76,17 @@ void main() {
     await bot.login();
     await bot.goOnline(33.8940, -5.5650); // next to Place El Hedim
 
-    await tester.pumpWidget(const RideMa());
+    // Start signed out: a session kept from an earlier run (the iOS keychain outlives the app) may
+    // be another account or driver mode.
+    CoreServices? services;
+    await tester.pumpWidget(RideMa(servicesFactory: (c) async => services = await RideMa.defaultServices(c)));
+    for (var i = 0; i < 100 && !(services?.boot.loaded ?? false); i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+    if (services!.auth.isSignedIn) await services!.auth.logout();
 
-    // First launch: language, welcome, login. Later runs may already be signed in.
+    // First launch: language, then welcome and login.
     if (await appears(tester, find.byKey(const ValueKey('lang_en')), within: const Duration(seconds: 20))) {
       await tester.tap(find.byKey(const ValueKey('lang_en')));
     }
@@ -83,10 +100,10 @@ void main() {
 
     // Refuse location and notifications: the app must keep working (manual addresses).
     if (await appears(tester, find.byKey(const ValueKey('location_not_now')), within: const Duration(seconds: 10))) {
-      await tester.tap(find.byKey(const ValueKey('location_not_now')));
+      await tapWhenReady(tester, find.byKey(const ValueKey('location_not_now')));
     }
     if (await appears(tester, find.byKey(const ValueKey('notif_allow')))) {
-      await tester.tap(find.text('Not now'));
+      await tapWhenReady(tester, find.byKey(const ValueKey('notif_not_now')));
     }
 
     // Home: From, To, fare, Find a driver.
