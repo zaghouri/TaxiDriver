@@ -21,18 +21,20 @@ import 'support/it_support.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  late CoreServices services;
+  // Set by the services factory of each launch (null until the app built them).
+  CoreServices? current;
 
   /// Starts the real app (real API, socket, GPS, native channels) and logs the test driver in.
   Future<DriverController> launchSignedIn(WidgetTester tester) async {
     FlutterForegroundTask.initCommunicationPort();
+    current = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('ridema.locale', 'fr');
     await prefs.setBool(HomeScreen.batteryGuideShownKey, true);
     await prefs.remove('ridema.api_base_url');
 
     await tester.pumpWidget(RideMa(
-      servicesFactory: (config) async => services = await CoreServices.create(
+      servicesFactory: (config) async => current = await CoreServices.create(
         config: AppConfig(
           version: config.version,
           flavor: 'sideload',
@@ -42,16 +44,16 @@ void main() {
       ),
       deviceChecks: (s) => EmulatorDeviceChecks(NativeDeviceChecks(s.deviceIntegrity)),
     ));
-    await pumpUntil(tester, () => services.boot.loaded, reason: 'boot');
-    if (services.auth.isSignedIn) await services.auth.logout();
-    await services.auth.login(ItEnv.driverEmail, ItEnv.driverPassword);
+    await pumpUntil(tester, () => current?.boot.loaded ?? false, reason: 'boot');
+    if (current!.auth.isSignedIn) await current!.auth.logout();
+    await current!.auth.login(ItEnv.driverEmail, ItEnv.driverPassword);
     await pumpUntilFound(tester, find.byKey(const ValueKey('online_switch')));
     return Provider.of<DriverController>(tester.element(find.byType(HomeScreen)), listen: false);
   }
 
   Future<void> shutdown(WidgetTester tester, DriverController c) async {
     if (c.online) await c.goOffline();
-    await services.auth.logout();
+    await current!.auth.logout();
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(milliseconds: 300));
   }
@@ -91,7 +93,7 @@ void main() {
     final c = await launchSignedIn(tester);
     await tester.tap(find.byKey(const ValueKey('online_switch')));
     await pumpUntil(tester, () => c.online, reason: 'online');
-    expect(find.text('En ligne'), findsOneWidget);
+    await pumpUntilFound(tester, find.text('En ligne'));
 
     final rideId = await rider.requestRide();
     final card = find.byKey(ValueKey('request_$rideId'));
@@ -109,7 +111,9 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('arrived_button')));
     await pumpUntilFound(tester, find.byKey(const ValueKey('pin_keypad')));
+    // The keypad scrolls inside the ride panel; on short screens the keys start below the fold.
     for (final d in pin.split('')) {
+      await tester.ensureVisible(find.byKey(ValueKey('pin_key_$d')));
       await tester.tap(find.byKey(ValueKey('pin_key_$d')));
       await tester.pump();
     }
@@ -118,12 +122,15 @@ void main() {
     await pumpUntilFound(tester, find.byKey(const ValueKey('complete_button')));
     expect(c.phase, DriverPhase.onTrip);
 
+    await tester.ensureVisible(find.byKey(const ValueKey('complete_button')));
     await tester.tap(find.byKey(const ValueKey('complete_button')));
     await pumpUntilFound(tester, find.byKey(const ValueKey('collect_cash')));
     expect(find.textContaining('en espèces'), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const ValueKey('star_5')));
     await tester.tap(find.byKey(const ValueKey('star_5')));
     await tester.pump();
+    await tester.ensureVisible(find.text('Envoyer la note'));
     await tester.tap(find.text('Envoyer la note'));
     await pumpUntil(tester, () => c.finishedRide == null, reason: 'rating sent');
 

@@ -38,6 +38,7 @@ class RideMaApp extends StatefulWidget {
     this.servicesFactory,
     this.services,
     this.providers,
+    this.builder,
     this.theme,
     this.navigatorKey,
     this.onReady,
@@ -57,6 +58,10 @@ class RideMaApp extends StatefulWidget {
 
   /// Extra app-level providers, created once services exist.
   final List<SingleChildWidget> Function(CoreServices services)? providers;
+
+  /// Wraps the signed-in app's navigator ([MaterialApp.builder]): what it provides is seen by
+  /// every route and dialog. Its context is below the core providers.
+  final TransitionBuilder? builder;
   final ThemeData? theme;
   final GlobalKey<NavigatorState>? navigatorKey;
 
@@ -107,6 +112,7 @@ class _RideMaAppState extends State<RideMaApp> {
         debugShowCheckedModeBanner: false,
         theme: widget.theme ?? buildRideMaTheme(),
         navigatorKey: booting ? null : _navKey,
+        builder: booting ? null : widget.builder,
         scaffoldMessengerKey: booting ? null : _messengerKey,
         locale: locale,
         supportedLocales: AppLocalizations.supportedLocales,

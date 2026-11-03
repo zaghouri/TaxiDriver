@@ -87,9 +87,9 @@ Where a point is our inference and not from a source, it says **inference**.
 
 ### 3.1 Structure
 - `apps/ridema/lib/main.dart` → `RideMa` (`lib/src/app.dart`) → `RideMaApp` from ridema_core (boot, language, welcome, auth unchanged) → **`ModeHome`**.
-  - `ModeHome` shows `RiderHome` or `DriverShell` from `AuthController.mode`.
+  - `ModeHome` shows `RiderHome` or `DriverRoot` from `AuthController.mode`.
   - Each side owns its controllers, so a switch disposes the other side's state.
-  - `DriverShell` creates the driver providers (foreground service, readiness, `DriverController`, profile, calls) only in driver mode.
+  - `DriverShell` creates the driver providers (foreground service, readiness, `DriverController`, profile, calls) only in driver mode. It wraps the navigator through `RideMaApp.builder`, so the driver screens pushed as routes, and dialogs, see them (as the old driver app's app-level providers did).
   - Leaving driver mode is only possible offline; `DriverRoot` resets location on dispose.
 - Rider code is in `lib/src/rider/`, driver code in `lib/src/driver/`, and the mode switch in `lib/src/mode/mode_switch.dart`. Shared build defines are in `lib/src/env.dart`.
 - ridema_core changes:

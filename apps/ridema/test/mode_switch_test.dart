@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -5,11 +6,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:ridema/src/app.dart';
+import 'package:ridema/src/driver/controller/driver_controller.dart';
 import 'package:ridema/src/driver/l10n/driver_strings.dart';
 import 'package:ridema/src/mode/mode_switch.dart';
 import 'package:ridema/src/rider/l10n/rider_strings.dart';
 import 'package:ridema_core/ridema_core.dart';
 
+import 'driver/support/fakes.dart';
 import 'driver/support/harness.dart';
 
 /// Core API for the auth / mode endpoints (D89): one account, rider and driver modes.
@@ -39,6 +43,7 @@ class _Api implements HttpClientAdapter {
     log.add((key: key, body: o.data));
     final Object body = switch (key) {
       'GET /v1/me' => me(),
+      'GET /v1/app/config' => {'min_version': '1.0.0', 'latest_version': '1.0.0'},
       'GET /v1/legal/background_location' => {
           'kind': 'background_location',
           'version': '2.0',
@@ -147,6 +152,49 @@ void main() {
     expect(_modeCalls(api).single, {'mode': 'rider', 'consents': <Object>[]});
     expect(h.services.auth.mode, AppMode.rider);
     h.controller.dispose();
+  });
+
+  testWidgets('in the real app, routes and dialogs pushed in driver mode see the driver controllers', (tester) async {
+    final api = _Api(role: 'driver', mode: 'driver');
+    final h = await Harness.create(http: api);
+    await tester.runAsync(h.services.auth.restore);
+    await tester.pumpWidget(RideMa(services: h.services, deviceChecks: (_) => FakeDeviceChecks()));
+    for (var i = 0; i < 20 && !h.services.boot.loaded; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pump();
+    expect(find.byKey(const ValueKey('mode_driver')), findsOneWidget);
+
+    // A route leaves the tree one frame after its animation ends.
+    Future<void> transition() async {
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+    }
+
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    Widget Function(BuildContext) readsDriver(String where) => (c) => Text('$where online=${c.read<DriverController>().online}');
+    unawaited(nav.push(MaterialPageRoute<void>(builder: readsDriver('route'))));
+    await transition();
+    expect(tester.takeException(), isNull);
+    expect(find.text('route online=false'), findsOneWidget);
+    nav.pop();
+    await transition();
+    unawaited(showDialog<void>(context: nav.context, builder: readsDriver('dialog')));
+    await transition();
+    expect(find.text('dialog online=false'), findsOneWidget);
+    nav.pop();
+    await transition();
+
+    // Back to rider mode: the driver side and its providers go away.
+    await tester.runAsync(() => h.services.auth.switchMode(AppMode.rider));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('mode_rider')), findsOneWidget);
+    unawaited(nav.push(MaterialPageRoute<void>(builder: (c) => Text('driver=${Provider.of<DriverController?>(c, listen: false)}'))));
+    await transition();
+    expect(find.text('driver=null'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
   });
 
   test('mode strings exist in ar, fr and en', () {

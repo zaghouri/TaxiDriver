@@ -14,7 +14,7 @@ The menu switches between the modes. The first switch to driver mode starts the 
 
 | Path | What |
 |---|---|
-| `lib/main.dart`, `lib/src/app.dart` | `RideMa` → `RideMaApp` → `ModeHome`: `RiderHome` or `DriverShell` by `AuthController.mode` |
+| `lib/main.dart`, `lib/src/app.dart` | `RideMa` → `RideMaApp` → `ModeHome`: `RiderHome` or `DriverRoot` by `AuthController.mode`; in driver mode `DriverShell` wraps the navigator with the driver providers |
 | `lib/src/mode/mode_switch.dart` | **Drive with RideMA** / **Switch to passenger mode** tiles, *Become a RideMA driver* screen |
 | `lib/src/rider/` | rider mode: `RideController` (`ride/`) and its screens (`ui/`), places, live ride notification |
 | `lib/src/driver/` | driver mode: `DriverController` (`controller/`, pure Dart with injected ports), onboarding, home, ride, earnings, readiness |

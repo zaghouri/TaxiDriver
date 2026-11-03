@@ -7,7 +7,6 @@ import 'controller/driver_controller.dart';
 import 'controller/ports.dart';
 import 'controller/profile_controller.dart';
 import 'platform/readiness.dart';
-import 'ui/driver_root.dart';
 
 /// Builds the driver controllers from [CoreServices] (shared by the app and integration tests).
 DriverController buildDriverController(CoreServices s, DriverForegroundService foreground, {DeviceChecks? device}) =>
@@ -25,8 +24,11 @@ DriverForegroundService buildForegroundService(CoreServices s) => DriverForegrou
 
 /// Driver mode (D89): the driver controllers live only while the session is in driver mode, so
 /// leaving it (always offline, no active ride) disposes them, and DriverRoot resets location.
+/// It wraps the whole navigator ([child]), like the app-level providers of the former driver app.
 class DriverShell extends StatelessWidget {
-  const DriverShell({super.key, this.deviceChecks});
+  const DriverShell({super.key, this.deviceChecks, required this.child});
+
+  final Widget child;
 
   /// Override the device checks (integration tests on emulators, whose images are rooted).
   final DeviceChecks Function(CoreServices s)? deviceChecks;
@@ -44,7 +46,7 @@ class DriverShell extends StatelessWidget {
         ChangeNotifierProvider<DriverProfileController>(create: (_) => DriverProfileController(ApiDriverBackend(s.api))),
         ChangeNotifierProvider<CallController>(create: (_) => CallController(realtime: s.realtime, api: s.api)),
       ],
-      child: const DriverRoot(),
+      child: child,
     );
   }
 }
