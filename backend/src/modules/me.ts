@@ -86,12 +86,12 @@ export async function exportData(ctx: AppContext, userId: string) {
 export async function meRoutes(app: FastifyInstance, ctx: AppContext) {
   const { db } = ctx;
 
-  app.get('/v1/me', { config: { auth: 'user', enrollOk: true } }, async (req) => meView(db, await getUser(db, req.user!.id)));
+  app.get('/v1/me', { config: { auth: 'user', enrollOk: true } }, async (req) => meView(db, await getUser(db, req.user!.id), req.user!.role));
 
   app.patch('/v1/me', { config: { auth: 'user' } }, async (req) => {
     const b = parse(z.object({ full_name: z.string().trim().min(2).max(80).optional(), locale: locale.optional() }), req.body);
     await db.query('UPDATE users SET full_name = COALESCE($2, full_name), locale = COALESCE($3, locale), updated_at = now() WHERE id = $1', [req.user!.id, b.full_name ?? null, b.locale ?? null]);
-    return meView(db, await getUser(db, req.user!.id));
+    return meView(db, await getUser(db, req.user!.id), req.user!.role);
   });
 
   app.post('/v1/me/devices', { config: { auth: 'user' } }, async (req) => {

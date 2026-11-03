@@ -193,8 +193,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vous proposez le prix. Les chauffeurs proches répondent.';
 
   @override
-  String get welcomeDriverTagline =>
-      'Recevez des courses près de vous. Acceptez le prix ou proposez le vôtre. 0 % de commission.';
+  String get welcomeDriveToo =>
+      'Vous avez une voiture ? Passez en mode chauffeur depuis le menu pour gagner de l’argent avec le même compte.';
 
   @override
   String get welcomeSignUp => 'Créer un compte';
@@ -338,13 +338,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noAccountLink => 'Pas encore de compte ? Créez-en un';
 
   @override
-  String wrongAppRider(String app) {
-    return 'C’est un compte chauffeur. Utilisez l’application $app Chauffeur.';
-  }
-
-  @override
-  String get wrongAppDriver =>
-      'C’est un compte client. Créez un compte chauffeur avec un autre e-mail.';
+  String get wrongAppAdmin =>
+      'C’est un compte d’administration. Utilisez le site d’administration RideMA.';
 
   @override
   String get twoFactorTitle => 'Code de sécurité';
@@ -2057,6 +2052,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errActiveRide =>
       'Terminez ou annulez d’abord votre course en cours.';
+
+  @override
+  String get errOtherModeBusy =>
+      'Vous êtes passager et chauffeur en même temps sur un autre téléphone. Terminez la course ou passez hors ligne d’abord.';
 
   @override
   String get errFeatureDisabled =>

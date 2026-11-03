@@ -113,10 +113,12 @@ Map<String, dynamic> meJson({
   bool phoneVerified = false,
   String? phone,
   String twofa = 'none',
+  String? mode,
 }) =>
     {
       'id': '0193f1a2-0000-7000-8000-000000000001',
       'role': role,
+      'mode': mode ?? (role == 'driver' ? 'driver' : 'rider'),
       'email': email,
       'email_verified': true,
       'phone': phone,
@@ -186,6 +188,7 @@ class FakeAuthServer {
         if (u == null || u['password'] != r.body['password']) return Res.error(401, 'INVALID_CREDENTIALS', 'Wrong email or password.');
         if (u['verified'] != true) return Res.error(403, 'EMAIL_NOT_VERIFIED', 'Verify first');
         if (u['twofa'] != 'none') return Res(200, {'mfa_required': true, 'method': u['twofa'], 'mfa_token': 'mfa-1'});
+        mode = role == 'driver' ? 'driver' : 'rider';
         return Res(200, {...tokensJson(), 'user': meJson(role: role, email: r.body['email'] as String)});
       })
       ..on('POST', '/v1/auth/login/2fa', (r) {
@@ -194,7 +197,19 @@ class FakeAuthServer {
       })
       ..on('POST', '/v1/auth/logout', (_) => const Res(200, {'ok': true}))
       ..on('POST', '/v1/me/devices', (_) => const Res(200, {'ok': true}))
-      ..on('GET', '/v1/me', (_) => Res(200, meJson(role: role, phoneVerified: phoneVerified, phone: phone)))
+      ..on('GET', '/v1/me', (_) => Res(200, meJson(role: role, mode: mode, phoneVerified: phoneVerified, phone: phone)))
+      ..on('POST', '/v1/auth/mode', (r) {
+        final target = r.body['mode'] as String;
+        if (modeBlock != null) return Res.error(409, modeBlock!, 'blocked');
+        if (target == 'driver' && role != 'driver') {
+          final kinds = (r.body['consents'] as List).map((c) => c['kind']);
+          if (!kinds.contains('background_location')) return Res.error(400, 'CONSENT_REQUIRED', 'consent', {'kind': 'background_location'});
+          role = 'driver';
+        }
+        mode = target;
+        modeSwitches++;
+        return Res(200, {'access_token': 'access-$target-$modeSwitches', 'token_type': 'Bearer', 'expires_in': 900, 'scope': 'full', 'mode': target, 'user': meJson(role: role, mode: target)});
+      })
       ..on('POST', '/v1/me/phone/start', (r) {
         phoneStarts.add(r.body['phone'] as String);
         if (phoneStarts.length > 3) return Res.error(429, 'PHONE_CODE_LIMIT', 'limit');
@@ -209,7 +224,16 @@ class FakeAuthServer {
   }
 
   final FakeBackend backend;
-  final String role;
+
+  /// Account kind; becomes `driver` on the first switch to driver mode (D89).
+  String role;
+
+  /// Session mode (null = default for [role]).
+  String? mode;
+
+  /// Error code `POST /v1/auth/mode` answers with (ACTIVE_RIDE, OTHER_MODE_BUSY), or null.
+  String? modeBlock;
+  int modeSwitches = 0;
   final Map<String, Map<String, dynamic>> users = {};
   String twofa = 'none';
   String emailCode = '123456';

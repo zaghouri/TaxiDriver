@@ -200,6 +200,10 @@ export async function driverRoutes(app: FastifyInstance, ctx: AppContext) {
     const id = req.user!.id;
     const problem = await driverProblem(db, id);
     if (problem) throw forbidden(problem.code, problem.message);
+    // One account, two modes (D89): no driving while the same account has an open request as a rider (other phone).
+    if (await one(db, `SELECT 1 FROM rides WHERE rider_id = $1 AND status IN ('searching','queued','accepted','arrived','in_progress')`, [id])) {
+      throw conflict('OTHER_MODE_BUSY', 'Finish your own ride as a passenger first.');
+    }
     const docs = await documentProblems(db, id);
     if (docs.length) throw new AppError(403, 'DOCUMENTS_INVALID', 'Some documents are missing, expired or not approved yet.', docs);
     const d = await one<{ city_id: string }>(db, 'SELECT city_id FROM drivers WHERE user_id = $1', [id]);
@@ -207,7 +211,7 @@ export async function driverRoutes(app: FastifyInstance, ctx: AppContext) {
     const vehicle = await one(db, 'SELECT 1 FROM vehicles WHERE driver_id = $1 AND active', [id]);
     if (!vehicle) throw forbidden('VEHICLE_MISSING', 'Add your vehicle first.');
     const deviceId = String(req.headers['x-device-id'] ?? 'unknown').slice(0, 100);
-    const verdict = await ctx.integrity.verify(b.integrity_token, 'ma.ridema.driver');
+    const verdict = await ctx.integrity.verify(b.integrity_token, req.headers['x-app-name'] === 'driver' ? 'ma.ridema.driver' : 'ma.ridema.app');
     await db.query(
       `INSERT INTO devices (user_id, device_id, platform, rooted, mock_location, integrity_verdict, last_seen_at)
        VALUES ($1,$2,$3,$4,$5,$6, now())

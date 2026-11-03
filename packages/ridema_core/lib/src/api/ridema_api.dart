@@ -6,6 +6,7 @@ import '../models/driver.dart';
 import '../models/json.dart';
 import '../models/ride.dart';
 import '../models/user.dart';
+import '../config/app_config.dart';
 import 'api_client.dart';
 
 /// Typed calls for every endpoint of docs/API.md used by the apps.
@@ -17,13 +18,12 @@ class RideMaApi {
 
   final ApiClient client;
 
-  String get _app => client.config.app.apiName;
 
   // ---------------------------------------------------------------- public
 
   Future<AppConfigResponse> appConfig() async => AppConfigResponse.fromJson(await client.get(
         '/v1/app/config',
-        query: {'app': _app, 'platform': client.config.platform, 'version': client.config.version},
+        query: {'app': AppConfig.apiAppName, 'platform': client.config.platform, 'version': client.config.version},
         auth: false,
       ));
 
@@ -70,7 +70,8 @@ class RideMaApi {
       'email': email.trim(),
       'password': password,
       'full_name': fullName.trim(),
-      'role': _app,
+      // Everyone signs up as a rider; driver mode is added later with [switchMode] (D89).
+      'role': 'rider',
       'locale': locale,
       'consents': [
         for (final e in consents.entries) {'kind': e.key, 'version': e.value},
@@ -89,6 +90,16 @@ class RideMaApi {
         auth: false,
         data: {'email': email.trim(), 'password': password, 'device_id': client.deviceId},
       ));
+
+  /// Moves this session to [mode] (D89). The first switch to driver mode needs the current
+  /// `background_location` version in [consents]. Throws `ACTIVE_RIDE`, `OTHER_MODE_BUSY`, `CONSENT_REQUIRED`.
+  Future<ModeSwitch> switchMode(AppMode mode, {Map<String, String> consents = const {}}) async =>
+      ModeSwitch.fromJson(await client.post('/v1/auth/mode', data: {
+        'mode': mode.apiName,
+        'consents': [
+          for (final e in consents.entries) {'kind': e.key, 'version': e.value},
+        ],
+      }));
 
   Future<LoginResult> login2fa(String mfaToken, String code) async => LoginResult.fromJson(
       await client.post('/v1/auth/login/2fa', auth: false, data: {'mfa_token': mfaToken, 'code': code.trim()}));

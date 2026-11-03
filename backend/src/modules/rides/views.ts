@@ -1,6 +1,6 @@
 import type { Queryable } from '../../db/pool.js';
 import { many, one } from '../../db/pool.js';
-import { effectiveRating, firstName } from '../users.js';
+import { firstName, ratingAs } from '../users.js';
 import { waitingRules } from './waiting.js';
 import { speedRules } from './speed-rules.js';
 import { renotifyInfo } from './renotify-info.js';
@@ -67,19 +67,21 @@ export async function getRide(q: Queryable, id: string, lock = false): Promise<R
   return one<RideRow>(q, `SELECT ${RIDE_COLUMNS} FROM rides r WHERE r.id = $1 ${lock ? 'FOR UPDATE' : ''}`, [id]);
 }
 
-export async function personCard(q: Queryable, userId: string) {
+/** Public card of one side of a ride; `side` picks the rating and trip count (one account can be both, D89). */
+export async function personCard(q: Queryable, userId: string, side: 'rider' | 'driver') {
   const u = await one<any>(q, 'SELECT id, role, full_name, rating_sum, rating_count, status FROM users WHERE id = $1', [userId]);
   if (!u) return null;
   const trips = await one<{ n: number }>(
     q,
-    `SELECT count(*)::int AS n FROM rides WHERE status = 'completed' AND ${u.role === 'driver' ? 'driver_id' : 'rider_id'} = $1`,
+    `SELECT count(*)::int AS n FROM rides WHERE status = 'completed' AND ${side === 'driver' ? 'driver_id' : 'rider_id'} = $1`,
     [userId],
   );
+  const r = await ratingAs(q, u, side);
   return {
     id: u.id,
     first_name: u.status === 'deleted' ? '—' : firstName(u.full_name),
-    rating: await effectiveRating(q, u),
-    rating_count: u.rating_count,
+    rating: r.rating,
+    rating_count: r.rating_count,
     trips: trips?.n ?? 0,
   };
 }
@@ -106,7 +108,7 @@ export async function driverChecks(q: Queryable, driverId: string): Promise<{ id
 
 /** Driver card shown to riders: person card + car (+ plate once accepted) + trust badges. */
 export async function driverCard(q: Queryable, driverId: string, vehicleId: string | null, withPlate: boolean) {
-  const d: any = await personCard(q, driverId);
+  const d: any = await personCard(q, driverId, 'driver');
   if (!d) return null;
   d.vehicle = await vehicleCard(q, vehicleId, driverId, withPlate);
   d.checks = await driverChecks(q, driverId);
@@ -165,7 +167,7 @@ export async function rideView(q: Queryable, r: RideRow, viewer: { id: string; r
   if (r.driver_id) {
     view.driver = await driverCard(q, r.driver_id, r.vehicle_id, true);
   }
-  view.rider = await personCard(q, r.rider_id);
+  view.rider = await personCard(q, r.rider_id, 'rider');
   if (isRider || isDriver) {
     const rated = await one(q, 'SELECT stars FROM ratings WHERE ride_id = $1 AND rater_id = $2', [r.id, viewer.id]);
     view.my_rating = rated?.stars ?? null;
@@ -233,7 +235,7 @@ export async function requestView(q: Queryable, r: RideRow, extra: { pickup_dist
     currency: 'DH',
     comment: r.rider_comment,
     expires_at: r.expires_at,
-    rider: await personCard(q, r.rider_id),
+    rider: await personCard(q, r.rider_id, 'rider'),
     ...extra,
   };
 }
@@ -277,7 +279,7 @@ export function bidViewWith(b: BidRow, driver: any) {
 export async function rankedOffers(q: Queryable, rideId: string, limit: number) {
   const rows = await many<BidRow & { total: number }>(
     q,
-    `SELECT b.*, count(*) OVER () AS total FROM bids b JOIN users u ON u.id = b.driver_id
+    `SELECT b.*, count(*) OVER () AS total FROM bids b JOIN drivers u ON u.user_id = b.driver_id
      WHERE b.ride_id = $1 AND b.status = 'active' AND b.expires_at > now()
      ORDER BY b.price, GREATEST(b.eta_s, COALESCE(b.promised_eta_s, 0)),
        CASE WHEN u.rating_count > 0 THEN u.rating_sum::numeric / u.rating_count ELSE 0 END

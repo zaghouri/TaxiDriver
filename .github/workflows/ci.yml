@@ -56,8 +56,7 @@ jobs:
         with: { flutter-version: 3.47.8, channel: stable, cache: true }
       - name: Analyze and test
         run: |
-          for d in packages/ridema_core apps/driver apps/rider; do
-            [ -f "$d/pubspec.yaml" ] || { echo "skip $d (not created yet)"; continue; }
+          for d in packages/ridema_core apps/ridema; do
             (cd "$d" && flutter pub get && flutter analyze && flutter test)
           done
 
@@ -65,10 +64,6 @@ jobs:
     needs: flutter
     runs-on: ubuntu-24.04
     timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        app: [rider, driver]
     steps:
       - name: Free disk space (release builds of both flavors need ~20 GB)
         run: |
@@ -84,10 +79,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ matrix.app }}-${{ hashFiles(format('apps/{0}/android/**/*.gradle.kts', matrix.app), format('apps/{0}/pubspec.lock', matrix.app)) }}
-      - name: Check app exists
-        id: apps
-        run: echo "ok=$([ -f apps/${{ matrix.app }}/pubspec.yaml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          key: gradle-ridema-${{ hashFiles('apps/ridema/android/**/*.gradle.kts', 'apps/ridema/pubspec.lock') }}
       - name: Restore release keystore (optional repository secrets)
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -97,9 +89,7 @@ jobs:
             echo "ANDROID_KEYSTORE=secrets/ridema-release.jks" >> "$GITHUB_ENV"
           fi
       - name: Build sideload APK and store AAB
-        if: steps.apps.outputs.ok == 'true'
         env:
-          APPS: ${{ matrix.app }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -108,8 +98,7 @@ jobs:
           GOOGLE_PLACES_KEY: ${{ secrets.GOOGLE_PLACES_KEY }}
         run: scripts/build-apks.sh
       - uses: actions/upload-artifact@v4
-        if: steps.apps.outputs.ok == 'true'
         with:
-          name: ridema-android-${{ matrix.app }}
+          name: ridema-android
           path: dist/
           retention-days: 30

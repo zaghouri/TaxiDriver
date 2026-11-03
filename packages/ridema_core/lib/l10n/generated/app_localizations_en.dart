@@ -191,8 +191,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'You choose the price. Drivers nearby answer.';
 
   @override
-  String get welcomeDriverTagline =>
-      'Receive rides near you. Accept the price or propose yours. 0% commission.';
+  String get welcomeDriveToo =>
+      'Have a car? Switch to driver mode from the menu to earn with the same account.';
 
   @override
   String get welcomeSignUp => 'Create an account';
@@ -334,13 +334,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noAccountLink => 'No account yet? Create one';
 
   @override
-  String wrongAppRider(String app) {
-    return 'This is a driver account. Use the $app Driver app.';
-  }
-
-  @override
-  String get wrongAppDriver =>
-      'This is a rider account. Create a driver account with another email.';
+  String get wrongAppAdmin =>
+      'This is a back-office account. Use the RideMA admin website.';
 
   @override
   String get twoFactorTitle => 'Security code';
@@ -2028,6 +2023,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errActiveRide => 'Finish or cancel your current ride first.';
+
+  @override
+  String get errOtherModeBusy =>
+      'You are riding and driving at the same time on another phone. Finish the ride or go offline there first.';
 
   @override
   String get errFeatureDisabled => 'This feature is turned off for now.';

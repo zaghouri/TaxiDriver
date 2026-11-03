@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android notification channel names (D47); ids match the backend push `channel` values. -->
+<resources>
+    <string name="app_name">RideMA</string>
+    <string name="channel_ride_requests">Demandes de course (mode chauffeur)</string>
+    <string name="channel_ride_requests_desc">Nouvelles demandes près de vous quand vous êtes en ligne (avec son).</string>
+    <string name="channel_ride_updates">Suivi des courses</string>
+    <string name="channel_ride_updates_desc">Chauffeur arrivé, offre acceptée, course annulée et autres changements.</string>
+    <string name="channel_offers">Offres</string>
+    <string name="channel_offers_desc">Nouvelles offres des chauffeurs sur votre demande.</string>
+    <string name="channel_ride_live">Course en cours</string>
+    <string name="channel_ride_live_desc">L’état de votre course en direct pendant qu’elle a lieu.</string>
+    <string name="channel_calls">Appels</string>
+    <string name="channel_calls_desc">Appels entrants de votre passager ou chauffeur dans RideMA.</string>
+</resources>

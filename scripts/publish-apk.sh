@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Uploads signed sideload APKs to the server's apk volume (served at https://<host>/apk/<file> and /download).
-# Usage: scripts/publish-apk.sh dist/ridema-rider-sideload-1.0.1.apk [dist/ridema-driver-sideload-1.0.1.apk ...]
+# Usage: scripts/publish-apk.sh dist/ridema-sideload-1.0.1.apk [more.apk ...]
 # Then set the file names/versions in Admin › Settings › APK.
 set -euo pipefail
 # shellcheck source=scripts/lib.sh

@@ -8,12 +8,12 @@ import 'support/test_services.dart';
 void main() {
   late FakeBackend backend;
 
-  Future<CoreServices> signedIn(WidgetTester tester, {AppKind app = AppKind.rider}) async {
+  Future<CoreServices> signedIn(WidgetTester tester, {String role = 'rider'}) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.6;
     addTearDown(tester.view.reset);
     backend = FakeBackend();
-    FakeAuthServer(backend, role: app.name);
+    FakeAuthServer(backend, role: role);
     backend
       ..on('GET', '/v1/me/data-requests', (_) => const Res(200, [
             {'id': 'd1', 'kind': 'correction', 'details': 'Nom mal écrit', 'status': 'done', 'response': 'Corrigé', 'created_at': '2026-10-20T10:00:00Z'},
@@ -27,7 +27,7 @@ void main() {
             ],
             'next_before': null,
           }));
-    final s = await buildTestServices(app: app, backend: backend, access: 'access-0', refresh: 'refresh-0-xxxxxxxxxxxxxxxxxxxxxx');
+    final s = await buildTestServices(backend: backend, access: 'access-0', refresh: 'refresh-0-xxxxxxxxxxxxxxxxxxxxxx');
     await tester.runAsync(() => Future.wait([s.auth.restore(), s.boot.loadAppConfig()]));
     return s;
   }
@@ -41,7 +41,7 @@ void main() {
   for (final lang in ['fr', 'ar']) {
     final l = lookupAppLocalizations(Locale(lang));
     testWidgets('[$lang] shared screens render without overflow', (tester) async {
-      final s = await signedIn(tester, app: AppKind.driver);
+      final s = await signedIn(tester, role: 'driver');
       final screens = <Widget>[
         const WelcomeScreen(),
         const LanguagePickerScreen(),
@@ -57,7 +57,7 @@ void main() {
         const ResetPasswordScreen(email: 'a@b.ma'),
         const TwoFactorScreen(),
         const LocationDisclosureScreen(kind: LocationDisclosureKind.driver),
-        const NotificationExplainerScreen(app: AppKind.driver),
+        const NotificationExplainerScreen(app: AppMode.driver),
         const ForceUpdateScreen(),
       ];
       for (final w in screens) {

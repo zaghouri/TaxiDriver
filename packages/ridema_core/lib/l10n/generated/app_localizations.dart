@@ -418,11 +418,11 @@ abstract class AppLocalizations {
   /// **'You choose the price. Drivers nearby answer.'**
   String get welcomeRiderTagline;
 
-  /// No description provided for @welcomeDriverTagline.
+  /// No description provided for @welcomeDriveToo.
   ///
   /// In en, this message translates to:
-  /// **'Receive rides near you. Accept the price or propose yours. 0% commission.'**
-  String get welcomeDriverTagline;
+  /// **'Have a car? Switch to driver mode from the menu to earn with the same account.'**
+  String get welcomeDriveToo;
 
   /// No description provided for @welcomeSignUp.
   ///
@@ -676,17 +676,11 @@ abstract class AppLocalizations {
   /// **'No account yet? Create one'**
   String get noAccountLink;
 
-  /// No description provided for @wrongAppRider.
+  /// No description provided for @wrongAppAdmin.
   ///
   /// In en, this message translates to:
-  /// **'This is a driver account. Use the {app} Driver app.'**
-  String wrongAppRider(String app);
-
-  /// No description provided for @wrongAppDriver.
-  ///
-  /// In en, this message translates to:
-  /// **'This is a rider account. Create a driver account with another email.'**
-  String get wrongAppDriver;
+  /// **'This is a back-office account. Use the RideMA admin website.'**
+  String get wrongAppAdmin;
 
   /// No description provided for @twoFactorTitle.
   ///
@@ -3621,6 +3615,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Finish or cancel your current ride first.'**
   String get errActiveRide;
+
+  /// No description provided for @errOtherModeBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'You are riding and driving at the same time on another phone. Finish the ride or go offline there first.'**
+  String get errOtherModeBusy;
 
   /// Error text for API code FEATURE_DISABLED
   ///

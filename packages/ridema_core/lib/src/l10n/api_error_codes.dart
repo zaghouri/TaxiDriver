@@ -96,6 +96,7 @@ String? apiErrorTextForCode(AppLocalizations l, String code) => switch (code) {
       'PIN_INVALID' => l.errPinInvalid,
       'PIN_LOCKED' => l.errPinLocked,
       'ACTIVE_RIDE' => l.errActiveRide,
+      'OTHER_MODE_BUSY' => l.errOtherModeBusy,
       'FEATURE_DISABLED' => l.errFeatureDisabled,
       'SOS_NOT_FOUND' => l.errSosNotFound,
       'SHARE_NOT_FOUND' => l.errShareNotFound,

@@ -1,6 +1,8 @@
+import '../config/app_config.dart';
 import 'json.dart';
 
-/// Account role. A person who rides and drives uses two accounts.
+/// Account kind (D89): `rider` rides only, `driver` also has a driver profile (applicant or approved) and can use
+/// both modes, `admin` is the back office.
 enum Role {
   rider,
   driver,
@@ -24,6 +26,7 @@ class Me {
   const Me({
     required this.id,
     required this.role,
+    this.mode = AppMode.rider,
     required this.email,
     required this.emailVerified,
     required this.phone,
@@ -39,6 +42,9 @@ class Me {
 
   final String id;
   final Role role;
+
+  /// Mode of this session (`mode` in `/v1/me`; older servers: the account role).
+  final AppMode mode;
   final String email;
   final bool emailVerified;
   final String? phone;
@@ -51,6 +57,9 @@ class Me {
   final String? idCheckStatus;
   final DateTime? createdAt;
 
+  /// Has a driver profile, so driver mode is open without applying again.
+  bool get canDrive => role == Role.driver;
+
   String get firstName => fullName.trim().split(RegExp(r'\s+')).first;
 
   factory Me.fromJson(Object? json) {
@@ -58,6 +67,7 @@ class Me {
     return Me(
       id: asStringOr(j['id']),
       role: Role.parse(j['role']),
+      mode: AppMode.parse(j['mode'] ?? j['role']),
       email: asStringOr(j['email']),
       emailVerified: asBool(j['email_verified']),
       phone: asString(j['phone']),
@@ -93,6 +103,26 @@ class Tokens {
   }
 
   bool get isValid => accessToken.isNotEmpty && refreshToken.isNotEmpty;
+}
+
+/// Result of `POST /v1/auth/mode`: a new access token for the same session, and the user in that mode.
+class ModeSwitch {
+  const ModeSwitch({required this.accessToken, required this.expiresIn, required this.scope, required this.me});
+
+  final String accessToken;
+  final int expiresIn;
+  final String scope;
+  final Me me;
+
+  factory ModeSwitch.fromJson(Object? json) {
+    final j = asJson(json);
+    return ModeSwitch(
+      accessToken: asStringOr(j['access_token']),
+      expiresIn: asIntOr(j['expires_in'], 900),
+      scope: asStringOr(j['scope'], 'full'),
+      me: Me.fromJson(j['user']),
+    );
+  }
 }
 
 /// Result of `POST /v1/auth/login`: either a session or a second step.

@@ -19,10 +19,23 @@ void main() {
   }
 
   Widget app(CoreServices s) => RideMaApp(
-        app: s.config.app,
         services: s,
         homeBuilder: (_) => const Scaffold(body: Text('HOME')),
       );
+
+  testWidgets('services built at boot (no injected services) leave the splash', (tester) async {
+    phone(tester);
+    final backend = FakeBackend();
+    FakeAuthServer(backend);
+    final s = await buildTestServices(backend: backend, prefs: const {});
+    await tester.pumpWidget(RideMaApp(
+      config: s.config,
+      servicesFactory: (_) async => s,
+      homeBuilder: (_) => const Scaffold(body: Text('HOME')),
+    ));
+    await settle(tester);
+    expect(find.byType(LanguagePickerScreen), findsOneWidget);
+  });
 
   testWidgets('first launch shows the language picker, then Welcome', (tester) async {
     phone(tester);
@@ -54,7 +67,7 @@ void main() {
     expect(find.text(l.updateBody(kAppName, '2.1.0')), findsOneWidget);
     expect(find.text(l.updateDownload), findsOneWidget);
     final cfg = backend.calls('GET', '/v1/app/config').single;
-    expect(cfg.query, {'app': 'rider', 'platform': 'android', 'version': '1.0.0'});
+    expect(cfg.query, {'app': 'ridema', 'platform': 'android', 'version': '1.0.0'});
   });
 
   testWidgets('a 426 from any call switches to the force update screen', (tester) async {
@@ -99,7 +112,7 @@ void main() {
     final launcher = FakeLauncher();
     final base = await buildTestServices(backend: backend, launcher: launcher);
     final s = CoreServices(
-      config: const AppConfig(app: AppKind.rider, version: '1.0.0', flavor: 'store'),
+      config: const AppConfig(version: '1.0.0', flavor: 'store'),
       prefs: base.prefs,
       remoteConfig: base.remoteConfig,
       tokens: base.tokens,

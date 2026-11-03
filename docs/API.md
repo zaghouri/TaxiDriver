@@ -5,7 +5,7 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 
 ## Conventions
 - JSON everywhere. Prices are integers in DH. Times are ISO-8601 strings (UTC). Coordinates `{lat, lng}`.
-- Headers on every request: `X-Device-Id` (stable per install), `X-App-Name: rider|driver|admin`, `X-Platform: android|ios|web`, `X-App-Version: 1.0.0`, `Accept-Language`.
+- Headers on every request: `X-Device-Id` (stable per install), `X-App-Name: ridema|admin` (the retired apps sent `rider|driver`), `X-Platform: android|ios|web`, `X-App-Version: 1.0.0`, `Accept-Language`.
 - Auth: `Authorization: Bearer <access_token>` (15 min). On `401` with code `TOKEN_INVALID` → call refresh once, retry; if refresh fails → log out.
 - **Every POST/PUT/PATCH/DELETE under `/v1/` needs `Idempotency-Key: <uuid v4>`** (except `POST /v1/driver/location`, `POST /v1/rides/estimate`, `POST /v1/sos/:id/location`). Reuse the same key when retrying the same action after a network error; a replay returns the original response with header `idempotent-replay: true`.
 - Errors: `{"error": {"code": "SNAKE_CASE", "message": "Human text (English)", "details": ...}}`. Apps translate by `code` and fall back to `message`.
@@ -15,7 +15,7 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 ## Public
 | Method | Path | Response |
 |---|---|---|
-| GET | `/v1/app/config?app=rider\|driver&platform=android\|ios&version=1.0.0` | `{api_base_url, ws_path:"/ws", min_version, latest_version, force_update, update_available, apk_url, store_url, company:{name, legal_name, rc, ice, address, support_phone, support_email}, legal_versions:{terms, privacy, data_transfer, background_location}, features:{pickup_pin, trip_share, voice_calls, subscriptions_enabled, selfie_check_enabled, rider_id_check_enabled, ...}, emergency_numbers:{police:"19", gendarmerie:"177", ambulance:"15"}, currency:"DH"}` |
+| GET | `/v1/app/config?app=ridema&platform=android\|ios&version=1.0.0` | `{api_base_url, ws_path:"/ws", min_version, latest_version, force_update, update_available, apk_url, store_url, company:{name, legal_name, rc, ice, address, support_phone, support_email}, legal_versions:{terms, privacy, data_transfer, background_location}, features:{pickup_pin, trip_share, voice_calls, subscriptions_enabled, selfie_check_enabled, rider_id_check_enabled, ...}, emergency_numbers:{police:"19", gendarmerie:"177", ambulance:"15"}, currency:"DH"}` |
 | GET | `/v1/legal?locale=ar\|fr\|en` | `[{kind, version, locale, title, body, published_at}]` for terms, privacy, data_transfer, background_location |
 | GET | `/v1/legal/:kind?locale=` | one of the above |
 | GET | `/v1/cities` | `[{id, slug, name_ar, name_fr, name_en, center:{lat,lng}, radius_km, base_fare, per_km, per_min, min_fare, enabled_driver_types, currency}]` |
@@ -25,19 +25,20 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 ## Auth
 | Method | Path | Body | Response |
 |---|---|---|---|
-| POST | `/v1/auth/signup` | `{email, password(≥10), full_name, role:"rider"\|"driver", locale, consents:[{kind, version}]}` — rider needs terms, privacy, data_transfer; driver also background_location; versions from `/v1/legal` | `201 {user: Me, next:"verify_email"}`. Errors: `CONSENT_REQUIRED`, `CONSENT_OUTDATED`, `EMAIL_TAKEN`, `VALIDATION_ERROR` |
+| POST | `/v1/auth/signup` | `{email, password(≥10), full_name, role:"rider"\|"driver", locale, consents:[{kind, version}]}` — rider needs terms, privacy, data_transfer; versions from `/v1/legal`. The app always sends `rider` (D89); `driver` (also needs background_location, creates the driver profile) is kept for the retired driver app | `201 {user: Me, next:"verify_email"}`. Errors: `CONSENT_REQUIRED`, `CONSENT_OUTDATED`, `EMAIL_TAKEN`, `VALIDATION_ERROR` |
 | POST | `/v1/auth/email/verify` | `{email, code}` (6 digits) | `{verified:true}`. Errors `CODE_INVALID`, `CODE_EXPIRED`, `CODE_TOO_MANY_ATTEMPTS` |
 | POST | `/v1/auth/email/resend` | `{email}` | `{sent:true}` (`RESEND_TOO_SOON` if < 60 s) |
 | POST | `/v1/auth/login` | `{email, password, device_id}` | `Tokens & {user: Me}` or `{mfa_required:true, method:"email"\|"totp", mfa_token}` or (admin without TOTP) `Tokens & {totp_enrollment_required:true}`. Errors `INVALID_CREDENTIALS`, `EMAIL_NOT_VERIFIED`, `ACCOUNT_DISABLED`, `LOGIN_LOCKED` |
 | POST | `/v1/auth/login/2fa` | `{mfa_token, code}` | `Tokens & {user}` (`MFA_CODE_INVALID`, `MFA_LOCKED`) |
 | POST | `/v1/auth/refresh` | `{refresh_token}` | `Tokens` (`REFRESH_INVALID`, `REFRESH_REUSED` → logout) |
+| POST | `/v1/auth/mode` | `{mode:"rider"\|"driver", consents?:[{kind, version}]}` | Switches this session's mode (D89): `{access_token, token_type, expires_in, scope, mode, user: Me}` — keep the refresh token. The first switch to `driver` needs `background_location` and creates the draft driver profile (`role` becomes `driver`). Errors `CONSENT_REQUIRED`, `CONSENT_OUTDATED`, `ACTIVE_RIDE` (a ride of the account is open), `OTHER_MODE_BUSY` (leaving driver mode while online), `WRONG_ROLE` (admin). Older access tokens of the session get `401 TOKEN_INVALID` → refresh |
 | POST | `/v1/auth/logout` | `{}` | `{ok:true}` |
 | POST | `/v1/auth/password/forgot` | `{email}` | `{sent:true}` always |
 | POST | `/v1/auth/password/reset` | `{email, code, new_password}` | `{reset:true}` |
 
 `Tokens = {access_token, refresh_token, token_type:"Bearer", expires_in:900, scope:"full"|"enroll"}`
 
-`Me = {id, role, email, email_verified, phone, phone_verified, full_name, locale, twofa_method:"none"|"email"|"totp", rating:number|null, rating_count, id_check_status, created_at}`
+`Me = {id, role:"rider"|"driver"|"admin" (account kind; driver = has a driver profile, may use both modes), mode:"rider"|"driver"|"admin" (this session; rating and rating_count are for this mode), email, email_verified, phone, phone_verified, full_name, locale, twofa_method:"none"|"email"|"totp", rating:number|null, rating_count, id_check_status, created_at}`
 
 ## Me (any logged-in user)
 | Method | Path | Body | Response |
@@ -73,7 +74,7 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | Method | Path | Body | Response |
 |---|---|---|---|
 | POST | `/v1/rides/estimate` | `{pickup:{lat,lng}, dropoff:{lat,lng}}` | `{city_id, distance_m, duration_s, suggested_price, min_offer, max_offer, currency, route_source}`. `OUT_OF_SERVICE_AREA`, `TRIP_TOO_LONG` |
-| POST | `/v1/rides` | `{pickup:{lat,lng,address}, dropoff:{lat,lng,address}, offered_price, comment?}` | `201 {ride: Ride, drivers_notified}`. Errors `PHONE_NOT_VERIFIED`, `ID_CHECK_REQUIRED`, `OFFER_TOO_LOW` (details.min_offer), `OFFER_TOO_HIGH`, `RIDE_ALREADY_ACTIVE` |
+| POST | `/v1/rides` | `{pickup:{lat,lng,address}, dropoff:{lat,lng,address}, offered_price, comment?}` | `201 {ride: Ride, drivers_notified}`. Errors `PHONE_NOT_VERIFIED`, `OTHER_MODE_BUSY` (the account is online or on a trip as a driver), `ID_CHECK_REQUIRED`, `OFFER_TOO_LOW` (details.min_offer), `OFFER_TOO_HIGH`, `RIDE_ALREADY_ACTIVE` |
 | GET | `/v1/rides/active` | | `{ride: Ride\|null, offers?: Bid[]}` (driver: also `pending_bids: Bid[]` and `queued_ride: Ride\|null`, the next ride waiting behind the current trip, D88; rider: `ride` may be `queued`) — **call on app start, resume and every socket (re)connect** |
 | GET | `/v1/rides?before=&limit=` | | `{items: Ride[], next_before}` history |
 | GET | `/v1/rides/:id` | | `Ride` |
@@ -111,7 +112,7 @@ The source of truth is the code (`backend/src/modules/**`). The tests in `backen
 | POST | `/v1/driver/documents` | multipart fields `type` (cin_front, cin_back, licence, carte_grise, insurance, visite_technique, selfie), `expires_on` (YYYY-MM-DD; required for cin_front, licence, insurance, visite_technique), file `file` (JPEG/PNG/WEBP/PDF ≤ 8 MB) | `201 {id, type, status:"pending", expires_on, created_at}` |
 | GET | `/v1/driver/documents` | | list |
 | POST | `/v1/driver/submit` | `{}` | `DriverProfile` (status pending) — `PROFILE_INCOMPLETE`, `VEHICLE_MISSING`, `DOCUMENTS_MISSING` (details = list) |
-| POST | `/v1/driver/online` | `{lat, lng, mock_location:bool, rooted:bool, integrity_token?}` | `{online:true, integrity}`. Errors `DRIVER_NOT_APPROVED`, `DRIVER_BLOCKED`, `DOCUMENTS_INVALID` (details list), `MOCK_LOCATION`, `ROOTED_DEVICE`, `INTEGRITY_FAILED`, `SELFIE_REQUIRED`, `OUT_OF_SERVICE_AREA`, `PHONE_NOT_VERIFIED`, `EMAIL_NOT_VERIFIED` |
+| POST | `/v1/driver/online` | `{lat, lng, mock_location:bool, rooted:bool, integrity_token?}` | `{online:true, integrity}`. Errors `DRIVER_NOT_APPROVED`, `OTHER_MODE_BUSY` (the account has an open ride as a rider), `DRIVER_BLOCKED`, `DOCUMENTS_INVALID` (details list), `MOCK_LOCATION`, `ROOTED_DEVICE`, `INTEGRITY_FAILED`, `SELFIE_REQUIRED`, `OUT_OF_SERVICE_AREA`, `PHONE_NOT_VERIFIED`, `EMAIL_NOT_VERIFIED` |
 | POST | `/v1/driver/offline` | `{}` | `{online:false}` |
 | POST | `/v1/driver/location` | `{lat, lng, heading?, speed?, accuracy?, mocked?, recorded_at?}` (no idempotency key) | `{on_ride, ride_id?}`; `403 MOCK_LOCATION` → driver forced offline |
 | GET | `/v1/driver/preview?lat=&lng=` | position optional | Drivers whose application is `draft` or `pending` only (D86): `{city, items: [{pickup_area, dropoff_area, trip_km, offered_price, minutes_ago, away_km\|null}]}` — up to 15 open requests of the driver's city (or the first active city before the profile step), newest first. Areas = nearest built-in landmark within 2 km, else the city; `away_km` rounded to 0.5 km. No ids, rider, addresses, comments or coordinates, so nothing can be bid on. `403 PREVIEW_NOT_AVAILABLE` once approved (or suspended / rejected) |

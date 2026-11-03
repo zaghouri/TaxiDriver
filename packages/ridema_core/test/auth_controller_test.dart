@@ -9,10 +9,10 @@ void main() {
   late FakeAuthServer server;
   late CoreServices s;
 
-  Future<void> setup({AppKind app = AppKind.rider, String? access, String? refresh}) async {
+  Future<void> setup({String role = 'rider', String? access, String? refresh, Map<String, Object>? prefs}) async {
     backend = FakeBackend();
-    server = FakeAuthServer(backend, role: app.name);
-    s = await buildTestServices(app: app, backend: backend, access: access, refresh: refresh);
+    server = FakeAuthServer(backend, role: role);
+    s = await buildTestServices(backend: backend, access: access, refresh: refresh, prefs: prefs ?? const {'ridema.locale': 'fr'});
   }
 
   const consents = {'terms': '2026-10-01', 'privacy': '1.0', 'data_transfer': '1.0'};
@@ -103,10 +103,8 @@ void main() {
     expect(s.auth.me!.phone, '+212612345678');
   });
 
-  test('a rider account is refused in the driver app', () async {
-    backend = FakeBackend();
-    server = FakeAuthServer(backend, role: 'rider');
-    s = await buildTestServices(app: AppKind.driver, backend: backend);
+  test('an admin account is refused in the app', () async {
+    await setup(role: 'admin');
     server.addUser('amina@example.ma', 'longpassword1');
     await expectLater(s.auth.login('amina@example.ma', 'longpassword1'), throwsA(isA<ApiException>().having((e) => e.code, 'code', 'WRONG_ROLE')));
     expect(s.auth.isSignedIn, isFalse);
@@ -149,5 +147,55 @@ void main() {
     await s.auth.deleteAccount('pw');
     expect(s.auth.status, AuthStatus.signedOut);
     expect(s.tokens.hasSession, isFalse);
+  });
+
+  group('rider / driver mode (D89)', () {
+    const refresh = 'refresh-0-xxxxxxxxxxxxxxxxxxxxxx';
+
+    test('a rider becomes a driver applicant with the background-location consent; the phone remembers the mode', () async {
+      await setup(access: 'access-0', refresh: refresh);
+      await s.auth.restore();
+      expect(s.auth.mode, AppMode.rider);
+      expect(s.auth.canDrive, isFalse);
+
+      await expectLater(s.auth.switchMode(AppMode.driver), throwsA(isA<ApiException>().having((e) => e.code, 'code', 'CONSENT_REQUIRED')));
+      expect(s.auth.mode, AppMode.rider);
+
+      await s.auth.switchMode(AppMode.driver, consents: {'background_location': '1.0'});
+      expect(s.auth.mode, AppMode.driver);
+      expect(s.auth.canDrive, isTrue);
+      expect(s.tokens.accessToken, 'access-driver-1');
+      expect(s.tokens.refreshToken, refresh, reason: 'same session, only a new access token');
+      expect(s.prefs.getString(AuthController.modeKey), 'driver');
+    });
+
+    test('after a new login the last mode of this phone comes back when the account allows it', () async {
+      await setup(role: 'driver', prefs: {'ridema.locale': 'fr', AuthController.modeKey: 'rider'});
+      server.addUser('amina@example.ma', 'longpassword1');
+      await s.auth.login('amina@example.ma', 'longpassword1');
+      expect(s.auth.mode, AppMode.rider);
+      expect(backend.calls('POST', '/v1/auth/mode').single.body['mode'], 'rider');
+
+      // A rider-only account never restores driver mode.
+      await setup(prefs: {'ridema.locale': 'fr', AuthController.modeKey: 'driver'});
+      server.addUser('amina@example.ma', 'longpassword1');
+      await s.auth.login('amina@example.ma', 'longpassword1');
+      expect(s.auth.mode, AppMode.rider);
+      expect(backend.calls('POST', '/v1/auth/mode'), isEmpty);
+    });
+
+    test('a refused switch keeps the current mode; logging out forgets it', () async {
+      await setup(role: 'driver', access: 'access-0', refresh: refresh);
+      await s.auth.restore();
+      expect(s.auth.mode, AppMode.driver);
+      server.modeBlock = 'OTHER_MODE_BUSY';
+      await expectLater(s.auth.switchMode(AppMode.rider), throwsA(isA<ApiException>().having((e) => e.code, 'code', 'OTHER_MODE_BUSY')));
+      expect(s.auth.mode, AppMode.driver);
+      server.modeBlock = null;
+      await s.auth.switchMode(AppMode.rider);
+      expect(s.auth.mode, AppMode.rider);
+      await s.auth.logout();
+      expect(s.prefs.getString(AuthController.modeKey), isNull);
+    });
   });
 }

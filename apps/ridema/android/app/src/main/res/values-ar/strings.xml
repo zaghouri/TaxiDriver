@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android notification channel names (D47); ids match the backend push `channel` values. -->
+<resources>
+    <string name="app_name">RideMA</string>
+    <string name="channel_ride_requests">طلبات الرحلات (وضع السائق)</string>
+    <string name="channel_ride_requests_desc">طلبات رحلات جديدة قريبة منك عندما تكون متصلاً (مع صوت).</string>
+    <string name="channel_ride_updates">تحديثات الرحلات</string>
+    <string name="channel_ride_updates_desc">وصول السائق، قبول العرض، إلغاء الرحلة وتغييرات أخرى.</string>
+    <string name="channel_offers">العروض</string>
+    <string name="channel_offers_desc">عروض جديدة من السائقين على طلبك.</string>
+    <string name="channel_ride_live">الرحلة الحالية</string>
+    <string name="channel_ride_live_desc">حالة رحلتك مباشرة أثناء الرحلة.</string>
+    <string name="channel_calls">المكالمات</string>
+    <string name="channel_calls_desc">المكالمات الواردة من راكبك أو سائقك عبر RideMA.</string>
+</resources>

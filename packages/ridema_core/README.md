@@ -1,6 +1,6 @@
 # ridema_core
 
-Shared Flutter code for the RideMA **rider** (`apps/rider`) and **driver** (`apps/driver`) apps:
+Shared Flutter code of the RideMA app (`apps/ridema`, rider and driver modes, D89):
 brand + theme, localisation (ar/fr/en), config, API client, realtime, auth, shared screens,
 safety widgets (SOS, voice calls, PIN, car card), permission helpers and platform interfaces.
 
@@ -16,12 +16,16 @@ Everything is exported from one import: `import 'package:ridema_core/ridema_core
 
 ## 1. Wiring an app
 
+One app, one account, two modes (D89): `AuthController.mode` is `AppMode.rider` or `AppMode.driver` for this
+session, `canDrive` says the account has a driver profile, and `switchMode()` calls `POST /v1/auth/mode` (the
+first switch to driver passes the `background_location` consent). The last mode is remembered per phone.
+
 ```dart
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(RideMaApp(
-    app: AppKind.rider,                       // or AppKind.driver
-    homeBuilder: (context) => const RiderHome(), // shown when signed in
+    // Shown when signed in; picks the rider or driver side from AuthController.mode (D89).
+    homeBuilder: (context) => const ModeHome(),
     providers: (s) => [                       // optional app-level providers
       ChangeNotifierProvider(create: (_) => CallController(realtime: s.realtime, api: s.api)),
     ],

@@ -16,12 +16,12 @@ export async function sharedTrip(ctx: AppContext, token: string) {
   const s = await one<{ ride_id: string; expired: boolean }>(ctx.db, `SELECT ride_id, (expires_at IS NOT NULL AND expires_at < now()) AS expired FROM trip_shares WHERE token = $1`, [token]);
   if (!s || s.expired) throw notFound('SHARE_NOT_FOUND', 'This link has expired.');
   const r = (await getRide(ctx.db, s.ride_id))!;
-  const driver = r.driver_id ? await personCard(ctx.db, r.driver_id) : null;
+  const driver = r.driver_id ? await personCard(ctx.db, r.driver_id, 'driver') : null;
   const vehicle = r.driver_id ? await vehicleCard(ctx.db, r.vehicle_id, r.driver_id, true) : null;
   const loc = r.driver_id && ['accepted', 'arrived', 'in_progress'].includes(r.status) ? await ctx.geo.get(r.driver_id) : null;
   return {
     status: r.status,
-    rider_first_name: (await personCard(ctx.db, r.rider_id))?.first_name,
+    rider_first_name: (await personCard(ctx.db, r.rider_id, 'rider'))?.first_name,
     driver: driver ? { first_name: driver.first_name, rating: driver.rating } : null,
     vehicle,
     pickup: { lat: r.pickup_lat, lng: r.pickup_lng, address: r.pickup_address },

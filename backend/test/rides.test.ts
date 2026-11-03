@@ -424,7 +424,7 @@ describe('cancellations', () => {
 
   it('driver: penalty point lowers the rating; 3 cancels in 24 h → blocked 2 h', async () => {
     const d = await onlineDriver(env);
-    await env.ctx.db.query('UPDATE users SET rating_sum = 50, rating_count = 10 WHERE id = $1', [d.userId]);
+    await env.ctx.db.query('UPDATE drivers SET rating_sum = 50, rating_count = 10 WHERE user_id = $1', [d.userId]);
     let res: any;
     for (let i = 0; i < 3; i++) {
       const acc = await acceptedRide(await newUser(env, 'rider'), d);

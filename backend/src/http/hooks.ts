@@ -6,7 +6,7 @@ import { AppError, forbidden, unauthorized, unprocessable, conflict, badRequest 
 import { one } from '../db/pool.js';
 import { openString, sealString, sha256 } from '../lib/crypto.js';
 import { compareVersions } from '../lib/validation.js';
-import { verifyAccess } from './tokens.js';
+import { sessionRole, verifyAccess, type Mode, type Role } from './tokens.js';
 import './types.js';
 
 const WRITE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -91,10 +91,12 @@ export function registerHooks(app: FastifyInstance, ctx: AppContext) {
       throw unauthorized('AUTH_REQUIRED', 'Please log in.');
     }
     const claims = await verifyAccess(ctx.cfg, h.slice(7));
-    const u = await one<{ status: string; role: string }>(ctx.db, 'SELECT status, role FROM users WHERE id = $1', [claims.sub]);
+    const u = await one<{ status: string; role: Role }>(ctx.db, 'SELECT status, role FROM users WHERE id = $1', [claims.sub]);
     if (!u || u.status !== 'active') throw unauthorized('ACCOUNT_DISABLED', 'This account is not active.');
-    const session = await one(ctx.db, 'SELECT 1 FROM refresh_tokens WHERE family_id = $1 AND revoked_at IS NULL LIMIT 1', [claims.sid]);
+    const session = await one<{ mode: Mode | null }>(ctx.db, 'SELECT mode FROM refresh_tokens WHERE family_id = $1 AND revoked_at IS NULL LIMIT 1', [claims.sid]);
     if (!session) throw unauthorized('SESSION_REVOKED', 'Session ended, please log in again.');
+    // A token minted before a mode switch (D89) is stale: TOKEN_INVALID makes the app refresh into the current mode.
+    if (claims.role !== sessionRole(u.role, session.mode)) throw unauthorized('TOKEN_INVALID', 'Session mode changed, please refresh.');
     req.user = { id: claims.sub, role: claims.role, sid: claims.sid, scp: claims.scp };
     if (claims.scp === 'enroll' && !req.routeOptions.config?.enrollOk) throw forbidden('TOTP_ENROLLMENT_REQUIRED', 'Set up your authenticator app first.');
     if (mode !== 'user' && mode !== 'optional' && claims.role !== mode) throw forbidden('WRONG_ROLE', 'Not allowed for this account type.');

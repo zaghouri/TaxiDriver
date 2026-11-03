@@ -190,8 +190,8 @@ class AppLocalizationsAr extends AppLocalizations {
       'أنت تقترح السعر، والسائقون القريبون يردّون.';
 
   @override
-  String get welcomeDriverTagline =>
-      'استقبل رحلات بالقرب منك. اقبل السعر أو اقترح سعرك. بدون عمولة.';
+  String get welcomeDriveToo =>
+      'عندك سيارة؟ انتقل إلى وضع السائق من القائمة واربح بنفس الحساب.';
 
   @override
   String get welcomeSignUp => 'إنشاء حساب';
@@ -334,13 +334,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noAccountLink => 'ليس لديك حساب؟ أنشئ حسابًا';
 
   @override
-  String wrongAppRider(String app) {
-    return 'هذا حساب سائق. استخدم تطبيق $app للسائقين.';
-  }
-
-  @override
-  String get wrongAppDriver =>
-      'هذا حساب راكب. أنشئ حساب سائق ببريد إلكتروني آخر.';
+  String get wrongAppAdmin => 'هذا حساب إدارة. استخدم موقع إدارة RideMA.';
 
   @override
   String get twoFactorTitle => 'رمز الأمان';
@@ -2005,6 +1999,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errActiveRide => 'أنهِ رحلتك الحالية أو ألغها أولًا.';
+
+  @override
+  String get errOtherModeBusy =>
+      'أنت راكب وسائق في نفس الوقت على هاتف آخر. أنهِ الرحلة أو اخرج من الاتصال هناك أولاً.';
 
   @override
   String get errFeatureDisabled => 'هذه الميزة متوقفة حاليًا.';

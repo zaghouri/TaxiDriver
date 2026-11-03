@@ -320,3 +320,26 @@ const gap24 = SizedBox(height: 24);
 
 /// Height of the main tap targets (re-exported for apps).
 const double tapTarget = kTapTarget;
+
+/// Full-screen column (24 dp padding) whose [Spacer]s share the free height. It scrolls instead of
+/// overflowing when the content does not fit: small phone, large text, or the keyboard still up
+/// from a form (the welcome screen stays laid out under the login form).
+class SpacedScreenBody extends StatelessWidget {
+  const SpacedScreenBody({super.key, required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+        child: LayoutBuilder(
+          builder: (context, box) => SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: (box.maxHeight - 48).clamp(0, double.infinity)),
+              child: IntrinsicHeight(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+              ),
+            ),
+          ),
+        ),
+      );
+}

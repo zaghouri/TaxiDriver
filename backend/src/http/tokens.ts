@@ -3,6 +3,18 @@ import type { Config } from '../config.js';
 import { unauthorized } from '../lib/errors.js';
 
 export type Role = 'rider' | 'driver' | 'admin';
+/** Mode a rider/driver session is in (D89): one account, one app, two modes. */
+export type Mode = 'rider' | 'driver';
+
+/**
+ * Role a session acts as (D89). `users.role` is the account kind: `rider` (passenger only), `driver` (also has a
+ * driver profile, may use both modes) or `admin`. `mode` is the session's stored choice (NULL = default).
+ */
+export function sessionRole(accountRole: Role, mode: Mode | null | undefined): Role {
+  if (accountRole === 'admin') return 'admin';
+  if (accountRole === 'driver') return mode ?? 'driver';
+  return 'rider';
+}
 /** full = normal session; enroll = admin who must set up TOTP before anything else. */
 export type Scope = 'full' | 'enroll';
 

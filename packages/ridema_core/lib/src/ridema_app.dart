@@ -17,7 +17,7 @@ import 'ui/screens/boot_screens.dart';
 /// Builds [CoreServices] for an app (default: [CoreServices.create]).
 typedef CoreServicesFactory = Future<CoreServices> Function(AppConfig config);
 
-/// Root widget of both apps.
+/// Root widget of the RideMA app.
 ///
 /// Boot sequence (SPEC §3.1): splash → services (Firebase optional, remote
 /// config `api_base_url`) → `GET /v1/app/config` (+ restore session) →
@@ -27,25 +27,22 @@ typedef CoreServicesFactory = Future<CoreServices> Function(AppConfig config);
 /// ```dart
 /// void main() {
 ///   WidgetsFlutterBinding.ensureInitialized();
-///   runApp(RideMaApp(app: AppKind.rider, homeBuilder: (_) => const RiderHome()));
+///   runApp(RideMaApp(homeBuilder: (_) => const ModeHome()));
 /// }
 /// ```
 class RideMaApp extends StatefulWidget {
   const RideMaApp({
     super.key,
-    required this.app,
     required this.homeBuilder,
     this.config,
     this.servicesFactory,
     this.services,
     this.providers,
+    this.builder,
     this.theme,
     this.navigatorKey,
     this.onReady,
   });
-
-  /// rider or driver.
-  final AppKind app;
 
   /// Signed-in home of the app (map, requests, ...).
   final WidgetBuilder homeBuilder;
@@ -61,6 +58,10 @@ class RideMaApp extends StatefulWidget {
 
   /// Extra app-level providers, created once services exist.
   final List<SingleChildWidget> Function(CoreServices services)? providers;
+
+  /// Wraps the signed-in app's navigator ([MaterialApp.builder]): what it provides is seen by
+  /// every route and dialog. Its context is below the core providers.
+  final TransitionBuilder? builder;
   final ThemeData? theme;
   final GlobalKey<NavigatorState>? navigatorKey;
 
@@ -87,7 +88,7 @@ class _RideMaAppState extends State<RideMaApp> {
     try {
       final s = widget.services ??
           await (widget.servicesFactory ?? ((c) => CoreServices.create(config: c)))(
-            widget.config ?? await AppConfig.load(app: widget.app),
+            widget.config ?? await AppConfig.load(),
           );
       if (!mounted) return;
       setState(() => _services = s);
@@ -104,12 +105,15 @@ class _RideMaAppState extends State<RideMaApp> {
     super.dispose();
   }
 
-  MaterialApp _material({required Locale? locale, required Widget home}) => MaterialApp(
+  /// The boot app ([booting]) must not share the global keys: a reused
+  /// navigator key would carry its splash route into the real app.
+  MaterialApp _material({required Locale? locale, required Widget home, bool booting = false}) => MaterialApp(
         title: kAppName,
         debugShowCheckedModeBanner: false,
         theme: widget.theme ?? buildRideMaTheme(),
-        navigatorKey: _navKey,
-        scaffoldMessengerKey: _messengerKey,
+        navigatorKey: booting ? null : _navKey,
+        builder: booting ? null : widget.builder,
+        scaffoldMessengerKey: booting ? null : _messengerKey,
         locale: locale,
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: const [
@@ -129,6 +133,7 @@ class _RideMaAppState extends State<RideMaApp> {
     if (s == null) {
       return _material(
         locale: null,
+        booting: true,
         home: _bootError == null
             ? const SplashScreen()
             : Builder(builder: (c) => SplashScreen(message: errorText(c.l10n, _bootError!))),

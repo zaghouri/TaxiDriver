@@ -9,13 +9,13 @@ void main() {
   late FakeBackend backend;
   late FakeAuthServer server;
 
-  Future<CoreServices> services(WidgetTester tester, {AppKind app = AppKind.rider, String? access, String? refresh}) async {
+  Future<CoreServices> services(WidgetTester tester, {String role = 'rider', String? access, String? refresh}) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.6;
     addTearDown(tester.view.reset);
     backend = FakeBackend();
-    server = FakeAuthServer(backend, role: app.name);
-    return buildTestServices(app: app, backend: backend, access: access, refresh: refresh);
+    server = FakeAuthServer(backend, role: role);
+    return buildTestServices(backend: backend, access: access, refresh: refresh);
   }
 
   TextDirection directionOf(WidgetTester tester, Finder f) => Directionality.of(tester.element(f));
@@ -106,11 +106,12 @@ void main() {
         expect(find.text(l.resendIn(60)), findsOneWidget);
       });
 
-      testWidgets('consents (driver app) adds background location', (tester) async {
-        final s = await services(tester, app: AppKind.driver);
+      testWidgets('consents never ask for background location: drivers accept it when they first switch (D89)', (tester) async {
+        final s = await services(tester);
         await tester.pumpWidget(testApp(s, const ConsentsScreen(fullName: 'Youssef', email: 'y@example.ma', password: 'longpassword1'), locale: lang));
         await tester.pumpAndSettle();
-        for (final k in ['terms', 'privacy', 'data_transfer', 'background_location']) {
+        expect(find.byKey(const ValueKey('consent_background_location')), findsNothing);
+        for (final k in ['terms', 'privacy', 'data_transfer']) {
           final f = find.byKey(ValueKey('consent_$k'));
           await tester.ensureVisible(f);
           await tester.tap(f);
@@ -118,8 +119,8 @@ void main() {
         }
         await tester.tap(find.byKey(const ValueKey('consents_accept')));
         await tester.pumpAndSettle();
-        expect((server.lastSignup!['consents'] as List).map((c) => c['kind']), ['terms', 'privacy', 'data_transfer', 'background_location']);
-        expect(server.lastSignup!['role'], 'driver');
+        expect((server.lastSignup!['consents'] as List).map((c) => c['kind']), ['terms', 'privacy', 'data_transfer']);
+        expect(server.lastSignup!['role'], 'rider');
       });
 
       testWidgets('log in: translated error, then success; 2FA opens the code screen', (tester) async {

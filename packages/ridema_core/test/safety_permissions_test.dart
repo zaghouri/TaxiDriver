@@ -256,7 +256,7 @@ void main() {
         s,
         Builder(
           builder: (c) => Scaffold(
-            body: TextButton(onPressed: () async => result = await perms.ensure(c, app: AppKind.driver), child: const Text('go')),
+            body: TextButton(onPressed: () async => result = await perms.ensure(c, app: AppMode.driver), child: const Text('go')),
           ),
         ),
       ));
@@ -269,6 +269,27 @@ void main() {
       expect(platform.requests, 1);
       expect(result, NotificationAccess.granted);
     });
+  });
+
+  testWidgets('full-screen columns scroll instead of overflowing on a short screen', (tester) async {
+    // The keyboard can still be up from the login form (seen on the iOS simulator): the welcome
+    // screen stays laid out under it, and the permission screens open right after it.
+    tester.view.physicalSize = const Size(402, 430);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final s = await buildTestServices();
+    for (final (screen, bottom) in [
+      (const WelcomeScreen(), 'welcome_login'),
+      (const LanguagePickerScreen(), 'lang_en'),
+      (const LocationDisclosureScreen(kind: LocationDisclosureKind.driver), 'location_not_now'),
+      (const NotificationExplainerScreen(app: AppMode.driver), 'notif_not_now'),
+    ]) {
+      await tester.pumpWidget(testApp(s, screen, locale: 'ar'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: '${screen.runtimeType}');
+      await tester.scrollUntilVisible(find.byKey(ValueKey(bottom)), 100);
+      expect(tester.getRect(find.byKey(ValueKey(bottom))).bottom, lessThanOrEqualTo(430));
+    }
   });
 
   group('ride widgets', () {

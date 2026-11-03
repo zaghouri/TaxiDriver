@@ -160,7 +160,7 @@ class CoreServices {
       accessToken: () => tokenStore.accessToken,
       refreshSession: () => client.refreshSession(),
       onAuthFailure: (code) => unawaited(client.endSession(code)),
-      headers: {'X-App-Name': config.app.apiName, 'X-App-Version': config.version, 'X-Device-Id': device.deviceId},
+      headers: {'X-App-Name': AppConfig.apiAppName, 'X-App-Version': config.version, 'X-Device-Id': device.deviceId},
       socketFactory: socketFactory,
     );
     final auth = AuthController(
@@ -168,6 +168,8 @@ class CoreServices {
       tokens: tokenStore,
       config: config,
       localeProvider: () => locale.languageCode,
+      prefs: prefs,
+      onModeChanged: (_) => realtime.restart(),
       onSignedIn: (me) async {
         realtime.connect();
         await _registerDevice(api, push, deviceIntegrity);

@@ -1,3 +1,0 @@
-tags:
-  live:
-    # Needs a running backend: --dart-define=LIVE_API=http://localhost:8080 (see README).

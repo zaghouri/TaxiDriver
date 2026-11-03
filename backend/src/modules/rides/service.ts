@@ -106,6 +106,15 @@ export async function createRide(
   const u = await getUser(ctx.db, riderId);
   if (!u.email_verified_at) throw forbidden('EMAIL_NOT_VERIFIED', 'Verify your email first.');
   if (!u.phone_verified_at) throw forbidden('PHONE_NOT_VERIFIED', 'Verify your phone number before your first ride.');
+  // One account, two modes (D89): no ride request while the same account is driving (online or on a trip, other phone).
+  if (u.role === 'driver') {
+    const driving = await one(
+      ctx.db,
+      `SELECT 1 FROM drivers d WHERE d.user_id = $1 AND (d.online OR EXISTS (SELECT 1 FROM rides r WHERE r.driver_id = d.user_id AND r.status IN ('queued','accepted','arrived','in_progress')))`,
+      [riderId],
+    );
+    if (driving) throw conflict('OTHER_MODE_BUSY', 'Go offline in driver mode first.');
+  }
   const est = await estimate(ctx, input.pickup, input.dropoff);
   const { city } = est;
   if (await ctx.settings.flag('rider_id_check_enabled', city.id)) {
@@ -439,7 +448,7 @@ export async function placeBid(ctx: AppContext, driverId: string, rideId: string
   const problem = await driverProblem(ctx.db, driverId, { requireOnline: true });
   if (problem) throw forbidden(problem.code, problem.message);
   const r0 = await getRide(ctx.db, rideId);
-  if (!r0) throw notFound('RIDE_NOT_FOUND');
+  if (!r0 || r0.rider_id === driverId) throw notFound('RIDE_NOT_FOUND');
   const city = await ctx.settings.city(r0.city_id);
   const driverCity = await one<{ city_id: string }>(ctx.db, 'SELECT city_id FROM drivers WHERE user_id = $1', [driverId]);
   if (driverCity?.city_id !== r0.city_id) throw notFound('RIDE_NOT_FOUND');
@@ -738,7 +747,8 @@ export async function rate(ctx: AppContext, userId: string, rideId: string, star
       [rideId, userId, ratee, stars, comment ?? null, picked],
     );
     if (!ins) throw conflict('ALREADY_RATED', 'You already rated this trip.');
-    await tx.query('UPDATE users SET rating_sum = rating_sum + $2, rating_count = rating_count + 1 WHERE id = $1', [ratee, stars]);
+    // Ratings received as a driver live on the driver profile, as a rider on the account (D89).
+    await tx.query(`UPDATE ${byRider ? 'drivers' : 'users'} SET rating_sum = rating_sum + $2, rating_count = rating_count + 1 WHERE ${byRider ? 'user_id' : 'id'} = $1`, [ratee, stars]);
     await addEvent(tx, rideId, 'rated', { id: userId, role: byRider ? 'rider' : 'driver' }, { stars, reasons: picked });
     return { rated: true };
   });

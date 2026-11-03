@@ -110,7 +110,6 @@ class FakeLocationPlatform implements LocationPlatform {
 
 /// Builds wired [CoreServices] over a [FakeBackend] (no Firebase, no sockets).
 Future<CoreServices> buildTestServices({
-  AppKind app = AppKind.rider,
   FakeBackend? backend,
   Map<String, Object> prefs = const {'ridema.locale': 'fr'},
   String? access,
@@ -122,7 +121,7 @@ Future<CoreServices> buildTestServices({
 }) async {
   SharedPreferences.setMockInitialValues(prefs);
   final sp = await SharedPreferences.getInstance();
-  final config = AppConfig(app: app, version: version, flavor: 'sideload', platform: 'android', defaultApiBaseUrl: 'https://api.test');
+  final config = AppConfig(version: version, flavor: 'sideload', platform: 'android', defaultApiBaseUrl: 'https://api.test');
   final tokens = MemoryTokenStore(access: access, refresh: refresh);
   final locale = LocaleController(sp, systemLanguageCode: 'fr');
   final dio = Dio()..httpClientAdapter = backend ?? FakeBackend();
@@ -143,7 +142,14 @@ Future<CoreServices> buildTestServices({
     onAuthFailure: (c) => client.endSession(c),
     socketFactory: (_, _, _, _) => socket ?? FakeRtSocket(),
   );
-  final auth = AuthController(api: api, tokens: tokens, config: config, localeProvider: () => locale.languageCode);
+  final auth = AuthController(
+    api: api,
+    tokens: tokens,
+    config: config,
+    localeProvider: () => locale.languageCode,
+    prefs: sp,
+    onModeChanged: (_) => realtime.restart(),
+  );
   final s = CoreServices(
     config: config,
     prefs: sp,

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../brand.dart';
-import '../../config/app_config.dart';
 import '../../core_services.dart';
 import '../../l10n/l10n.dart';
 import '../../platform/apk_installer.dart';
@@ -129,26 +128,18 @@ class _ForceUpdateScreenState extends State<ForceUpdateScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Spacer(),
-                const Center(child: BrandLogo(size: 80)),
-                gap24,
-                Text(l.updateTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
-                gap16,
-                Text(l.updateBody(kAppName, version), textAlign: TextAlign.center, style: const TextStyle(fontSize: 17)),
-                const Spacer(),
-                if (_needsPermission) ...[InfoBox(l.updateAllowInstall(kAppName)), gap16],
-                if (_error != null) ...[ErrorBanner(_error!), gap16],
-                action,
-              ],
-            ),
-          ),
-        ),
+        body: SpacedScreenBody(children: [
+          const Spacer(),
+          const Center(child: BrandLogo(size: 80)),
+          gap24,
+          Text(l.updateTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
+          gap16,
+          Text(l.updateBody(kAppName, version), textAlign: TextAlign.center, style: const TextStyle(fontSize: 17)),
+          const Spacer(),
+          if (_needsPermission) ...[InfoBox(l.updateAllowInstall(kAppName)), gap16],
+          if (_error != null) ...[ErrorBanner(_error!), gap16],
+          action,
+        ]),
       ),
     );
   }
@@ -184,27 +175,19 @@ class LanguagePickerScreen extends StatelessWidget {
           ),
         );
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              const Center(child: BrandLogo(size: 80)),
-              gap24,
-              Text(l.languageTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
-              gap24,
-              option('ar', l.languageArabic),
-              option('fr', l.languageFrench),
-              option('en', l.languageEnglish),
-              gap8,
-              Text(l.languageChangeLater, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700)),
-              const Spacer(),
-            ],
-          ),
-        ),
-      ),
+      body: SpacedScreenBody(children: [
+        const Spacer(),
+        const Center(child: BrandLogo(size: 80)),
+        gap24,
+        Text(l.languageTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+        gap24,
+        option('ar', l.languageArabic),
+        option('fr', l.languageFrench),
+        option('en', l.languageEnglish),
+        gap8,
+        Text(l.languageChangeLater, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700)),
+        const Spacer(),
+      ]),
     );
   }
 }
@@ -216,51 +199,39 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final s = CoreServices.of(context);
-    final driver = s.config.app == AppKind.driver;
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: TextButton.icon(
-                  icon: const Icon(Icons.language),
-                  label: Text(l.languageLabel),
-                  onPressed: () => showLanguageSheet(context),
-                ),
-              ),
-              const Spacer(),
-              const Center(child: BrandLogo(size: 110)),
-              gap24,
-              Text(l.welcomeTitle(kAppName), textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
-              gap16,
-              Text(
-                driver ? l.welcomeDriverTagline : l.welcomeRiderTagline,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18),
-              ),
-              gap8,
-              Text(l.welcomeCash, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700)),
-              const Spacer(),
-              PrimaryButton(
-                key: const ValueKey('welcome_signup'),
-                label: l.welcomeSignUp,
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SignUpScreen())),
-              ),
-              gap16,
-              SecondaryButton(
-                key: const ValueKey('welcome_login'),
-                label: l.welcomeLogIn,
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
-              ),
-            ],
+      body: SpacedScreenBody(children: [
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: TextButton.icon(
+            icon: const Icon(Icons.language),
+            label: Text(l.languageLabel),
+            onPressed: () => showLanguageSheet(context),
           ),
         ),
-      ),
+        const Spacer(),
+        const Center(child: BrandLogo(size: 110)),
+        gap24,
+        Text(l.welcomeTitle(kAppName), textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
+        gap16,
+        Text(l.welcomeRiderTagline, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18)),
+        gap8,
+        Text(l.welcomeDriveToo, textAlign: TextAlign.center),
+        gap8,
+        Text(l.welcomeCash, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700)),
+        const Spacer(),
+        PrimaryButton(
+          key: const ValueKey('welcome_signup'),
+          label: l.welcomeSignUp,
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SignUpScreen())),
+        ),
+        gap16,
+        SecondaryButton(
+          key: const ValueKey('welcome_login'),
+          label: l.welcomeLogIn,
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
+        ),
+      ]),
     );
   }
 }

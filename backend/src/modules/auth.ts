@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { generateSecret, generateURI, verify as verifyTotp } from 'otplib';
 import type { AppContext } from '../context.js';
@@ -12,20 +12,21 @@ import { msg } from '../i18n.js';
 import { consumeCode, createCode } from './codes.js';
 import { currentLegal, type LegalKind } from './legal.js';
 import { getUser, meView, type UserRow } from './users.js';
-import { signAccess, signEmailLink, signMfa, verifyEmailLink, verifyMfa, type Role, type Scope } from '../http/tokens.js';
+import { sessionRole, signAccess, signEmailLink, signMfa, verifyEmailLink, verifyMfa, type Mode, type Role, type Scope } from '../http/tokens.js';
 
 const REQUIRED_CONSENTS: Record<'rider' | 'driver', LegalKind[]> = {
   rider: ['terms', 'privacy', 'data_transfer'],
   driver: ['terms', 'privacy', 'data_transfer', 'background_location'],
 };
 
+/** New session; rider/driver sessions start in the account's default mode (D89: a driver account starts as driver). */
 export async function issueSession(ctx: AppContext, q: Queryable, user: { id: string; role: Role }, deviceId: string | undefined, scope: Scope = 'full') {
   const familyId = crypto.randomUUID();
   const refresh = randomToken(32);
   await q.query(
-    `INSERT INTO refresh_tokens (user_id, family_id, token_hash, device_id, expires_at)
-     VALUES ($1, $2, $3, $4, now() + make_interval(days => $5))`,
-    [user.id, familyId, sha256(refresh), deviceId ?? null, ctx.cfg.REFRESH_TOKEN_TTL_DAYS],
+    `INSERT INTO refresh_tokens (user_id, family_id, token_hash, device_id, expires_at, mode)
+     VALUES ($1, $2, $3, $4, now() + make_interval(days => $5), $6)`,
+    [user.id, familyId, sha256(refresh), deviceId ?? null, ctx.cfg.REFRESH_TOKEN_TTL_DAYS, user.role === 'admin' ? null : user.role],
   );
   const access = await signAccess(ctx.cfg, { sub: user.id, role: user.role, sid: familyId, scp: scope });
   return { access_token: access, refresh_token: refresh, token_type: 'Bearer', expires_in: ctx.cfg.ACCESS_TOKEN_TTL_S, scope };
@@ -33,6 +34,39 @@ export async function issueSession(ctx: AppContext, q: Queryable, user: { id: st
 
 export async function revokeAllSessions(q: Queryable, userId: string) {
   await q.query('UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL', [userId]);
+}
+
+type Consent = { kind: LegalKind; version: string };
+const consentList = z.array(z.object({ kind: z.enum(['terms', 'privacy', 'data_transfer', 'background_location']), version: z.string() })).max(10);
+
+/** The current legal texts for `kinds`, after checking that `given` accepts the current version of each. */
+async function checkConsents(ctx: AppContext, q: Queryable, kinds: LegalKind[], given: Consent[], locale: string) {
+  const versions = new Map(given.map((c) => [c.kind, c.version]));
+  const legal = await Promise.all(kinds.map((k) => currentLegal(q, ctx.settings, k, locale)));
+  for (const l of legal) {
+    const v = versions.get(l.kind as LegalKind);
+    if (!v) throw badRequest('CONSENT_REQUIRED', `Consent "${l.kind}" is required.`, { kind: l.kind });
+    if (v !== l.version) throw conflict('CONSENT_OUTDATED', 'The text you accepted has changed, please read it again.', { kind: l.kind, version: l.version });
+  }
+  return legal;
+}
+
+/** Consent log rows (law 09-08): the exact text shown, its hash, IP and user agent. */
+async function storeConsents(tx: Queryable, req: FastifyRequest, userId: string, legal: Awaited<ReturnType<typeof checkConsents>>) {
+  for (const l of legal) {
+    const text = `${l.title}\n\n${l.body}`;
+    await tx.query(
+      `INSERT INTO consents (user_id, kind, version, locale, text, text_sha256, accepted, ip, user_agent)
+       VALUES ($1,$2,$3,$4,$5,$6,true,$7,$8)`,
+      [userId, l.kind, l.version, l.locale, text, sha256(text), req.ip, String(req.headers['user-agent'] ?? '').slice(0, 300)],
+    );
+  }
+}
+
+/** Driver applicant profile (status `draft`) in the default city; the account becomes a driver account (D89). */
+async function createDriverProfile(tx: Queryable, userId: string) {
+  await tx.query(`INSERT INTO drivers (user_id, city_id) VALUES ($1, (SELECT id FROM cities WHERE active ORDER BY slug = 'meknes' DESC, slug LIMIT 1))`, [userId]);
+  await tx.query(`UPDATE users SET role = 'driver', updated_at = now() WHERE id = $1`, [userId]);
 }
 
 async function sendEmailCode(ctx: AppContext, q: Queryable, u: UserRow) {
@@ -80,35 +114,24 @@ export async function authRoutes(app: FastifyInstance, ctx: AppContext) {
         full_name: z.string().trim().min(2).max(80),
         role: z.enum(['rider', 'driver']),
         locale,
-        consents: z.array(z.object({ kind: z.enum(['terms', 'privacy', 'data_transfer', 'background_location']), version: z.string() })).max(10),
+        consents: consentList,
       }),
       req.body,
     );
-    const given = new Map(body.consents.map((c) => [c.kind, c.version]));
-    const legal = await Promise.all(REQUIRED_CONSENTS[body.role].map((k) => currentLegal(db, ctx.settings, k, body.locale)));
-    for (const l of legal) {
-      const v = given.get(l.kind as LegalKind);
-      if (!v) throw badRequest('CONSENT_REQUIRED', `Consent "${l.kind}" is required.`, { kind: l.kind });
-      if (v !== l.version) throw conflict('CONSENT_OUTDATED', 'The text you accepted has changed, please read it again.', { kind: l.kind, version: l.version });
-    }
+    const legal = await checkConsents(ctx, db, REQUIRED_CONSENTS[body.role], body.consents, body.locale);
     const user = await withTx(db, async (tx) => {
       const exists = await one(tx, 'SELECT 1 FROM users WHERE email = $1', [body.email]);
       if (exists) throw conflict('EMAIL_TAKEN', 'An account already uses this email. Log in or reset your password.');
       const u = await one<UserRow>(
         tx,
-        `INSERT INTO users (role, email, password_hash, full_name, locale) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-        [body.role, body.email, await hashPassword(body.password), body.full_name, body.locale],
+        `INSERT INTO users (role, email, password_hash, full_name, locale) VALUES ('rider',$1,$2,$3,$4) RETURNING *`,
+        [body.email, await hashPassword(body.password), body.full_name, body.locale],
       );
-      for (const l of legal) {
-        const text = `${l.title}\n\n${l.body}`;
-        await tx.query(
-          `INSERT INTO consents (user_id, kind, version, locale, text, text_sha256, accepted, ip, user_agent)
-           VALUES ($1,$2,$3,$4,$5,$6,true,$7,$8)`,
-          [u!.id, l.kind, l.version, l.locale, text, sha256(text), req.ip, String(req.headers['user-agent'] ?? '').slice(0, 300)],
-        );
-      }
+      await storeConsents(tx, req, u!.id, legal);
+      // `role: driver` is what the retired driver app sends; the RideMA app signs up riders and adds driver mode later.
       if (body.role === 'driver') {
-        await tx.query(`INSERT INTO drivers (user_id, city_id) VALUES ($1, (SELECT id FROM cities WHERE active ORDER BY slug = 'meknes' DESC, slug LIMIT 1))`, [u!.id]);
+        await createDriverProfile(tx, u!.id);
+        u!.role = 'driver';
       }
       await sendEmailCode(ctx, tx, u!);
       return u!;
@@ -217,9 +240,9 @@ export async function authRoutes(app: FastifyInstance, ctx: AppContext) {
   app.post('/v1/auth/refresh', async (req) => {
     const body = parse(z.object({ refresh_token: z.string().min(20).max(200) }), req.body);
     const out = await withTx(db, async (tx) => {
-      const row = await one<{ id: string; user_id: string; family_id: string; device_id: string | null; rotated_at: Date | null; revoked_at: Date | null; expired: boolean }>(
+      const row = await one<{ id: string; user_id: string; family_id: string; device_id: string | null; mode: Mode | null; rotated_at: Date | null; revoked_at: Date | null; expired: boolean }>(
         tx,
-        'SELECT id, user_id, family_id, device_id, rotated_at, revoked_at, expires_at < now() AS expired FROM refresh_tokens WHERE token_hash = $1 FOR UPDATE',
+        'SELECT id, user_id, family_id, device_id, mode, rotated_at, revoked_at, expires_at < now() AS expired FROM refresh_tokens WHERE token_hash = $1 FOR UPDATE',
         [sha256(body.refresh_token)],
       );
       if (!row || row.revoked_at || row.expired) throw unauthorized('REFRESH_INVALID', 'Session ended, please log in again.');
@@ -233,12 +256,12 @@ export async function authRoutes(app: FastifyInstance, ctx: AppContext) {
       await tx.query('UPDATE refresh_tokens SET rotated_at = now() WHERE id = $1', [row.id]);
       const refresh = randomToken(32);
       await tx.query(
-        `INSERT INTO refresh_tokens (user_id, family_id, token_hash, device_id, expires_at)
-         VALUES ($1,$2,$3,$4, now() + make_interval(days => $5))`,
-        [u.id, row.family_id, sha256(refresh), row.device_id, ctx.cfg.REFRESH_TOKEN_TTL_DAYS],
+        `INSERT INTO refresh_tokens (user_id, family_id, token_hash, device_id, expires_at, mode)
+         VALUES ($1,$2,$3,$4, now() + make_interval(days => $5), $6)`,
+        [u.id, row.family_id, sha256(refresh), row.device_id, ctx.cfg.REFRESH_TOKEN_TTL_DAYS, row.mode],
       );
       const scope: Scope = u.role === 'admin' && u.twofa_method !== 'totp' ? 'enroll' : 'full';
-      const access = await signAccess(ctx.cfg, { sub: u.id, role: u.role, sid: row.family_id, scp: scope });
+      const access = await signAccess(ctx.cfg, { sub: u.id, role: sessionRole(u.role, row.mode), sid: row.family_id, scp: scope });
       return { tokens: { access_token: access, refresh_token: refresh, token_type: 'Bearer', expires_in: ctx.cfg.ACCESS_TOKEN_TTL_S, scope } };
     });
     if ('reused' in out) {
@@ -246,6 +269,39 @@ export async function authRoutes(app: FastifyInstance, ctx: AppContext) {
       throw unauthorized('REFRESH_REUSED', 'Session ended for your safety, please log in again.');
     }
     return out.tokens;
+  });
+
+  // Switch this session between rider and driver mode (D89). The first switch to driver mode makes the account a
+  // driver applicant (draft profile) and needs the background-location consent. Any active ride blocks a change, and
+  // so does being online as a driver (the app goes offline first). Other devices keep their own mode.
+  app.post('/v1/auth/mode', { config: { auth: 'user' } }, async (req) => {
+    const b = parse(z.object({ mode: z.enum(['rider', 'driver']), consents: consentList.default([]) }), req.body);
+    const me = req.user!;
+    if (me.role === 'admin') throw forbidden('WRONG_ROLE', 'Not allowed for this account type.');
+    const u = await withTx(db, async (tx) => {
+      const u = (await one<UserRow>(tx, 'SELECT * FROM users WHERE id = $1 FOR UPDATE', [me.id]))!;
+      if (b.mode !== me.role) {
+        const busy = await one(
+          tx,
+          `SELECT 1 FROM rides WHERE (rider_id = $1 OR driver_id = $1) AND status IN ('searching','queued','accepted','arrived','in_progress') LIMIT 1`,
+          [me.id],
+        );
+        if (busy) throw conflict('ACTIVE_RIDE', 'Finish or cancel your current ride first.');
+      }
+      if (b.mode === 'driver' && u.role !== 'driver') {
+        const legal = await checkConsents(ctx, tx, ['background_location'], b.consents, u.locale);
+        await storeConsents(tx, req, u.id, legal);
+        await createDriverProfile(tx, u.id);
+        u.role = 'driver';
+      }
+      if (b.mode === 'rider' && u.role === 'driver' && (await one(tx, 'SELECT 1 FROM drivers WHERE user_id = $1 AND online', [u.id]))) {
+        throw conflict('OTHER_MODE_BUSY', 'Go offline in driver mode first.');
+      }
+      await tx.query('UPDATE refresh_tokens SET mode = $2 WHERE family_id = $1 AND revoked_at IS NULL', [me.sid, b.mode]);
+      return u;
+    });
+    const access = await signAccess(ctx.cfg, { sub: u.id, role: b.mode, sid: me.sid, scp: me.scp });
+    return { access_token: access, token_type: 'Bearer', expires_in: ctx.cfg.ACCESS_TOKEN_TTL_S, scope: me.scp, mode: b.mode, user: await meView(db, u, b.mode) };
   });
 
   app.post('/v1/auth/logout', { config: { auth: 'user', enrollOk: true } }, async (req) => {
