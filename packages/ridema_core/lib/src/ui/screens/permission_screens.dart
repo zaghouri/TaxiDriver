@@ -25,45 +25,37 @@ class LocationDisclosureScreen extends StatelessWidget {
     final l = context.l10n;
     final driver = kind == LocationDisclosureKind.driver;
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              Icon(driver ? Icons.share_location : Icons.my_location, size: 88, color: BrandColors.primary),
-              gap24,
-              Text(l.locationTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
-              gap16,
-              Text(
-                driver ? l.locationDriverBody(kAppName) : l.locationRiderBody,
-                key: const ValueKey('location_disclosure_text'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              gap16,
-              Text(
-                driver ? l.locationDriverDetail : l.locationRiderDetail,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade800),
-              ),
-              const Spacer(),
-              PrimaryButton(
-                key: const ValueKey('location_continue'),
-                label: l.continueLabel,
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-              gap8,
-              TextButton(
-                key: const ValueKey('location_not_now'),
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(l.notNow),
-              ),
-            ],
-          ),
+      body: SpacedScreenBody(children: [
+        const Spacer(),
+        Icon(driver ? Icons.share_location : Icons.my_location, size: 88, color: BrandColors.primary),
+        gap24,
+        Text(l.locationTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
+        gap16,
+        Text(
+          driver ? l.locationDriverBody(kAppName) : l.locationRiderBody,
+          key: const ValueKey('location_disclosure_text'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
-      ),
+        gap16,
+        Text(
+          driver ? l.locationDriverDetail : l.locationRiderDetail,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, color: Colors.grey.shade800),
+        ),
+        const Spacer(),
+        PrimaryButton(
+          key: const ValueKey('location_continue'),
+          label: l.continueLabel,
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+        gap8,
+        TextButton(
+          key: const ValueKey('location_not_now'),
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(l.notNow),
+        ),
+      ]),
     );
   }
 }
@@ -77,38 +69,30 @@ class NotificationExplainerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              const Icon(Icons.notifications_active_outlined, size: 88, color: BrandColors.primary),
-              gap24,
-              Text(l.notifTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
-              gap16,
-              Text(
-                app == AppMode.driver ? l.notifDriverBody : l.notifRiderBody,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18),
-              ),
-              const Spacer(),
-              PrimaryButton(
-                key: const ValueKey('notif_allow'),
-                label: l.notifAllow,
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-              gap8,
-              TextButton(
-                key: const ValueKey('notif_not_now'),
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(l.notNow),
-              ),
-            ],
-          ),
+      body: SpacedScreenBody(children: [
+        const Spacer(),
+        const Icon(Icons.notifications_active_outlined, size: 88, color: BrandColors.primary),
+        gap24,
+        Text(l.notifTitle, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
+        gap16,
+        Text(
+          app == AppMode.driver ? l.notifDriverBody : l.notifRiderBody,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18),
         ),
-      ),
+        const Spacer(),
+        PrimaryButton(
+          key: const ValueKey('notif_allow'),
+          label: l.notifAllow,
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+        gap8,
+        TextButton(
+          key: const ValueKey('notif_not_now'),
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(l.notNow),
+        ),
+      ]),
     );
   }
 }

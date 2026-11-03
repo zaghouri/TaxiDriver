@@ -9,11 +9,12 @@ import 'controller/profile_controller.dart';
 import 'platform/readiness.dart';
 
 /// Builds the driver controllers from [CoreServices] (shared by the app and integration tests).
-DriverController buildDriverController(CoreServices s, DriverForegroundService foreground, {DeviceChecks? device}) =>
+DriverController buildDriverController(CoreServices s, DriverForegroundService foreground,
+        {DeviceChecks? device, LocationSource? location}) =>
     DriverController(
       api: ApiDriverBackend(s.api),
       realtime: SocketDriverRealtime(s.realtime),
-      location: GeolocatorLocationSource(permissions: s.location),
+      location: location ?? GeolocatorLocationSource(permissions: s.location),
       device: device ?? NativeDeviceChecks(s.deviceIntegrity),
       foreground: foreground,
     );
@@ -26,12 +27,16 @@ DriverForegroundService buildForegroundService(CoreServices s) => DriverForegrou
 /// leaving it (always offline, no active ride) disposes them, and DriverRoot resets location.
 /// It wraps the whole navigator ([child]), like the app-level providers of the former driver app.
 class DriverShell extends StatelessWidget {
-  const DriverShell({super.key, this.deviceChecks, required this.child});
+  const DriverShell({super.key, this.deviceChecks, this.locationSource, required this.child});
 
   final Widget child;
 
   /// Override the device checks (integration tests on emulators, whose images are rooted).
   final DeviceChecks Function(CoreServices s)? deviceChecks;
+
+  /// Override the GPS source (integration tests on the iOS simulator, whose fixes are all flagged
+  /// as simulated).
+  final LocationSource Function(CoreServices s)? locationSource;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +46,8 @@ class DriverShell extends StatelessWidget {
         Provider<DriverForegroundService>(create: (_) => buildForegroundService(s)),
         Provider<ReadinessChecks>(create: (_) => ReadinessChecks(const MethodChannelReadiness(), s.location)),
         ChangeNotifierProvider<DriverController>(
-          create: (c) => buildDriverController(s, c.read<DriverForegroundService>(), device: deviceChecks?.call(s)),
+          create: (c) => buildDriverController(s, c.read<DriverForegroundService>(),
+              device: deviceChecks?.call(s), location: locationSource?.call(s)),
         ),
         ChangeNotifierProvider<DriverProfileController>(create: (_) => DriverProfileController(ApiDriverBackend(s.api))),
         ChangeNotifierProvider<CallController>(create: (_) => CallController(realtime: s.realtime, api: s.api)),

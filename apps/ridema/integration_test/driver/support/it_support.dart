@@ -47,6 +47,31 @@ class EmulatorDeviceChecks implements DeviceChecks {
   Future<String?> integrityToken() async => null;
 }
 
+/// The iOS simulator flags every fix as "simulated by software", which the app and the server
+/// treat as fake GPS. Its fixes are the test's own (`simctl location`), so the flag is dropped.
+class SimulatorLocationSource implements LocationSource {
+  SimulatorLocationSource(this.inner);
+  final LocationSource inner;
+
+  static DriverPosition _real(DriverPosition p) => DriverPosition(
+        lat: p.lat,
+        lng: p.lng,
+        accuracy: p.accuracy,
+        speed: p.speed,
+        heading: p.heading,
+        timestamp: p.timestamp,
+      );
+
+  @override
+  Future<DriverPosition?> current() async {
+    final p = await inner.current();
+    return p == null ? null : _real(p);
+  }
+
+  @override
+  Stream<DriverPosition> positions() => inner.positions().map(_real);
+}
+
 /// A rider (or driver) talking to the API directly over HTTP.
 class ApiActor {
   ApiActor({required this.app}) : _dio = Dio(BaseOptions(baseUrl: ItEnv.apiBaseUrl, validateStatus: (_) => true));
@@ -130,13 +155,14 @@ Future<void> pumpUntil(WidgetTester tester, bool Function() condition, {Duration
 String _screenText() =>
     find.byType(Text).evaluate().map((e) => (e.widget as Text).data).whereType<String>().join(' | ');
 
-/// Taps the online switch and waits until online. The notification explainer is dismissed:
-/// an iOS simulator cannot pre-grant notifications, and going online works without them.
+/// Goes online with the switch (unless a restored session already is) and waits until online. The
+/// notification explainer is dismissed: an iOS simulator cannot pre-grant notifications, and going
+/// online works without them.
 Future<void> switchOnline(WidgetTester tester, bool Function() online) async {
-  await tester.tap(find.byKey(const ValueKey('online_switch')));
+  if (!online()) await tester.tap(find.byKey(const ValueKey('online_switch')));
   final notNow = find.byKey(const ValueKey('notif_not_now'));
   final end = DateTime.now().add(const Duration(seconds: 30));
-  while (!online()) {
+  while (!online() || notNow.evaluate().isNotEmpty) {
     if (DateTime.now().isAfter(end)) fail('Timed out waiting for online. On screen: ${_screenText()}');
     final route = notNow.evaluate().isEmpty ? null : ModalRoute.of(notNow.evaluate().first);
     if (route != null && route.isCurrent && route.animation?.status == AnimationStatus.completed) {
@@ -144,6 +170,20 @@ Future<void> switchOnline(WidgetTester tester, bool Function() online) async {
     }
     await tester.pump(const Duration(milliseconds: 200));
   }
+}
+
+/// Taps [f] once a tap at its centre reaches it: scrolled into view and not during a route
+/// transition or under a sheet (the iOS transitions are slow enough to swallow an early tap).
+Future<void> tapWhenHittable(WidgetTester tester, Finder f) async {
+  await pumpUntilFound(tester, f);
+  await tester.ensureVisible(f);
+  await pumpUntil(tester, () {
+    final box = tester.renderObject(f) as RenderBox;
+    final hit = tester.hitTestOnBinding(box.localToGlobal(box.size.center(Offset.zero)));
+    return hit.path.any((e) => e.target == box);
+  }, reason: 'a tap to reach ${f.describeMatch(Plurality.one)}');
+  await tester.tap(f);
+  await tester.pump();
 }
 
 Future<void> pumpUntilFound(WidgetTester tester, Finder f, {Duration timeout = const Duration(seconds: 30)}) =>

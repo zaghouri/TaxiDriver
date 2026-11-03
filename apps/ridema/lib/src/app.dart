@@ -11,7 +11,7 @@ import 'store_apk_installer.dart';
 
 /// The RideMA app: one account, a rider mode and a driver mode (D89).
 class RideMa extends StatelessWidget {
-  const RideMa({super.key, this.services, this.servicesFactory, this.deviceChecks});
+  const RideMa({super.key, this.services, this.servicesFactory, this.deviceChecks, this.locationSource});
 
   /// Ready-made services (integration tests).
   final CoreServices? services;
@@ -21,6 +21,9 @@ class RideMa extends StatelessWidget {
 
   /// Driver-mode device checks override (integration tests on rooted emulator images).
   final DeviceChecks Function(CoreServices s)? deviceChecks;
+
+  /// Driver-mode GPS source override (integration tests on the iOS simulator).
+  final LocationSource Function(CoreServices s)? locationSource;
 
   static Future<CoreServices> defaultServices(AppConfig c) => CoreServices.create(
         config: AppConfig(version: c.version, flavor: appFlavorName(), platform: c.platform),
@@ -34,7 +37,7 @@ class RideMa extends StatelessWidget {
         servicesFactory: servicesFactory ?? defaultServices,
         // Above the navigator, so the driver screens pushed as routes and dialogs see them.
         builder: (context, navigator) => context.select<AuthController, AppMode>((a) => a.mode) == AppMode.driver
-            ? DriverShell(deviceChecks: deviceChecks, child: navigator!)
+            ? DriverShell(deviceChecks: deviceChecks, locationSource: locationSource, child: navigator!)
             : navigator!,
         homeBuilder: (_) => const ModeHome(),
       );

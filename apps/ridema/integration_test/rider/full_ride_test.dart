@@ -15,7 +15,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:ridema_core/ridema_core.dart';
 import 'package:ridema/src/app.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../driver/support/it_support.dart' show ApiActor;
 import 'driver_bot.dart';
 
 const apiBase = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8080');
@@ -26,7 +28,10 @@ Future<void> pumpUntil(WidgetTester tester, Finder f, {Duration timeout = const 
   while (true) {
     await tester.pump(const Duration(milliseconds: 100));
     if (f.evaluate().isNotEmpty) return;
-    if (DateTime.now().isAfter(end)) throw TimeoutException('Not found: $f');
+    if (DateTime.now().isAfter(end)) {
+      final screen = find.byType(Text).evaluate().map((e) => (e.widget as Text).data).whereType<String>().join(' | ');
+      throw TimeoutException('Not found: $f. On screen: $screen');
+    }
     await Future<void>.delayed(const Duration(milliseconds: 200));
   }
 }
@@ -75,9 +80,14 @@ void main() {
     });
     await bot.login();
     await bot.goOnline(33.8940, -5.5650); // next to Place El Hedim
+    // A failed earlier run can leave the rider's ride open.
+    final riderApi = ApiActor(app: 'rider');
+    await riderApi.login('it-rider@ridema.test', password);
+    await riderApi.cancelActive();
 
-    // Start signed out: a session kept from an earlier run (the iOS keychain outlives the app) may
-    // be another account or driver mode.
+    // Start signed out and in English: a session kept from an earlier run (the iOS keychain
+    // outlives the app; --no-uninstall keeps its prefs) may be another account, driver mode or French.
+    await (await SharedPreferences.getInstance()).setString('ridema.locale', 'en');
     CoreServices? services;
     await tester.pumpWidget(RideMa(servicesFactory: (c) async => services = await RideMa.defaultServices(c)));
     for (var i = 0; i < 100 && !(services?.boot.loaded ?? false); i++) {

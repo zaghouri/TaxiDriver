@@ -19,33 +19,28 @@ class DeviceCheckScreen extends StatelessWidget {
       canPop: true,
       child: Scaffold(
         appBar: AppBar(title: Text(context.ds.deviceCheckTitle)),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              const Spacer(),
-              Icon(mock ? Icons.location_disabled : Icons.phonelink_erase, size: 96, color: BrandColors.danger),
-              gap16,
-              Text(mock ? l.deviceMockTitle : l.deviceRootedTitle,
-                  key: const ValueKey('device_block_title'), textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
-              gap16,
-              Text(mock ? l.deviceMockBody : l.deviceRootedBody, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17)),
-              const Spacer(),
-              if (mock)
-                PrimaryButton(
-                  key: const ValueKey('device_check_again'),
-                  label: l.deviceCheckAgain,
-                  icon: Icons.refresh,
-                  onPressed: () {
-                    context.read<DriverController>().clearDeviceBlock();
-                    Navigator.of(context).maybePop();
-                  },
-                ),
-              gap8,
-              SecondaryButton(label: l.close, onPressed: () => Navigator.of(context).maybePop()),
-            ]),
-          ),
-        ),
+        body: SpacedScreenBody(children: [
+          const Spacer(),
+          Icon(mock ? Icons.location_disabled : Icons.phonelink_erase, size: 96, color: BrandColors.danger),
+          gap16,
+          Text(mock ? l.deviceMockTitle : l.deviceRootedTitle,
+              key: const ValueKey('device_block_title'), textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
+          gap16,
+          Text(mock ? l.deviceMockBody : l.deviceRootedBody, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17)),
+          const Spacer(),
+          if (mock)
+            PrimaryButton(
+              key: const ValueKey('device_check_again'),
+              label: l.deviceCheckAgain,
+              icon: Icons.refresh,
+              onPressed: () {
+                context.read<DriverController>().clearDeviceBlock();
+                Navigator.of(context).maybePop();
+              },
+            ),
+          gap8,
+          SecondaryButton(label: l.close, onPressed: () => Navigator.of(context).maybePop()),
+        ]),
       ),
     );
   }

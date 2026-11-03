@@ -45,6 +45,7 @@ void main() {
         ),
       ),
       deviceChecks: (s) => EmulatorDeviceChecks(NativeDeviceChecks(s.deviceIntegrity)),
+      locationSource: Platform.isIOS ? (s) => SimulatorLocationSource(GeolocatorLocationSource(permissions: s.location)) : null,
     ));
     await pumpUntil(tester, () => current?.boot.loaded ?? false, reason: 'boot');
     if (current!.auth.isSignedIn) await current!.auth.logout();
@@ -101,38 +102,35 @@ void main() {
     await pumpUntilFound(tester, card);
     expect(find.textContaining('Gare Meknès'), findsWidgets, reason: 'destination shown before accepting');
 
-    await tester.tap(card);
+    await tapWhenHittable(tester, card);
     await pumpUntilFound(tester, find.byKey(const ValueKey('accept_button')));
-    await tester.tap(find.byKey(const ValueKey('accept_button')));
+    await tapWhenHittable(tester, find.byKey(const ValueKey('accept_button')));
     await pumpUntilFound(tester, find.byKey(const ValueKey('waiting_for_rider')));
 
     final pin = await rider.acceptFirstOffer(rideId);
     await pumpUntilFound(tester, find.byKey(const ValueKey('arrived_button')));
     expect(c.phase, DriverPhase.toPickup);
 
-    await tester.tap(find.byKey(const ValueKey('arrived_button')));
+    await tapWhenHittable(tester, find.byKey(const ValueKey('arrived_button')));
     await pumpUntilFound(tester, find.byKey(const ValueKey('pin_keypad')));
-    // The keypad scrolls inside the ride panel; on short screens the keys start below the fold.
+    // The keypad scrolls inside the ride panel; on short screens the keys start below the fold
+    // (tapWhenHittable scrolls to each key).
     for (final d in pin.split('')) {
-      await tester.ensureVisible(find.byKey(ValueKey('pin_key_$d')));
-      await tester.tap(find.byKey(ValueKey('pin_key_$d')));
-      await tester.pump();
+      await tapWhenHittable(tester, find.byKey(ValueKey('pin_key_$d')));
     }
-    await tester.ensureVisible(find.byKey(const ValueKey('pin_submit')));
-    await tester.tap(find.byKey(const ValueKey('pin_submit')));
+    await tapWhenHittable(tester, find.byKey(const ValueKey('pin_submit')));
     await pumpUntilFound(tester, find.byKey(const ValueKey('complete_button')));
     expect(c.phase, DriverPhase.onTrip);
 
-    await tester.ensureVisible(find.byKey(const ValueKey('complete_button')));
-    await tester.tap(find.byKey(const ValueKey('complete_button')));
+    await tapWhenHittable(tester, find.byKey(const ValueKey('complete_button')));
     await pumpUntilFound(tester, find.byKey(const ValueKey('collect_cash')));
     expect(find.textContaining('en espèces'), findsOneWidget);
 
-    await tester.ensureVisible(find.byKey(const ValueKey('star_5')));
-    await tester.tap(find.byKey(const ValueKey('star_5')));
-    await tester.pump();
-    await tester.ensureVisible(find.text('Envoyer la note'));
-    await tester.tap(find.text('Envoyer la note'));
+    await tapWhenHittable(tester, find.byKey(const ValueKey('star_5')));
+    // Below the fold on a phone-sized screen, so not built yet: scroll the panel to it.
+    await tester.scrollUntilVisible(find.text('Envoyer la note'), 200,
+        scrollable: find.ancestor(of: find.byKey(const ValueKey('star_5')), matching: find.byType(Scrollable)).first);
+    await tapWhenHittable(tester, find.text('Envoyer la note'));
     await pumpUntil(tester, () => c.finishedRide == null, reason: 'rating sent');
 
     final ride = await rider.get('/v1/rides/$rideId');

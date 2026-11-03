@@ -271,6 +271,27 @@ void main() {
     });
   });
 
+  testWidgets('full-screen columns scroll instead of overflowing on a short screen', (tester) async {
+    // The keyboard can still be up from the login form (seen on the iOS simulator): the welcome
+    // screen stays laid out under it, and the permission screens open right after it.
+    tester.view.physicalSize = const Size(402, 430);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final s = await buildTestServices();
+    for (final (screen, bottom) in [
+      (const WelcomeScreen(), 'welcome_login'),
+      (const LanguagePickerScreen(), 'lang_en'),
+      (const LocationDisclosureScreen(kind: LocationDisclosureKind.driver), 'location_not_now'),
+      (const NotificationExplainerScreen(app: AppMode.driver), 'notif_not_now'),
+    ]) {
+      await tester.pumpWidget(testApp(s, screen, locale: 'ar'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: '${screen.runtimeType}');
+      await tester.scrollUntilVisible(find.byKey(ValueKey(bottom)), 100);
+      expect(tester.getRect(find.byKey(ValueKey(bottom))).bottom, lessThanOrEqualTo(430));
+    }
+  });
+
   group('ride widgets', () {
     testWidgets('PIN digits and plate stay left-to-right in Arabic', (tester) async {
       phone(tester);
